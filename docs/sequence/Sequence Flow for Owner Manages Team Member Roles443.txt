@@ -1,0 +1,929 @@
+# 1 Overview
+
+## 1.1 Diagram Id
+
+SEQ-BP-003
+
+## 1.2 Name
+
+Owner Manages Team Member Roles
+
+## 1.3 Description
+
+A merchant with the 'Owner' role accesses the user management interface to either change an existing team member's role (e.g., from Analyst to Admin) or permanently remove a team member from their account, immediately revoking their access.
+
+## 1.4 Type
+
+🔹 BusinessProcess
+
+## 1.5 Purpose
+
+To provide owners with full control over their team's access permissions, fulfilling the user and role management requirements (FR-203).
+
+## 1.6 Complexity
+
+Low
+
+## 1.7 Priority
+
+🔴 High
+
+## 1.8 Frequency
+
+OnDemand
+
+## 1.9 Participants
+
+- user-browser
+- spa-frontend-001
+- api-gateway-002
+- user-management-service-003
+- oltp-repository-008
+- audit-logger-010
+
+## 1.10 Key Interactions
+
+- Owner navigates to the team management page.
+- Owner selects a team member and chooses a new role from a dropdown or clicks 'Remove'.
+- An API call is made to the User Management Service to update the user's role or disassociate them from the merchant account.
+- The change is committed to the OLTP database.
+- An audit event is published to the audit log queue for the role change or user removal.
+
+## 1.11 Triggers
+
+- An 'Owner' initiates a role change or removal from the UI.
+
+## 1.12 Outcomes
+
+- The team member's permissions are updated in real-time.
+- A removed user can no longer access the merchant's account.
+- The action is logged for security and compliance.
+
+## 1.13 Business Rules
+
+- Only the 'Owner' role can perform this action.
+- An Owner cannot change their own role or remove themselves.
+
+## 1.14 Error Scenarios
+
+- The Owner attempts to modify a user who is no longer part of the team.
+- A database error occurs during the update.
+
+## 1.15 Integration Points
+
+*No items available*
+
+# 2.0 Details
+
+## 2.1 Diagram Id
+
+SEQ-BP-003
+
+## 2.2 Name
+
+Implementation: Owner Manages Team Member Roles
+
+## 2.3 Description
+
+Technical sequence for a merchant with the 'Owner' role modifying a team member's role. The sequence covers UI interaction, API gateway authorization, business rule validation in the User Management Service, transactional database updates via the OLTP repository, and asynchronous audit event generation.
+
+## 2.4 Participants
+
+### 2.4.1 Client
+
+#### 2.4.1.1 Repository Id
+
+user-browser
+
+#### 2.4.1.2 Display Name
+
+User Browser
+
+#### 2.4.1.3 Type
+
+🔹 Client
+
+#### 2.4.1.4 Technology
+
+Web Browser (Chrome, Firefox, etc.)
+
+#### 2.4.1.5 Order
+
+1
+
+#### 2.4.1.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | actor |
+| Color | #E0E0E0 |
+| Stereotype | User |
+
+### 2.4.2.0 Presentation
+
+#### 2.4.2.1 Repository Id
+
+spa-frontend-001
+
+#### 2.4.2.2 Display Name
+
+Frontend SPA
+
+#### 2.4.2.3 Type
+
+🔹 Presentation
+
+#### 2.4.2.4 Technology
+
+React 18, TypeScript 5.4, Material-UI
+
+#### 2.4.2.5 Order
+
+2
+
+#### 2.4.2.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | rectangle |
+| Color | #C5CAE9 |
+| Stereotype | SPA |
+
+### 2.4.3.0 Gateway
+
+#### 2.4.3.1 Repository Id
+
+api-gateway-002
+
+#### 2.4.3.2 Display Name
+
+API Gateway
+
+#### 2.4.3.3 Type
+
+🔹 Gateway
+
+#### 2.4.3.4 Technology
+
+AWS API Gateway
+
+#### 2.4.3.5 Order
+
+3
+
+#### 2.4.3.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | rectangle |
+| Color | #9FA8DA |
+| Stereotype | APIGateway |
+
+### 2.4.4.0 Serverless Function Group
+
+#### 2.4.4.1 Repository Id
+
+user-management-service-003
+
+#### 2.4.4.2 Display Name
+
+User Management Service
+
+#### 2.4.4.3 Type
+
+🔹 Serverless Function Group
+
+#### 2.4.4.4 Technology
+
+AWS Lambda, Node.js 20.x
+
+#### 2.4.4.5 Order
+
+4
+
+#### 2.4.4.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | rectangle |
+| Color | #7986CB |
+| Stereotype | Service |
+
+### 2.4.5.0 Repository
+
+#### 2.4.5.1 Repository Id
+
+oltp-repository-008
+
+#### 2.4.5.2 Display Name
+
+OLTP Repository
+
+#### 2.4.5.3 Type
+
+🔹 Repository
+
+#### 2.4.5.4 Technology
+
+Prisma 5.x, PostgreSQL 16
+
+#### 2.4.5.5 Order
+
+5
+
+#### 2.4.5.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | database |
+| Color | #5C6BC0 |
+| Stereotype | Database |
+
+### 2.4.6.0 Service
+
+#### 2.4.6.1 Repository Id
+
+audit-logger-010
+
+#### 2.4.6.2 Display Name
+
+Audit Logger Service
+
+#### 2.4.6.3 Type
+
+🔹 Service
+
+#### 2.4.6.4 Technology
+
+AWS Lambda, Winston
+
+#### 2.4.6.5 Order
+
+6
+
+#### 2.4.6.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | rectangle |
+| Color | #3F51B5 |
+| Stereotype | Service |
+
+## 2.5.0.0 Interactions
+
+### 2.5.1.0 User Interaction
+
+#### 2.5.1.1 Source Id
+
+user-browser
+
+#### 2.5.1.2 Target Id
+
+spa-frontend-001
+
+#### 2.5.1.3 Message
+
+1. Initiates role change for a team member (e.g., selects new role from dropdown and clicks 'Save')
+
+#### 2.5.1.4 Sequence Number
+
+1
+
+#### 2.5.1.5 Type
+
+🔹 User Interaction
+
+#### 2.5.1.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.1.7 Return Message
+
+
+
+#### 2.5.1.8 Has Return
+
+❌ No
+
+#### 2.5.1.9 Is Activation
+
+✅ Yes
+
+#### 2.5.1.10 Technical Details
+
+##### 2.5.1.10.1 Protocol
+
+UI Event
+
+##### 2.5.1.10.2 Method
+
+onClick
+
+##### 2.5.1.10.3 Parameters
+
+Event object containing targetUserId and newRoleId
+
+##### 2.5.1.10.4 Authentication
+
+N/A
+
+##### 2.5.1.10.5 Error Handling
+
+UI displays validation error if no role is selected.
+
+##### 2.5.1.10.6 Performance
+
+###### 2.5.1.10.6.1 Latency
+
+<50ms
+
+### 2.5.2.0.0.0 API Call
+
+#### 2.5.2.1.0.0 Source Id
+
+spa-frontend-001
+
+#### 2.5.2.2.0.0 Target Id
+
+api-gateway-002
+
+#### 2.5.2.3.0.0 Message
+
+2. Sends API request to update team member's role
+
+#### 2.5.2.4.0.0 Sequence Number
+
+2
+
+#### 2.5.2.5.0.0 Type
+
+🔹 API Call
+
+#### 2.5.2.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.2.7.0.0 Return Message
+
+HTTP 200 OK with updated team member object
+
+#### 2.5.2.8.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.2.9.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.2.10.0.0 Technical Details
+
+##### 2.5.2.10.1.0 Protocol
+
+HTTPS
+
+##### 2.5.2.10.2.0 Method
+
+PUT /api/v1/team-members/{membershipId}
+
+##### 2.5.2.10.3.0 Parameters
+
+| Property | Value |
+|----------|-------|
+| Path | {'membershipId': 'string (UUID)'} |
+| Body | {'roleId': 'string (UUID)'} |
+
+##### 2.5.2.10.4.0 Authentication
+
+JWT Bearer Token in 'Authorization' header
+
+##### 2.5.2.10.5.0 Error Handling
+
+Handles 401, 403, 404, 5xx responses and displays appropriate notifications to the user.
+
+##### 2.5.2.10.6.0 Performance
+
+###### 2.5.2.10.6.1 Latency
+
+Awaits response
+
+### 2.5.3.0.0.0 Service Invocation
+
+#### 2.5.3.1.0.0 Source Id
+
+api-gateway-002
+
+#### 2.5.3.2.0.0 Target Id
+
+user-management-service-003
+
+#### 2.5.3.3.0.0 Message
+
+3. Authorizes request and forwards to service
+
+#### 2.5.3.4.0.0 Sequence Number
+
+3
+
+#### 2.5.3.5.0.0 Type
+
+🔹 Service Invocation
+
+#### 2.5.3.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.3.7.0.0 Return Message
+
+Service response (success or error object)
+
+#### 2.5.3.8.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.3.9.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.3.10.0.0 Technical Details
+
+##### 2.5.3.10.1.0 Protocol
+
+Lambda Invoke
+
+##### 2.5.3.10.2.0 Method
+
+N/A
+
+##### 2.5.3.10.3.0 Parameters
+
+Transformed event object from API Gateway request
+
+##### 2.5.3.10.4.0 Authentication
+
+Validates JWT signature, expiration, and claims. Enforces RBAC policy: requires 'Owner' role in token claims.
+
+##### 2.5.3.10.5.0 Error Handling
+
+Returns HTTP 401 if token is invalid. Returns HTTP 403 if role is not 'Owner'.
+
+##### 2.5.3.10.6.0 Performance
+
+###### 2.5.3.10.6.1 Latency
+
+<10ms
+
+### 2.5.4.0.0.0 Database Query
+
+#### 2.5.4.1.0.0 Source Id
+
+user-management-service-003
+
+#### 2.5.4.2.0.0 Target Id
+
+oltp-repository-008
+
+#### 2.5.4.3.0.0 Message
+
+4. Validates business rules and requests data update
+
+#### 2.5.4.4.0.0 Sequence Number
+
+4
+
+#### 2.5.4.5.0.0 Type
+
+🔹 Database Query
+
+#### 2.5.4.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.4.7.0.0 Return Message
+
+Updated UserMerchantAccount entity
+
+#### 2.5.4.8.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.4.9.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.4.10.0.0 Technical Details
+
+##### 2.5.4.10.1.0 Protocol
+
+Prisma Client
+
+##### 2.5.4.10.2.0 Method
+
+prisma.userMerchantAccount.update()
+
+##### 2.5.4.10.3.0 Parameters
+
+| Property | Value |
+|----------|-------|
+| Where | {'id': 'membershipId'} |
+| Data | {'roleId': 'newRoleId'} |
+
+##### 2.5.4.10.4.0 Authentication
+
+Database credentials from environment variables.
+
+##### 2.5.4.10.5.0 Error Handling
+
+Catches Prisma exceptions (e.g., P2025 for record not found). Validates that acting user is not modifying their own record.
+
+##### 2.5.4.10.6.0 Performance
+
+###### 2.5.4.10.6.1 Latency
+
+<50ms
+
+### 2.5.5.0.0.0 Database Response
+
+#### 2.5.5.1.0.0 Source Id
+
+oltp-repository-008
+
+#### 2.5.5.2.0.0 Target Id
+
+user-management-service-003
+
+#### 2.5.5.3.0.0 Message
+
+5. Returns success confirmation
+
+#### 2.5.5.4.0.0 Sequence Number
+
+5
+
+#### 2.5.5.5.0.0 Type
+
+🔹 Database Response
+
+#### 2.5.5.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.5.7.0.0 Return Message
+
+
+
+#### 2.5.5.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.5.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.5.10.0.0 Technical Details
+
+##### 2.5.5.10.1.0 Protocol
+
+Prisma Client
+
+##### 2.5.5.10.2.0 Method
+
+
+
+##### 2.5.5.10.3.0 Parameters
+
+Updated record object
+
+##### 2.5.5.10.4.0 Authentication
+
+N/A
+
+##### 2.5.5.10.5.0 Error Handling
+
+Propagates database errors up to the service layer.
+
+##### 2.5.5.10.6.0 Performance
+
+###### 2.5.5.10.6.1 Latency
+
+Included in step 4
+
+### 2.5.6.0.0.0 Event Publishing
+
+#### 2.5.6.1.0.0 Source Id
+
+user-management-service-003
+
+#### 2.5.6.2.0.0 Target Id
+
+audit-logger-010
+
+#### 2.5.6.3.0.0 Message
+
+6. Asynchronously publishes audit event
+
+#### 2.5.6.4.0.0 Sequence Number
+
+6
+
+#### 2.5.6.5.0.0 Type
+
+🔹 Event Publishing
+
+#### 2.5.6.6.0.0 Is Synchronous
+
+❌ No
+
+#### 2.5.6.7.0.0 Return Message
+
+
+
+#### 2.5.6.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.6.9.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.6.10.0.0 Technical Details
+
+##### 2.5.6.10.1.0 Protocol
+
+Message Queue (e.g., SQS)
+
+##### 2.5.6.10.2.0 Method
+
+auditLogger.logEvent()
+
+##### 2.5.6.10.3.0 Parameters
+
+| Property | Value |
+|----------|-------|
+| Event Type | TEAM_MEMBER_ROLE_UPDATED |
+| Acting User Id | string (UUID) |
+| Merchant Account Id | string (UUID) |
+| Target Resource | user_merchant_account:{membershipId} |
+| Outcome | success |
+| Details | {'targetUserId': 'string (UUID)', 'previousRoleId': 'string (UUID)', 'newRoleId': 'string (UUID)'} |
+
+##### 2.5.6.10.4.0 Authentication
+
+IAM role for queue access.
+
+##### 2.5.6.10.5.0 Error Handling
+
+Fire-and-forget. Failures handled by queue's dead-letter configuration.
+
+##### 2.5.6.10.6.0 Performance
+
+###### 2.5.6.10.6.1 Latency
+
+<20ms
+
+### 2.5.7.0.0.0 Service Response
+
+#### 2.5.7.1.0.0 Source Id
+
+user-management-service-003
+
+#### 2.5.7.2.0.0 Target Id
+
+api-gateway-002
+
+#### 2.5.7.3.0.0 Message
+
+7. Returns success response
+
+#### 2.5.7.4.0.0 Sequence Number
+
+7
+
+#### 2.5.7.5.0.0 Type
+
+🔹 Service Response
+
+#### 2.5.7.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.7.7.0.0 Return Message
+
+
+
+#### 2.5.7.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.7.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.7.10.0.0 Technical Details
+
+##### 2.5.7.10.1.0 Protocol
+
+Lambda Invoke Response
+
+##### 2.5.7.10.2.0 Method
+
+
+
+##### 2.5.7.10.3.0 Parameters
+
+Serialized JSON of the updated resource
+
+##### 2.5.7.10.4.0 Authentication
+
+N/A
+
+##### 2.5.7.10.5.0 Error Handling
+
+N/A
+
+##### 2.5.7.10.6.0 Performance
+
+###### 2.5.7.10.6.1 Latency
+
+<5ms
+
+### 2.5.8.0.0.0 API Response
+
+#### 2.5.8.1.0.0 Source Id
+
+api-gateway-002
+
+#### 2.5.8.2.0.0 Target Id
+
+spa-frontend-001
+
+#### 2.5.8.3.0.0 Message
+
+8. Forwards HTTP 200 OK response
+
+#### 2.5.8.4.0.0 Sequence Number
+
+8
+
+#### 2.5.8.5.0.0 Type
+
+🔹 API Response
+
+#### 2.5.8.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.8.7.0.0 Return Message
+
+
+
+#### 2.5.8.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.8.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.8.10.0.0 Technical Details
+
+##### 2.5.8.10.1.0 Protocol
+
+HTTPS
+
+##### 2.5.8.10.2.0 Method
+
+
+
+##### 2.5.8.10.3.0 Parameters
+
+HTTP 200 with JSON body
+
+##### 2.5.8.10.4.0 Authentication
+
+N/A
+
+##### 2.5.8.10.5.0 Error Handling
+
+N/A
+
+##### 2.5.8.10.6.0 Performance
+
+###### 2.5.8.10.6.1 Latency
+
+Included in step 2
+
+### 2.5.9.0.0.0 UI Update
+
+#### 2.5.9.1.0.0 Source Id
+
+spa-frontend-001
+
+#### 2.5.9.2.0.0 Target Id
+
+user-browser
+
+#### 2.5.9.3.0.0 Message
+
+9. Updates UI and displays success notification
+
+#### 2.5.9.4.0.0 Sequence Number
+
+9
+
+#### 2.5.9.5.0.0 Type
+
+🔹 UI Update
+
+#### 2.5.9.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.9.7.0.0 Return Message
+
+
+
+#### 2.5.9.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.9.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.9.10.0.0 Technical Details
+
+##### 2.5.9.10.1.0 Protocol
+
+DOM Manipulation
+
+##### 2.5.9.10.2.0 Method
+
+setState
+
+##### 2.5.9.10.3.0 Parameters
+
+Updates local state with the new role, triggering a re-render. Displays a toast notification.
+
+##### 2.5.9.10.4.0 Authentication
+
+N/A
+
+##### 2.5.9.10.5.0 Error Handling
+
+N/A
+
+##### 2.5.9.10.6.0 Performance
+
+###### 2.5.9.10.6.1 Latency
+
+<100ms
+
+## 2.6.0.0.0.0 Notes
+
+### 2.6.1.0.0.0 Content
+
+#### 2.6.1.1.0.0 Content
+
+Business Rule: The User Management Service MUST verify that the authenticated principal's ID does not match the target user's ID to prevent an owner from changing their own role.
+
+#### 2.6.1.2.0.0 Position
+
+top-right
+
+#### 2.6.1.3.0.0 Participant Id
+
+user-management-service-003
+
+#### 2.6.1.4.0.0 Sequence Number
+
+4
+
+### 2.6.2.0.0.0 Content
+
+#### 2.6.2.1.0.0 Content
+
+Alternative Flow (Remove User): The flow is nearly identical, but the API call is `DELETE /api/v1/team-members/{membershipId}`. The database operation is a `delete()` instead of `update()`, and the audit event type is `TEAM_MEMBER_REMOVED`.
+
+#### 2.6.2.2.0.0 Position
+
+bottom-left
+
+#### 2.6.2.3.0.0 Participant Id
+
+*Not specified*
+
+#### 2.6.2.4.0.0 Sequence Number
+
+2
+
+## 2.7.0.0.0.0 Implementation Guidance
+
+| Property | Value |
+|----------|-------|
+| Security Requirements | The API Gateway must enforce a strict RBAC policy,... |
+| Performance Targets | The end-to-end P95 latency for this operation, fro... |
+| Error Handling Strategy | If the database update fails, the service must ret... |
+| Testing Considerations | E2E tests must cover: 1) A non-owner attempting to... |
+| Monitoring Requirements | Monitor the latency and error rate of the PUT and ... |
+| Deployment Considerations | Changes to the business logic in the User Manageme... |
+

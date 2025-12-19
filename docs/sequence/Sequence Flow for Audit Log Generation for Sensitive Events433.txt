@@ -1,0 +1,597 @@
+# 1 Overview
+
+## 1.1 Diagram Id
+
+SEQ-CF-001
+
+## 1.2 Name
+
+Audit Log Generation for Sensitive Events
+
+## 1.3 Description
+
+When a user performs a security-sensitive action (e.g., changes another user's role), the responsible application service publishes a 'SecurityEventOccurred' event. A dedicated, asynchronous consumer processes this event and writes a detailed, immutable record to the audit log database table.
+
+## 1.4 Type
+
+🔹 ComplianceFlow
+
+## 1.5 Purpose
+
+To maintain a detailed, immutable audit trail of all security-sensitive events, as mandated by REQ-SEC-005, for compliance, security investigations, and accountability.
+
+## 1.6 Complexity
+
+Medium
+
+## 1.7 Priority
+
+🔴 High
+
+## 1.8 Frequency
+
+OnDemand
+
+## 1.9 Participants
+
+- user-management-service-003
+- async-task-queue-013
+- audit-logger-010
+- oltp-repository-008
+
+## 1.10 Key Interactions
+
+- The User Management Service successfully processes a role change request.
+- The service constructs a 'SecurityEventOccurred' event payload with details (acting user, target user, old role, new role, merchantId, timestamp).
+- The service publishes this event to a dedicated, high-priority message queue for auditing.
+- The Audit Logger service, an independent consumer of this queue, receives the event.
+- The Audit Logger formats the event data into a structured log record.
+- The record is written to a dedicated, append-only 'audit_logs' table in the OLTP database.
+
+## 1.11 Triggers
+
+- A security-sensitive event occurs, such as user login (success/fail), role change, data export, or team member removal.
+
+## 1.12 Outcomes
+
+- An immutable audit record is created for the event, separate from application logs.
+- The system meets its compliance requirement for audit logging.
+
+## 1.13 Business Rules
+
+- Audit logs must be retained for at least 12 months (REQ-SEC-005).
+- Audit logging must be asynchronous to avoid impacting the performance of the primary user action.
+- The audit log table should have restricted write access, limited only to the Audit Logger service role.
+
+## 1.14 Error Scenarios
+
+- The message queue is unavailable; the application service retries publishing with backoff.
+- The audit logger consumer fails to write to the database; the message is sent to a DLQ for manual intervention.
+
+## 1.15 Integration Points
+
+*No items available*
+
+# 2.0 Details
+
+## 2.1 Diagram Id
+
+SEQ-CF-001
+
+## 2.2 Name
+
+Asynchronous Audit Log Generation for Security-Sensitive Events
+
+## 2.3 Description
+
+This sequence details the asynchronous process for creating an immutable audit trail for security-sensitive actions, fulfilling the compliance requirement REQ-SEC-005. A primary application service (User Management Service) publishes a detailed event to a dedicated message queue (AWS SQS) upon a sensitive operation's completion. A separate, decoupled consumer (Audit Logger Service) processes this event and persists a permanent record into a restricted-access table in the OLTP database (PostgreSQL) via the Prisma client. This decoupling ensures the primary user-facing operation's performance is not impacted by the audit logging process.
+
+## 2.4 Participants
+
+### 2.4.1 Serverless Function Group
+
+#### 2.4.1.1 Repository Id
+
+user-management-service-003
+
+#### 2.4.1.2 Display Name
+
+User Management Service
+
+#### 2.4.1.3 Type
+
+🔹 Serverless Function Group
+
+#### 2.4.1.4 Technology
+
+AWS Lambda, Node.js 20.x
+
+#### 2.4.1.5 Order
+
+1
+
+#### 2.4.1.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | actor |
+| Color | #264653 |
+| Stereotype | Application Service |
+
+### 2.4.2.0 Message Queue
+
+#### 2.4.2.1 Repository Id
+
+async-task-queue-013
+
+#### 2.4.2.2 Display Name
+
+Audit Event Queue
+
+#### 2.4.2.3 Type
+
+🔹 Message Queue
+
+#### 2.4.2.4 Technology
+
+AWS SQS
+
+#### 2.4.2.5 Order
+
+2
+
+#### 2.4.2.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | queue |
+| Color | #2A9D8F |
+| Stereotype | Infrastructure |
+
+### 2.4.3.0 Serverless Function
+
+#### 2.4.3.1 Repository Id
+
+audit-logger-010
+
+#### 2.4.3.2 Display Name
+
+Audit Logger Service
+
+#### 2.4.3.3 Type
+
+🔹 Serverless Function
+
+#### 2.4.3.4 Technology
+
+AWS Lambda, Node.js 20.x
+
+#### 2.4.3.5 Order
+
+3
+
+#### 2.4.3.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | actor |
+| Color | #E9C46A |
+| Stereotype | Compliance Consumer |
+
+### 2.4.4.0 Repository Library
+
+#### 2.4.4.1 Repository Id
+
+oltp-repository-008
+
+#### 2.4.4.2 Display Name
+
+OLTP Repository
+
+#### 2.4.4.3 Type
+
+🔹 Repository Library
+
+#### 2.4.4.4 Technology
+
+Prisma, PostgreSQL
+
+#### 2.4.4.5 Order
+
+4
+
+#### 2.4.4.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | database |
+| Color | #F4A261 |
+| Stereotype | Data Access |
+
+## 2.5.0.0 Interactions
+
+### 2.5.1.0 Internal Processing
+
+#### 2.5.1.1 Source Id
+
+user-management-service-003
+
+#### 2.5.1.2 Target Id
+
+user-management-service-003
+
+#### 2.5.1.3 Message
+
+1. Successfully processes a security-sensitive operation (e.g., updateUserRole) after all business logic, validation, and authorization checks are complete.
+
+#### 2.5.1.4 Sequence Number
+
+1
+
+#### 2.5.1.5 Type
+
+🔹 Internal Processing
+
+#### 2.5.1.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.1.7 Return Message
+
+
+
+#### 2.5.1.8 Has Return
+
+❌ No
+
+#### 2.5.1.9 Is Activation
+
+✅ Yes
+
+#### 2.5.1.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Internal Method Call |
+| Method | handleUpdateUserRoleRequest |
+| Parameters | Authenticated user context, target user ID, new ro... |
+| Authentication | Assumes a valid JWT has been verified by the API G... |
+| Error Handling | Standard application-level exception handling for ... |
+| Performance | Part of the primary user-facing transaction latenc... |
+
+#### 2.5.1.11 Nested Interactions
+
+*No items available*
+
+### 2.5.2.0 Asynchronous Message
+
+#### 2.5.2.1 Source Id
+
+user-management-service-003
+
+#### 2.5.2.2 Target Id
+
+async-task-queue-013
+
+#### 2.5.2.3 Message
+
+2. Publishes `SecurityEventOccurred` event. Payload includes: { eventType: 'USER_ROLE_CHANGED', actingUserId: '...', merchantId: '...', targetResource: 'user:...', outcome: 'success', details: { oldRole: '...', newRole: '...' } }.
+
+#### 2.5.2.4 Sequence Number
+
+2
+
+#### 2.5.2.5 Type
+
+🔹 Asynchronous Message
+
+#### 2.5.2.6 Is Synchronous
+
+❌ No
+
+#### 2.5.2.7 Return Message
+
+
+
+#### 2.5.2.8 Has Return
+
+❌ No
+
+#### 2.5.2.9 Is Activation
+
+❌ No
+
+#### 2.5.2.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | AWS SQS SDK |
+| Method | sendMessage |
+| Parameters | MessageBody containing the serialized event payloa... |
+| Authentication | Requires `sqs:SendMessage` permission on the IAM r... |
+| Error Handling | Implements a retry policy (3 attempts, exponential... |
+| Performance | p99 latency < 50ms. |
+
+#### 2.5.2.11 Nested Interactions
+
+*No items available*
+
+### 2.5.3.0 Event-Driven Invocation
+
+#### 2.5.3.1 Source Id
+
+async-task-queue-013
+
+#### 2.5.3.2 Target Id
+
+audit-logger-010
+
+#### 2.5.3.3 Message
+
+3. Triggers the consumer with the event message.
+
+#### 2.5.3.4 Sequence Number
+
+3
+
+#### 2.5.3.5 Type
+
+🔹 Event-Driven Invocation
+
+#### 2.5.3.6 Is Synchronous
+
+❌ No
+
+#### 2.5.3.7 Return Message
+
+
+
+#### 2.5.3.8 Has Return
+
+❌ No
+
+#### 2.5.3.9 Is Activation
+
+✅ Yes
+
+#### 2.5.3.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | AWS SQS-Lambda Integration |
+| Method | lambda.invoke |
+| Parameters | SQS event source mapping with a batch size of 1. |
+| Authentication | The Lambda function's resource-based policy must g... |
+| Error Handling | If the Lambda function returns an error, SQS will ... |
+| Performance | Invocation latency is managed by AWS. |
+
+#### 2.5.3.11 Nested Interactions
+
+*No items available*
+
+### 2.5.4.0 Internal Processing
+
+#### 2.5.4.1 Source Id
+
+audit-logger-010
+
+#### 2.5.4.2 Target Id
+
+audit-logger-010
+
+#### 2.5.4.3 Message
+
+4. Validates and transforms the event payload into a structured, immutable `AuditLog` record.
+
+#### 2.5.4.4 Sequence Number
+
+4
+
+#### 2.5.4.5 Type
+
+🔹 Internal Processing
+
+#### 2.5.4.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.4.7 Return Message
+
+
+
+#### 2.5.4.8 Has Return
+
+❌ No
+
+#### 2.5.4.9 Is Activation
+
+❌ No
+
+#### 2.5.4.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Internal Method Call |
+| Method | createAuditRecordFromEvent |
+| Parameters | The raw SQS message body. |
+| Authentication | N/A |
+| Error Handling | Schema validation (e.g., using Zod) is performed. ... |
+| Performance | p99 latency < 10ms. |
+
+#### 2.5.4.11 Nested Interactions
+
+*No items available*
+
+### 2.5.5.0 Database Write
+
+#### 2.5.5.1 Source Id
+
+audit-logger-010
+
+#### 2.5.5.2 Target Id
+
+oltp-repository-008
+
+#### 2.5.5.3 Message
+
+5. Persists the `AuditLog` record to the `audit_logs` database table.
+
+#### 2.5.5.4 Sequence Number
+
+5
+
+#### 2.5.5.5 Type
+
+🔹 Database Write
+
+#### 2.5.5.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.5.7 Return Message
+
+5.1. Returns success confirmation or throws a database exception.
+
+#### 2.5.5.8 Has Return
+
+✅ Yes
+
+#### 2.5.5.9 Is Activation
+
+❌ No
+
+#### 2.5.5.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Library Call (Prisma Client) |
+| Method | prisma.auditLog.create() |
+| Parameters | `data`: The structured AuditLog object matching th... |
+| Authentication | The `audit-logger-010` Lambda function's IAM role ... |
+| Error Handling | Database connection errors or transient failures w... |
+| Performance | p99 latency < 100ms. |
+
+#### 2.5.5.11 Nested Interactions
+
+*No items available*
+
+### 2.5.6.0 Message Acknowledgement
+
+#### 2.5.6.1 Source Id
+
+audit-logger-010
+
+#### 2.5.6.2 Target Id
+
+async-task-queue-013
+
+#### 2.5.6.3 Message
+
+6. On successful database write, the Lambda function execution completes successfully, causing SQS to automatically delete the message from the queue.
+
+#### 2.5.6.4 Sequence Number
+
+6
+
+#### 2.5.6.5 Type
+
+🔹 Message Acknowledgement
+
+#### 2.5.6.6 Is Synchronous
+
+❌ No
+
+#### 2.5.6.7 Return Message
+
+
+
+#### 2.5.6.8 Has Return
+
+❌ No
+
+#### 2.5.6.9 Is Activation
+
+❌ No
+
+#### 2.5.6.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | AWS SQS-Lambda Integration |
+| Method | deleteMessage (implicit) |
+| Parameters | Message receipt handle. |
+| Authentication | The Lambda service principal has `sqs:DeleteMessag... |
+| Error Handling | This step occurs only after the function handler r... |
+| Performance | Managed by AWS. |
+
+#### 2.5.6.11 Nested Interactions
+
+*No items available*
+
+## 2.6.0.0 Notes
+
+### 2.6.1.0 Content
+
+#### 2.6.1.1 Content
+
+Trigger: This entire flow is initiated by an internal, post-processing step of a successful, authenticated API request that modifies state in a security-sensitive manner, such as `PUT /users/{userId}/role`.
+
+#### 2.6.1.2 Position
+
+Top
+
+#### 2.6.1.3 Participant Id
+
+user-management-service-003
+
+#### 2.6.1.4 Sequence Number
+
+1
+
+### 2.6.2.0 Content
+
+#### 2.6.2.1 Content
+
+Dead Letter Queue (DLQ): A DLQ is configured for the Audit Event Queue. If the Audit Logger Service fails to process a message after multiple retries (e.g., due to a persistent database error or a malformed message), the message is moved to the DLQ. A CloudWatch alarm is set to trigger a CRITICAL alert when `ApproximateNumberOfMessagesVisible > 0` in the DLQ, ensuring immediate manual investigation.
+
+#### 2.6.2.2 Position
+
+Bottom
+
+#### 2.6.2.3 Participant Id
+
+audit-logger-010
+
+#### 2.6.2.4 Sequence Number
+
+6
+
+### 2.6.3.0 Content
+
+#### 2.6.3.1 Content
+
+Database Security: The `audit_logs` table is designed to be append-only. The database user role associated with the Audit Logger Service has only `INSERT` and `SELECT` privileges on this table, preventing any modification or deletion of existing audit records at the application layer.
+
+#### 2.6.3.2 Position
+
+Bottom
+
+#### 2.6.3.3 Participant Id
+
+oltp-repository-008
+
+#### 2.6.3.4 Sequence Number
+
+5
+
+## 2.7.0.0 Implementation Guidance
+
+| Property | Value |
+|----------|-------|
+| Security Requirements | The `audit_logs` table and its corresponding SQS D... |
+| Performance Targets | The primary requirement is that this audit flow do... |
+| Error Handling Strategy | The strategy relies on the combination of producer... |
+| Testing Considerations | End-to-end tests must cover: 1) Successful generat... |
+| Monitoring Requirements | A critical CloudWatch Alarm must be configured on ... |
+| Deployment Considerations | The `audit_logs` table schema must be managed via ... |
+

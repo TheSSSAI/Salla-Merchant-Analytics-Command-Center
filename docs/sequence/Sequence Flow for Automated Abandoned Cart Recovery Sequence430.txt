@@ -1,0 +1,882 @@
+# 1 Overview
+
+## 1.1 Diagram Id
+
+SEQ-BP-002
+
+## 1.2 Name
+
+Automated Abandoned Cart Recovery Sequence
+
+## 1.3 Description
+
+A customer abandons a shopping cart in the Salla store. After a configured delay, the system's scheduled job identifies the abandoned cart. It initiates a pre-configured, multi-step email campaign, sending follow-up emails at defined intervals until the customer completes the purchase or the sequence ends.
+
+## 1.4 Type
+
+🔹 BusinessProcess
+
+## 1.5 Purpose
+
+To automatically recover potentially lost sales by engaging with customers who have abandoned their shopping carts, thereby increasing merchant revenue, as per REQ-FUN-500.
+
+## 1.6 Complexity
+
+High
+
+## 1.7 Priority
+
+🔴 High
+
+## 1.8 Frequency
+
+Hourly
+
+## 1.9 Participants
+
+- salla-platform
+- scheduled-jobs-processor-015
+- oltp-repository-008
+- cart-recovery-service-006
+- notification-gateway-009
+
+## 1.10 Key Interactions
+
+- A 'cart.updated' webhook is received from Salla and stored in the OLTP DB.
+- A scheduled job runs (e.g., hourly) and queries the database for carts that meet the 'abandoned' definition (e.g., inactive for 60 minutes).
+- For each abandoned cart, the Cart Recovery Service checks if a recovery campaign is active and if the customer has not unsubscribed.
+- It determines the next step in the email sequence for that cart (e.g., 'send email 1').
+- It renders the appropriate email template with dynamic variables (customer name, cart items).
+- The Notification Gateway sends the email to the customer.
+- The system records that the email was sent and schedules the next potential follow-up.
+
+## 1.11 Triggers
+
+- A scheduled job (e.g., running every hour) to scan for newly abandoned carts.
+
+## 1.12 Outcomes
+
+- Customers with abandoned carts receive a sequence of targeted recovery emails.
+- A portion of abandoned carts are converted into completed sales.
+- Campaign performance metrics (sends, opens, clicks, recovered value) are tracked.
+
+## 1.13 Business Rules
+
+- A cart is considered abandoned after a system-configurable time (BR-003).
+- The email sequence for a customer stops immediately if they complete their purchase.
+- All emails must contain a mandatory, one-click unsubscribe link (FR-503).
+
+## 1.14 Error Scenarios
+
+- Email delivery to the customer bounces.
+- The scheduled job fails to run and an alert is triggered.
+- Customer unsubscribes and is immediately added to the per-merchant suppression list.
+
+## 1.15 Integration Points
+
+- Salla Platform (for cart data via webhooks).
+- Email Provider (via Notification Gateway).
+
+# 2.0 Details
+
+## 2.1 Diagram Id
+
+SEQ-BP-002
+
+## 2.2 Name
+
+Implementation Sequence: Automated Abandoned Cart Recovery
+
+## 2.3 Description
+
+Provides a comprehensive, implementation-ready sequence for the automated abandoned cart recovery business process. The sequence is initiated by a scheduled task that identifies eligible abandoned carts and orchestrates a multi-step email campaign. It details the state management, business rule enforcement, and external integrations required to convert abandoned carts into sales, fulfilling REQ-FUN-500.
+
+## 2.4 Participants
+
+### 2.4.1 External System
+
+#### 2.4.1.1 Repository Id
+
+salla-platform
+
+#### 2.4.1.2 Display Name
+
+Salla E-commerce Platform
+
+#### 2.4.1.3 Type
+
+🔹 External System
+
+#### 2.4.1.4 Technology
+
+SaaS API / Webhooks
+
+#### 2.4.1.5 Order
+
+1
+
+#### 2.4.1.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | actor |
+| Color | #FF8C00 |
+| Stereotype | External |
+
+### 2.4.2.0 Repository
+
+#### 2.4.2.1 Repository Id
+
+oltp-repository-008
+
+#### 2.4.2.2 Display Name
+
+OLTP Repository
+
+#### 2.4.2.3 Type
+
+🔹 Repository
+
+#### 2.4.2.4 Technology
+
+Prisma ORM over PostgreSQL
+
+#### 2.4.2.5 Order
+
+2
+
+#### 2.4.2.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | database |
+| Color | #4682B4 |
+| Stereotype | Infrastructure |
+
+### 2.4.3.0 Background Process
+
+#### 2.4.3.1 Repository Id
+
+scheduled-jobs-processor-015
+
+#### 2.4.3.2 Display Name
+
+Scheduled Jobs Processor
+
+#### 2.4.3.3 Type
+
+🔹 Background Process
+
+#### 2.4.3.4 Technology
+
+AWS Lambda (Triggered by EventBridge)
+
+#### 2.4.3.5 Order
+
+3
+
+#### 2.4.3.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #8A2BE2 |
+| Stereotype | Orchestrator |
+
+### 2.4.4.0 Service
+
+#### 2.4.4.1 Repository Id
+
+cart-recovery-service-006
+
+#### 2.4.4.2 Display Name
+
+Cart Recovery Service
+
+#### 2.4.4.3 Type
+
+🔹 Service
+
+#### 2.4.4.4 Technology
+
+AWS Lambda
+
+#### 2.4.4.5 Order
+
+4
+
+#### 2.4.4.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #32CD32 |
+| Stereotype | Application Service |
+
+### 2.4.5.0 Gateway
+
+#### 2.4.5.1 Repository Id
+
+notification-gateway-009
+
+#### 2.4.5.2 Display Name
+
+Notification Gateway
+
+#### 2.4.5.3 Type
+
+🔹 Gateway
+
+#### 2.4.5.4 Technology
+
+AWS SES SDK / Postmark SDK
+
+#### 2.4.5.5 Order
+
+5
+
+#### 2.4.5.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #DC143C |
+| Stereotype | Infrastructure Gateway |
+
+## 2.5.0.0 Interactions
+
+### 2.5.1.0 Webhook Notification
+
+#### 2.5.1.1 Source Id
+
+salla-platform
+
+#### 2.5.1.2 Target Id
+
+oltp-repository-008
+
+#### 2.5.1.3 Message
+
+1. [Pre-condition] POST /webhook/cart/updated
+
+#### 2.5.1.4 Sequence Number
+
+1
+
+#### 2.5.1.5 Type
+
+🔹 Webhook Notification
+
+#### 2.5.1.6 Is Synchronous
+
+❌ No
+
+#### 2.5.1.7 Return Message
+
+200 OK
+
+#### 2.5.1.8 Has Return
+
+✅ Yes
+
+#### 2.5.1.9 Is Activation
+
+❌ No
+
+#### 2.5.1.10 Technical Details
+
+##### 2.5.1.10.1 Protocol
+
+HTTPS
+
+##### 2.5.1.10.2 Method
+
+POST
+
+##### 2.5.1.10.3 Parameters
+
+- {'name': 'Webhook Payload', 'type': 'JSON', 'description': 'Contains full cart details, including items and customer info.'}
+
+##### 2.5.1.10.4 Authentication
+
+Webhook Signature Verification
+
+##### 2.5.1.10.5 Error Handling
+
+Logs error and returns 4xx/5xx if signature is invalid or payload is malformed.
+
+##### 2.5.1.10.6 Performance
+
+###### 2.5.1.10.6.1 Latency
+
+< 500ms
+
+### 2.5.2.0.0.0 Scheduled Event
+
+#### 2.5.2.1.0.0 Source Id
+
+scheduled-jobs-processor-015
+
+#### 2.5.2.2.0.0 Target Id
+
+scheduled-jobs-processor-015
+
+#### 2.5.2.3.0.0 Message
+
+2. Hourly Trigger (e.g., cron(0 * * * ? *))
+
+#### 2.5.2.4.0.0 Sequence Number
+
+2
+
+#### 2.5.2.5.0.0 Type
+
+🔹 Scheduled Event
+
+#### 2.5.2.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.2.7.0.0 Return Message
+
+
+
+#### 2.5.2.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.2.9.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.2.10.0.0 Technical Details
+
+##### 2.5.2.10.1.0 Protocol
+
+Cloud Event (AWS EventBridge)
+
+##### 2.5.2.10.2.0 Method
+
+invoke()
+
+##### 2.5.2.10.3.0 Parameters
+
+*No items available*
+
+##### 2.5.2.10.4.0 Authentication
+
+IAM Role
+
+##### 2.5.2.10.5.0 Error Handling
+
+Job failure triggers a CloudWatch Alarm to notify the on-call team.
+
+##### 2.5.2.10.6.0 Performance
+
+*No data available*
+
+### 2.5.3.0.0.0 Database Query
+
+#### 2.5.3.1.0.0 Source Id
+
+scheduled-jobs-processor-015
+
+#### 2.5.3.2.0.0 Target Id
+
+oltp-repository-008
+
+#### 2.5.3.3.0.0 Message
+
+3. findAbandonedCarts(criteria)
+
+#### 2.5.3.4.0.0 Sequence Number
+
+3
+
+#### 2.5.3.5.0.0 Type
+
+🔹 Database Query
+
+#### 2.5.3.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.3.7.0.0 Return Message
+
+4. Promise<Cart[]>
+
+#### 2.5.3.8.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.3.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.3.10.0.0 Technical Details
+
+##### 2.5.3.10.1.0 Protocol
+
+Prisma Client
+
+##### 2.5.3.10.2.0 Method
+
+findMany
+
+##### 2.5.3.10.3.0 Parameters
+
+- {'name': 'criteria', 'type': 'object', 'description': "{ abandonedAfterMinutes: 60, status: 'active', convertedAt: null, batchSize: 100 }"}
+
+##### 2.5.3.10.4.0 Authentication
+
+Database Connection Credentials
+
+##### 2.5.3.10.5.0 Error Handling
+
+Throws DatabaseConnectionError or QueryFailedError.
+
+##### 2.5.3.10.6.0 Performance
+
+###### 2.5.3.10.6.1 Latency
+
+< 1000ms
+
+###### 2.5.3.10.6.2 Notes
+
+Query must be optimized with an index on `updated_at`, `status`, and `converted_at` columns.
+
+### 2.5.4.0.0.0 Service Invocation
+
+#### 2.5.4.1.0.0 Source Id
+
+scheduled-jobs-processor-015
+
+#### 2.5.4.2.0.0 Target Id
+
+cart-recovery-service-006
+
+#### 2.5.4.3.0.0 Message
+
+5. [Loop] processAbandonedCart(cart)
+
+#### 2.5.4.4.0.0 Sequence Number
+
+5
+
+#### 2.5.4.5.0.0 Type
+
+🔹 Service Invocation
+
+#### 2.5.4.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.4.7.0.0 Return Message
+
+13. Promise<ProcessResult>
+
+#### 2.5.4.8.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.4.9.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.4.10.0.0 Technical Details
+
+##### 2.5.4.10.1.0 Protocol
+
+Internal Function Call / Lambda Invocation
+
+##### 2.5.4.10.2.0 Method
+
+processAbandonedCart
+
+##### 2.5.4.10.3.0 Parameters
+
+- {'name': 'cart', 'type': 'Cart', 'description': 'The abandoned cart object retrieved from the database.'}
+
+##### 2.5.4.10.4.0 Authentication
+
+IAM Role
+
+##### 2.5.4.10.5.0 Error Handling
+
+Handles exceptions from the service, logs the failed cart ID, and continues the loop.
+
+##### 2.5.4.10.6.0 Performance
+
+*No data available*
+
+#### 2.5.4.11.0.0 Nested Interactions
+
+##### 2.5.4.11.1.0 Database Query
+
+###### 2.5.4.11.1.1 Source Id
+
+cart-recovery-service-006
+
+###### 2.5.4.11.1.2 Target Id
+
+oltp-repository-008
+
+###### 2.5.4.11.1.3 Message
+
+6. getRecoveryContext(merchantId, customerEmail)
+
+###### 2.5.4.11.1.4 Sequence Number
+
+6
+
+###### 2.5.4.11.1.5 Type
+
+🔹 Database Query
+
+###### 2.5.4.11.1.6 Is Synchronous
+
+✅ Yes
+
+###### 2.5.4.11.1.7 Return Message
+
+7. Promise<RecoveryContext>
+
+###### 2.5.4.11.1.8 Has Return
+
+✅ Yes
+
+###### 2.5.4.11.1.9 Is Activation
+
+❌ No
+
+###### 2.5.4.11.1.10 Technical Details
+
+####### 2.5.4.11.1.10.1 Protocol
+
+Prisma Client
+
+####### 2.5.4.11.1.10.2 Method
+
+findUnique/findFirst
+
+####### 2.5.4.11.1.10.3 Parameters
+
+######## 2.5.4.11.1.10.3.1 UUID
+
+######### 2.5.4.11.1.10.3.1.1 Name
+
+merchantId
+
+######### 2.5.4.11.1.10.3.1.2 Type
+
+🔹 UUID
+
+######## 2.5.4.11.1.10.3.2.0 string
+
+######### 2.5.4.11.1.10.3.2.1 Name
+
+customerEmail
+
+######### 2.5.4.11.1.10.3.2.2 Type
+
+🔹 string
+
+####### 2.5.4.11.1.10.4.0.0 Authentication
+
+Database Connection Credentials
+
+####### 2.5.4.11.1.10.5.0.0 Error Handling
+
+Throws if context cannot be found.
+
+####### 2.5.4.11.1.10.6.0.0 Performance
+
+######## 2.5.4.11.1.10.6.1.0 Latency
+
+< 50ms
+
+##### 2.5.4.11.2.0.0.0.0 Internal Logic
+
+###### 2.5.4.11.2.1.0.0.0 Source Id
+
+cart-recovery-service-006
+
+###### 2.5.4.11.2.2.0.0.0 Target Id
+
+cart-recovery-service-006
+
+###### 2.5.4.11.2.3.0.0.0 Message
+
+8. [Business Rule] Evaluate Campaign & Subscription
+
+###### 2.5.4.11.2.4.0.0.0 Sequence Number
+
+8
+
+###### 2.5.4.11.2.5.0.0.0 Type
+
+🔹 Internal Logic
+
+###### 2.5.4.11.2.6.0.0.0 Is Synchronous
+
+✅ Yes
+
+###### 2.5.4.11.2.7.0.0.0 Return Message
+
+Stop if campaign is inactive or user is unsubscribed.
+
+###### 2.5.4.11.2.8.0.0.0 Has Return
+
+❌ No
+
+###### 2.5.4.11.2.9.0.0.0 Is Activation
+
+❌ No
+
+###### 2.5.4.11.2.10.0.0.0 Technical Details
+
+####### 2.5.4.11.2.10.1.0.0 Protocol
+
+N/A
+
+####### 2.5.4.11.2.10.2.0.0 Method
+
+Internal Business Logic
+
+####### 2.5.4.11.2.10.3.0.0 Parameters
+
+- {'name': 'RecoveryContext', 'type': 'object', 'description': 'Contains campaign settings and customer subscription status.'}
+
+####### 2.5.4.11.2.10.4.0.0 Authentication
+
+N/A
+
+####### 2.5.4.11.2.10.5.0.0 Error Handling
+
+N/A
+
+####### 2.5.4.11.2.10.6.0.0 Performance
+
+*No data available*
+
+##### 2.5.4.11.3.0.0.0.0 API Call
+
+###### 2.5.4.11.3.1.0.0.0 Source Id
+
+cart-recovery-service-006
+
+###### 2.5.4.11.3.2.0.0.0 Target Id
+
+notification-gateway-009
+
+###### 2.5.4.11.3.3.0.0.0 Message
+
+9. sendEmail(emailRequest)
+
+###### 2.5.4.11.3.4.0.0.0 Sequence Number
+
+9
+
+###### 2.5.4.11.3.5.0.0.0 Type
+
+🔹 API Call
+
+###### 2.5.4.11.3.6.0.0.0 Is Synchronous
+
+✅ Yes
+
+###### 2.5.4.11.3.7.0.0.0 Return Message
+
+10. Promise<SendStatus>
+
+###### 2.5.4.11.3.8.0.0.0 Has Return
+
+✅ Yes
+
+###### 2.5.4.11.3.9.0.0.0 Is Activation
+
+❌ No
+
+###### 2.5.4.11.3.10.0.0.0 Technical Details
+
+####### 2.5.4.11.3.10.1.0.0 Protocol
+
+AWS SES SDK
+
+####### 2.5.4.11.3.10.2.0.0 Method
+
+sendEmail
+
+####### 2.5.4.11.3.10.3.0.0 Parameters
+
+- {'name': 'emailRequest', 'type': 'object', 'description': '{ to: string, from: string, subject: string, htmlBody: string, unsubscribeLink: string }'}
+
+####### 2.5.4.11.3.10.4.0.0 Authentication
+
+IAM Role / API Key
+
+####### 2.5.4.11.3.10.5.0.0 Error Handling
+
+Returns a failed status on delivery failure or bounce. Implements retry for transient errors.
+
+####### 2.5.4.11.3.10.6.0.0 Performance
+
+######## 2.5.4.11.3.10.6.1.0 Latency
+
+< 1000ms
+
+##### 2.5.4.11.4.0.0.0.0 Database Update
+
+###### 2.5.4.11.4.1.0.0.0 Source Id
+
+cart-recovery-service-006
+
+###### 2.5.4.11.4.2.0.0.0 Target Id
+
+oltp-repository-008
+
+###### 2.5.4.11.4.3.0.0.0 Message
+
+11. updateCartRecoveryStatus(cartId, newStatus)
+
+###### 2.5.4.11.4.4.0.0.0 Sequence Number
+
+11
+
+###### 2.5.4.11.4.5.0.0.0 Type
+
+🔹 Database Update
+
+###### 2.5.4.11.4.6.0.0.0 Is Synchronous
+
+✅ Yes
+
+###### 2.5.4.11.4.7.0.0.0 Return Message
+
+12. Promise<UpdateResult>
+
+###### 2.5.4.11.4.8.0.0.0 Has Return
+
+✅ Yes
+
+###### 2.5.4.11.4.9.0.0.0 Is Activation
+
+❌ No
+
+###### 2.5.4.11.4.10.0.0.0 Technical Details
+
+####### 2.5.4.11.4.10.1.0.0 Protocol
+
+Prisma Client
+
+####### 2.5.4.11.4.10.2.0.0 Method
+
+update
+
+####### 2.5.4.11.4.10.3.0.0 Parameters
+
+######## 2.5.4.11.4.10.3.1.0 UUID
+
+######### 2.5.4.11.4.10.3.1.1 Name
+
+cartId
+
+######### 2.5.4.11.4.10.3.1.2 Type
+
+🔹 UUID
+
+######## 2.5.4.11.4.10.3.2.0 object
+
+######### 2.5.4.11.4.10.3.2.1 Name
+
+newStatus
+
+######### 2.5.4.11.4.10.3.2.2 Type
+
+🔹 object
+
+######### 2.5.4.11.4.10.3.2.3 Description
+
+{ lastStepSent: 1, lastAttemptAt: 'timestamp', emailStatus: 'sent' }
+
+####### 2.5.4.11.4.10.4.0.0 Authentication
+
+Database Connection Credentials
+
+####### 2.5.4.11.4.10.5.0.0 Error Handling
+
+Throws on update failure. Transactional update if multiple records are modified.
+
+####### 2.5.4.11.4.10.6.0.0 Performance
+
+######## 2.5.4.11.4.10.6.1.0 Latency
+
+< 50ms
+
+## 2.6.0.0.0.0.0.0.0 Notes
+
+### 2.6.1.0.0.0.0.0.0 Content
+
+#### 2.6.1.1.0.0.0.0.0 Content
+
+Business Rule Enforcement (BR-003): The initial query in step 3 enforces the definition of an abandoned cart (e.g., not updated in 60 minutes) and ensures already converted carts are excluded.
+
+#### 2.6.1.2.0.0.0.0.0 Position
+
+top
+
+#### 2.6.1.3.0.0.0.0.0 Participant Id
+
+scheduled-jobs-processor-015
+
+#### 2.6.1.4.0.0.0.0.0 Sequence Number
+
+3
+
+### 2.6.2.0.0.0.0.0.0 Content
+
+#### 2.6.2.1.0.0.0.0.0 Content
+
+State Management: Step 11 is critical. It updates the state of the recovery process for a specific cart, ensuring the next job run sends the next email in the sequence, not the same one.
+
+#### 2.6.2.2.0.0.0.0.0 Position
+
+bottom
+
+#### 2.6.2.3.0.0.0.0.0 Participant Id
+
+cart-recovery-service-006
+
+#### 2.6.2.4.0.0.0.0.0 Sequence Number
+
+11
+
+### 2.6.3.0.0.0.0.0.0 Content
+
+#### 2.6.3.1.0.0.0.0.0 Content
+
+Unsubscribe Requirement (FR-503): The 'unsubscribeLink' is generated by the Cart Recovery Service and is a mandatory, non-removable parameter passed to the Notification Gateway.
+
+#### 2.6.3.2.0.0.0.0.0 Position
+
+right
+
+#### 2.6.3.3.0.0.0.0.0 Participant Id
+
+notification-gateway-009
+
+#### 2.6.3.4.0.0.0.0.0 Sequence Number
+
+9
+
+## 2.7.0.0.0.0.0.0.0 Implementation Guidance
+
+| Property | Value |
+|----------|-------|
+| Security Requirements | All database queries must be strictly scoped by `m... |
+| Performance Targets | The entire scheduled job should complete within 5 ... |
+| Error Handling Strategy | If the `scheduled-jobs-processor-015` fails entire... |
+| Testing Considerations | End-to-end tests must simulate the scheduler trigg... |
+| Monitoring Requirements | Key metrics to monitor: Number of abandoned carts ... |
+| Deployment Considerations | The abandoned cart time threshold (BR-003) must be... |
+

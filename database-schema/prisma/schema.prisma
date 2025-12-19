@@ -1,0 +1,472 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions", "views"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_URL")
+  extensions = [vector] // Enables pgvector extension for RAG/AI features
+}
+
+// -----------------------------------------------------------------------------
+// ENUMS
+// -----------------------------------------------------------------------------
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  DECLINED
+}
+
+enum CartRecoveryStatus {
+  ACTIVE
+  RECOVERED
+  ABANDONED
+  CONVERTED
+}
+
+enum DsarType {
+  ACCESS
+  ERASURE
+}
+
+enum DsarStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  REJECTED
+}
+
+enum InsightType {
+  TREND_POSITIVE
+  TREND_NEGATIVE
+  ANOMALY
+  SUGGESTION
+}
+
+enum ThemePreference {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+// -----------------------------------------------------------------------------
+// CORE IDENTITY & ACCESS MANAGEMENT
+// -----------------------------------------------------------------------------
+
+/// Represents a system user who can log in.
+/// Users are global and can belong to multiple Merchant Accounts via UserMerchantAccount.
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  memberships        UserMerchantAccount[]
+  preference         UserPreference?
+  passwordResetToken PasswordResetToken?
+  auditLogs          AuditLog[]
+  createdInvitations Invitation[]          @relation("InvitedBy")
+
+  @@map("users")
+}
+
+/// Stores user-specific UI settings.
+model UserPreference {
+  id        String          @id @default(uuid())
+  userId    String          @unique
+  theme     ThemePreference @default(SYSTEM)
+  locale    String          @default("en-US")
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+/// Represents a secure token for password reset flows.
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}
+
+/// Defines available roles in the system (e.g., Owner, Admin, Analyst, Marketer).
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique // 'Owner', 'Admin', 'Analyst', 'Marketer'
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  memberships UserMerchantAccount[]
+  invitations Invitation[]
+
+  @@map("roles")
+}
+
+// -----------------------------------------------------------------------------
+// TENANCY & TEAM MANAGEMENT
+// -----------------------------------------------------------------------------
+
+/// The root aggregate for a tenant. All business data is scoped to a MerchantAccount.
+model MerchantAccount {
+  id              String   @id @default(uuid())
+  accountName     String
+  sallaMerchantId String   @unique // External ID from Salla Platform
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Settings
+  cartRecoveryEnabled Boolean   @default(false)
+  syncStatus          String? // 'PENDING', 'IN_PROGRESS', 'COMPLETED', 'FAILED'
+  lastSyncAt          DateTime?
+
+  // Relations - Team
+  members     UserMerchantAccount[]
+  invitations Invitation[]
+
+  // Relations - Business Data
+  customers      Customer[]
+  categories     Category[]
+  products       Product[]
+  salesOrders    SalesOrder[]
+  abandonedCarts AbandonedCart[]
+
+  // Relations - Config & Ops
+  emailTemplates       EmailTemplate[]
+  domainAuthentication DomainAuthentication?
+  auditLogs            AuditLog[]
+  aiInsights           AIInsightCard[]
+  dsarRequests         DataSubjectRequest[]
+  vectors              KnowledgeBaseVector[]
+
+  @@map("merchant_accounts")
+}
+
+/// Join table linking Users to MerchantAccounts with a specific Role.
+model UserMerchantAccount {
+  id                String   @id @default(uuid())
+  userId            String
+  merchantAccountId String
+  roleId            String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  merchant MerchantAccount @relation(fields: [merchantAccountId], references: [id], onDelete: Cascade)
+  role     Role            @relation(fields: [roleId], references: [id])
+
+  @@unique([userId, merchantAccountId]) // A user can only have one role per merchant
+  @@index([merchantAccountId])
+  @@map("user_merchant_accounts")
+}
+
+/// Represents a pending invitation for a user to join a team.
+model Invitation {
+  id                String           @id @default(uuid())
+  merchantAccountId String
+  invitedByUserId   String
+  roleId            String
+  email             String
+  token             String           @unique
+  status            InvitationStatus @default(PENDING)
+  expiresAt         DateTime
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  merchant  MerchantAccount @relation(fields: [merchantAccountId], references: [id], onDelete: Cascade)
+  invitedBy User            @relation("InvitedBy", fields: [invitedByUserId], references: [id])
+  role      Role            @relation(fields: [roleId], references: [id])
+
+  @@index([email])
+  @@index([merchantAccountId])
+  @@map("invitations")
+}
+
+// -----------------------------------------------------------------------------
+// E-COMMERCE DOMAIN
+// -----------------------------------------------------------------------------
+
+/// Represents a customer of the merchant.
+model Customer {
+  id              String   @id @default(uuid())
+  merchantId      String
+  sallaCustomerId String? // Nullable if guest or generated from cart
+  email           String?
+  firstName       String?
+  lastName        String?
+  phone           String?
+  city            String?
+  country         String?
+  totalSpent      Decimal  @default(0.00) @db.Decimal(12, 2)
+  ordersCount     Int      @default(0)
+  firstOrderAt    DateTime?
+  lastOrderAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  merchant       MerchantAccount @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  orders         SalesOrder[]
+  abandonedCarts AbandonedCart[]
+
+  @@unique([merchantId, sallaCustomerId])
+  @@index([merchantId, email])
+  @@index([merchantId, city, country]) // For Location Reporting
+  @@map("customers")
+}
+
+/// Product taxonomy.
+model Category {
+  id              String   @id @default(uuid())
+  merchantId      String
+  sallaCategoryId String?
+  name            String
+  parentId        String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  merchant MerchantAccount @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  parent   Category?       @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[]      @relation("CategoryHierarchy")
+  products Product[]
+
+  @@unique([merchantId, sallaCategoryId])
+  @@index([merchantId])
+  @@map("categories")
+}
+
+/// Catalog item.
+model Product {
+  id             String   @id @default(uuid())
+  merchantId     String
+  sallaProductId String?
+  categoryId     String?
+  name           String
+  sku            String?
+  price          Decimal  @default(0.00) @db.Decimal(10, 2)
+  imageUrl       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  merchant           MerchantAccount     @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  category           Category?           @relation(fields: [categoryId], references: [id])
+  orderItems         OrderItem[]
+  abandonedCartItems AbandonedCartItem[]
+
+  @@unique([merchantId, sallaProductId])
+  @@index([merchantId, categoryId])
+  @@map("products")
+}
+
+/// Represents a completed or processed order.
+model SalesOrder {
+  id           String   @id @default(uuid())
+  merchantId   String
+  customerId   String
+  sallaOrderId String?
+  status       String // e.g., 'completed', 'refunded'
+  currency     String   @default("SAR")
+  totalAmount  Decimal  @db.Decimal(10, 2)
+  createdAt    DateTime // Order date from Salla
+  syncedAt     DateTime @default(now()) // System sync time
+
+  merchant MerchantAccount @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  customer Customer        @relation(fields: [customerId], references: [id])
+  items    OrderItem[]
+
+  @@unique([merchantId, sallaOrderId])
+  @@index([merchantId, createdAt]) // Critical for date range filtering in reports
+  @@map("sales_orders")
+}
+
+/// Line item within an order.
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  productId String? // Nullable if product deleted from catalog but historical record remains
+  name      String  // Snapshot of product name at time of order
+  quantity  Int
+  price     Decimal @db.Decimal(10, 2) // Snapshot of price at time of order
+  total     Decimal @db.Decimal(10, 2)
+
+  order   SalesOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product?   @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+// -----------------------------------------------------------------------------
+// CART RECOVERY MODULE
+// -----------------------------------------------------------------------------
+
+/// Represents a shopping cart that has not been converted to an order.
+model AbandonedCart {
+  id             String             @id @default(uuid())
+  merchantId     String
+  sallaCartId    String
+  customerId     String? // Nullable for guest carts
+  customerEmail  String? // Captured email for guest recovery
+  customerName   String?
+  checkoutUrl    String             @db.Text
+  currency       String             @default("SAR")
+  totalValue     Decimal            @db.Decimal(10, 2)
+  recoveryStatus CartRecoveryStatus @default(ACTIVE)
+  recoveredAt    DateTime?
+  createdAt      DateTime           @default(now()) // Time of abandonment
+  updatedAt      DateTime           @updatedAt
+
+  merchant MerchantAccount     @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  customer Customer?           @relation(fields: [customerId], references: [id])
+  items    AbandonedCartItem[]
+
+  @@unique([merchantId, sallaCartId])
+  @@index([merchantId, createdAt]) // Critical for retention purging (REQ-DATA-001)
+  @@index([merchantId, recoveryStatus])
+  @@map("abandoned_carts")
+}
+
+/// Items within an abandoned cart.
+model AbandonedCartItem {
+  id              String  @id @default(uuid())
+  abandonedCartId String
+  productId       String?
+  name            String
+  quantity        Int
+  price           Decimal @db.Decimal(10, 2)
+  imageUrl        String?
+
+  abandonedCart AbandonedCart @relation(fields: [abandonedCartId], references: [id], onDelete: Cascade)
+  product       Product?      @relation(fields: [productId], references: [id])
+
+  @@index([abandonedCartId])
+  @@map("abandoned_cart_items")
+}
+
+/// Templates for recovery emails (REQ-FUNC-019).
+model EmailTemplate {
+  id         String   @id @default(uuid())
+  merchantId String
+  name       String
+  subject    String
+  body       String   @db.Text // Rich text content
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  merchant MerchantAccount @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@unique([merchantId, name])
+  @@map("email_templates")
+}
+
+/// Configuration for custom sending domains (REQ-FUNC-021).
+model DomainAuthentication {
+  id         String   @id @default(uuid())
+  merchantId String   @unique
+  domain     String
+  dnsRecords Json // Stores required CNAME/TXT records for verification
+  isVerified Boolean  @default(false)
+  verifiedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  merchant MerchantAccount @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@map("domain_authentications")
+}
+
+// -----------------------------------------------------------------------------
+// ANALYTICS, AI & COMPLIANCE
+// -----------------------------------------------------------------------------
+
+/// Stores high-volume, immutable audit logs for security events (REQ-SEC-005).
+model AuditLog {
+  id         BigInt   @id @default(autoincrement()) // BigInt for high volume
+  merchantId String? // Nullable for system-level events
+  userId     String? // Nullable for system actions
+  action     String   // e.g., 'LOGIN', 'EXPORT_DATA', 'UPDATE_ROLE'
+  resource   String?  // Target resource ID
+  details    Json?    // Structured metadata about the event
+  ipAddress  String?
+  timestamp  DateTime @default(now())
+
+  merchant MerchantAccount? @relation(fields: [merchantId], references: [id])
+  user     User?            @relation(fields: [userId], references: [id])
+
+  @@index([merchantId, timestamp])
+  @@index([timestamp])
+  @@map("audit_logs")
+}
+
+/// Stores AI-generated insights and suggestions (REQ-FUNC-015, REQ-FUNC-016).
+model AIInsightCard {
+  id          String      @id @default(uuid())
+  merchantId  String
+  type        InsightType
+  title       String
+  description String      @db.Text
+  dataPayload Json?       // Supporting data for visualization
+  isDismissed Boolean     @default(false)
+  generatedAt DateTime    @default(now())
+  expiresAt   DateTime?
+
+  merchant MerchantAccount @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@index([merchantId, isDismissed])
+  @@map("ai_insight_cards")
+}
+
+/// Stores vector embeddings for RAG implementation (REQ-INTG-004).
+/// Requires 'vector' extension in PostgreSQL.
+model KnowledgeBaseVector {
+  id         String                 @id @default(uuid())
+  merchantId String
+  content    String                 @db.Text // The raw text chunk
+  embedding  Unsupported("vector")? // 1536 dimensions for OpenAI embeddings
+  sourceType String // e.g., 'Product', 'Review', 'Policy'
+  sourceId   String? // ID of the source entity
+  createdAt  DateTime               @default(now())
+
+  merchant MerchantAccount @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@index([merchantId])
+  @@map("knowledge_base_vectors")
+}
+
+/// Tracks Data Subject Access Requests for GDPR/CCPA compliance (REQ-CMPL-001).
+model DataSubjectRequest {
+  id                 String     @id @default(uuid())
+  merchantId         String
+  requestingUserId   String // The Owner who initiated the request
+  customerEmail      String
+  requestType        DsarType // ACCESS or ERASURE
+  status             DsarStatus @default(PENDING)
+  resultPayload      Json? // URL to export file or deletion confirmation details
+  failureReason      String?
+  createdAt          DateTime   @default(now())
+  completedAt        DateTime?
+
+  merchant MerchantAccount @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@index([merchantId, status])
+  @@map("data_subject_requests")
+}

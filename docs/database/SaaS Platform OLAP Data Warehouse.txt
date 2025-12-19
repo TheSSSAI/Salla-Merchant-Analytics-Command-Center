@@ -1,0 +1,33 @@
+CREATE DATABASE IF NOT EXISTS saas_platform_olap_db;
+
+CREATE TABLE saas_platform_olap_db.SalesFact
+(
+    `eventDateTime` DateTime64(3),
+    `merchantId` UUID,
+    `orderId` UUID,
+    `customerId` UUID,
+    `productId` UUID,
+    `categoryId` UUID,
+    `customerCountry` Nullable(String),
+    `customerCity` Nullable(String),
+    `quantity` UInt32,
+    `revenue` Decimal(10, 2),
+    `orderStatus` LowCardinality(String)
+)
+ENGINE = MergeTree()
+PARTITION BY toYYYYMM(eventDateTime)
+ORDER BY (merchantId, eventDateTime, productId, customerId);
+
+CREATE TABLE saas_platform_olap_db.AbandonedCartFact
+(
+    `eventDateTime` DateTime64(3),
+    `merchantId` UUID,
+    `abandonedCartId` UUID,
+    `customerId` UUID,
+    `totalValue` Decimal(10, 2),
+    `status` LowCardinality(String),
+    `recoveryCampaignId` Nullable(UUID)
+)
+ENGINE = MergeTree()
+PARTITION BY toYYYYMM(eventDateTime)
+ORDER BY (merchantId, eventDateTime, status);

@@ -1,0 +1,2 @@
+"total_stories","total_story_points","must_have_stories","should_have_stories","could_have_stories","epics_identified","estimated_sprints","key_dependencies"
+"8","42","4","3","1","[""Authentication & Onboarding"",""Data Ingestion & Pipeline"",""Deep Analytics Engine"",""AI Assistant (RAG)"",""Cart Recovery Module""]","3","[""Salla OAuth Connection (US-009)"",""Data Pipeline Foundation (US-011)""]"

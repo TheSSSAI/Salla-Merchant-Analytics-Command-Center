@@ -1,0 +1,3 @@
+"gate_id","gate_name","sprint","gate_type","criteria","responsible_team","gate_date","approval_required","approver","bypass_criteria","automation_level","tools_used","success_metrics"
+"QG-001","Data Pipeline Gate","Sprint 1","Integration","Data flows from Salla Mock -> ClickHouse in < 5 mins; Idempotency verified","Data Team","2023-11-09","true","tech.lead@company.com","None","Fully Automated","Jest,ClickHouse Client","Zero data loss; Latency targets met"
+"QG-002","Security Gate","Sprint 3","Security","SQL Injection tests against AI service pass; Tenant isolation verified","Backend Team","2023-12-07","true","security.architect@company.com","None","Partially Automated","Custom Security Suite","Zero critical vulnerabilities"

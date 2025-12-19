@@ -1,0 +1,4 @@
+"component_name","business_criticality","technical_complexity","change_frequency","test_types_required","unit_test_coverage","integration_test_coverage","e2e_test_coverage","automation_percentage","manual_test_effort","automated_test_effort","total_test_cases","risk_mitigation_score","quality_confidence","maintenance_overhead","tool_compatibility","team_skill_alignment"
+"Salla Integration & Onboarding","Critical","High","Medium","[""Unit"",""Integration"",""Contract"",""Resilience""]","90","85","70","80","8","60","45","0.95","High","Medium","Good","Good"
+"ClickHouse Data Pipeline (ELT)","Critical","Very High","Low","[""Data Integrity"",""Performance"",""Latency""]","85","95","60","90","4","50","30","0.9","High","Low","Excellent","Medium"
+"AI Assistant (RAG)","Medium","Very High","High","[""Functional"",""Security"",""Accuracy""]","80","75","50","70","16","40","35","0.85","Medium","High","Medium","Low"

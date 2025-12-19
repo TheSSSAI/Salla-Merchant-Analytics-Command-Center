@@ -1,0 +1,4 @@
+"dependency_id","from_task","to_task","dependency_type","description","critical_path","lead_time_days","responsible_team","coordination_required","risk_level","mitigation_plan","status","resolution_date","impact_if_delayed","escalation_required"
+"DEP-001","TASK-AUTH-001","TASK-AUTH-002","Technical","DB Schema required for OAuth service","true","","Backend","","Low","None","Active","2023-11-01","OAuth service delayed",""
+"DEP-002","TASK-DATA-001","TASK-DATA-004","Technical","ClickHouse Schema required for ETL worker","true","","Data","","Medium","Use mock DB for worker dev","Active","2023-11-02","Data pipeline blocked",""
+"DEP-003","TASK-REC-004","TASK-REC-006","Technical","Scheduler trigger required for email sending","true","","Backend","","Low","None","Active","2023-11-15","Email automation blocked",""

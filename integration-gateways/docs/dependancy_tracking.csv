@@ -1,0 +1,5 @@
+"dependency_id","from_task","to_task","dependency_type","description","critical_path","status"
+"DEP-001","TASK-AUTH-001","TASK-AUTH-002","Technical","Context injection requires verified token","true","Active"
+"DEP-002","TASK-INF-001","TASK-INF-002","Technical","Schema design requires DB connection","true","Active"
+"DEP-003","TASK-DATA-001","TASK-DATA-003","Technical","Sync logic requires worker endpoint","true","Active"
+"DEP-004","TASK-ANA-001","TASK-ANA-004","Technical","Data fetching requires layout components","true","Active"

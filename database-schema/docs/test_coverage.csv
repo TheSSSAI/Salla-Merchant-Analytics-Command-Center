@@ -1,0 +1,3 @@
+"component_name","business_criticality","technical_complexity","change_frequency","test_types_required","unit_test_coverage","integration_test_coverage","e2e_test_coverage","automation_percentage","manual_test_effort","automated_test_effort","total_test_cases","risk_mitigation_score","quality_confidence","maintenance_overhead","tool_compatibility","team_skill_alignment"
+"Data Synchronization Engine","Critical","High","Medium","[""Unit"",""Integration"",""Resiliency"",""Performance""]","90","85","70","88","8","60","45","0.95","High","Medium","Good","Excellent"
+"AI Assistant (RAG Pipeline)","High","Very High","High","[""Unit"",""Integration"",""Security"",""Accuracy""]","85","75","60","70","20","50","35","0.85","Medium","High","Medium","Good"

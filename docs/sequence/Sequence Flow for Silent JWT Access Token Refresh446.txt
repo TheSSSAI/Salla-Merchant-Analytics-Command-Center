@@ -1,0 +1,1340 @@
+# 1 Overview
+
+## 1.1 Diagram Id
+
+SEQ-AF-003
+
+## 1.2 Name
+
+Silent JWT Access Token Refresh
+
+## 1.3 Description
+
+Client-side logic in the SPA detects that the current JWT access token is expired or about to expire. It makes a secure, background API call, sending the long-lived refresh token (from an HttpOnly cookie) to the auth service, which validates it and issues a new, short-lived access token. The original failed API call is then retried automatically.
+
+## 1.4 Type
+
+🔹 AuthenticationFlow
+
+## 1.5 Purpose
+
+To provide a seamless and secure user experience by maintaining the user's session without requiring them to log in again after the short-lived access token expires.
+
+## 1.6 Complexity
+
+Medium
+
+## 1.7 Priority
+
+🚨 Critical
+
+## 1.8 Frequency
+
+OnDemand
+
+## 1.9 Participants
+
+- user-browser
+- spa-frontend-001
+- api-gateway-002
+- user-management-service-003
+- oltp-repository-008
+
+## 1.10 Key Interactions
+
+- An API client interceptor in the SPA catches a 401 Unauthorized error or proactively checks the access token's expiry.
+- The interceptor sends a POST request to the '/auth/refresh' endpoint. The browser automatically includes the HttpOnly refresh token cookie.
+- The auth service validates the refresh token against the database, ensuring it's not expired or revoked.
+- A new access token is generated and returned in the response body.
+- The SPA client updates its in-memory access token and automatically retries the API request that originally failed.
+
+## 1.11 Triggers
+
+- An API call is made with an expired access token.
+
+## 1.12 Outcomes
+
+- The user's session is extended without any interruption to their workflow.
+- A new, valid access token is securely obtained.
+
+## 1.13 Business Rules
+
+- Refresh tokens must be single-use or implement rotation for enhanced security.
+- The refresh token endpoint must be protected against CSRF.
+
+## 1.14 Error Scenarios
+
+- The refresh token is expired or has been revoked, forcing the user to be logged out.
+- The refresh attempt fails, and the user is redirected to the login page.
+
+## 1.15 Integration Points
+
+*No items available*
+
+# 2.0 Details
+
+## 2.1 Diagram Id
+
+SEQ-AF-003
+
+## 2.2 Name
+
+Implementation of Silent JWT Access Token Refresh with Token Rotation
+
+## 2.3 Description
+
+Provides a comprehensive technical specification for the silent JWT access token refresh mechanism. This sequence is triggered when a client-side API interceptor detects a 401 Unauthorized response or a proactively identified imminent token expiry. The interceptor initiates a background request to a secure refresh endpoint, sending the long-lived refresh token via an HttpOnly cookie. The authentication service validates this token, implements a rotation scheme by issuing a new refresh token and revoking the old one, and returns a new short-lived access token. The client then transparently retries the original failed request.
+
+## 2.4 Participants
+
+### 2.4.1 FrontendApplication
+
+#### 2.4.1.1 Repository Id
+
+spa-frontend-001
+
+#### 2.4.1.2 Display Name
+
+SPA Frontend
+
+#### 2.4.1.3 Type
+
+🔹 FrontendApplication
+
+#### 2.4.1.4 Technology
+
+React 18, Axios Interceptor, TypeScript
+
+#### 2.4.1.5 Order
+
+1
+
+#### 2.4.1.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | actor |
+| Color | #1E90FF |
+| Stereotype | Client |
+
+### 2.4.2.0 Gateway
+
+#### 2.4.2.1 Repository Id
+
+api-gateway-002
+
+#### 2.4.2.2 Display Name
+
+API Gateway
+
+#### 2.4.2.3 Type
+
+🔹 Gateway
+
+#### 2.4.2.4 Technology
+
+AWS API Gateway
+
+#### 2.4.2.5 Order
+
+2
+
+#### 2.4.2.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | boundary |
+| Color | #FF7F50 |
+| Stereotype | Gateway |
+
+### 2.4.3.0 Serverless Function Group
+
+#### 2.4.3.1 Repository Id
+
+analytics-service-004
+
+#### 2.4.3.2 Display Name
+
+Analytics Service
+
+#### 2.4.3.3 Type
+
+🔹 Serverless Function Group
+
+#### 2.4.3.4 Technology
+
+AWS Lambda, Node.js 20.x
+
+#### 2.4.3.5 Order
+
+3
+
+#### 2.4.3.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | control |
+| Color | #32CD32 |
+| Stereotype | Service |
+
+### 2.4.4.0 Serverless Function Group
+
+#### 2.4.4.1 Repository Id
+
+user-management-service-003
+
+#### 2.4.4.2 Display Name
+
+Auth Service
+
+#### 2.4.4.3 Type
+
+🔹 Serverless Function Group
+
+#### 2.4.4.4 Technology
+
+AWS Lambda, Node.js 20.x
+
+#### 2.4.4.5 Order
+
+4
+
+#### 2.4.4.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | control |
+| Color | #BA55D3 |
+| Stereotype | Service |
+
+### 2.4.5.0 Repository
+
+#### 2.4.5.1 Repository Id
+
+oltp-repository-008
+
+#### 2.4.5.2 Display Name
+
+OLTP Repository
+
+#### 2.4.5.3 Type
+
+🔹 Repository
+
+#### 2.4.5.4 Technology
+
+Prisma, PostgreSQL
+
+#### 2.4.5.5 Order
+
+5
+
+#### 2.4.5.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | database |
+| Color | #4682B4 |
+| Stereotype | Repository |
+
+### 2.4.6.0 Service
+
+#### 2.4.6.1 Repository Id
+
+audit-logger-010
+
+#### 2.4.6.2 Display Name
+
+Audit Logger
+
+#### 2.4.6.3 Type
+
+🔹 Service
+
+#### 2.4.6.4 Technology
+
+Winston, Centralized Logging
+
+#### 2.4.6.5 Order
+
+6
+
+#### 2.4.6.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | entity |
+| Color | #808080 |
+| Stereotype | Logger |
+
+## 2.5.0.0 Interactions
+
+### 2.5.1.0 API Request
+
+#### 2.5.1.1 Source Id
+
+spa-frontend-001
+
+#### 2.5.1.2 Target Id
+
+api-gateway-002
+
+#### 2.5.1.3 Message
+
+1. GET /reports/sales-trends (with expired Access Token)
+
+#### 2.5.1.4 Sequence Number
+
+1
+
+#### 2.5.1.5 Type
+
+🔹 API Request
+
+#### 2.5.1.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.1.7 Has Return
+
+✅ Yes
+
+#### 2.5.1.8 Is Activation
+
+✅ Yes
+
+#### 2.5.1.9 Technical Details
+
+##### 2.5.1.9.1 Protocol
+
+HTTPS
+
+##### 2.5.1.9.2 Method
+
+GET
+
+##### 2.5.1.9.3 Parameters
+
+- {'name': 'Authorization', 'value': 'Bearer <expired_jwt>', 'location': 'Header'}
+
+##### 2.5.1.9.4 Authentication
+
+JWT Bearer Token
+
+##### 2.5.1.9.5 Error Handling
+
+The API client's interceptor is configured to catch 401 responses.
+
+##### 2.5.1.9.6 Performance
+
+###### 2.5.1.9.6.1 Latency
+
+p99 < 200ms (on success)
+
+###### 2.5.1.9.6.2 Timeout
+
+10s
+
+### 2.5.2.0.0.0 Service Invocation
+
+#### 2.5.2.1.0.0 Source Id
+
+api-gateway-002
+
+#### 2.5.2.2.0.0 Target Id
+
+analytics-service-004
+
+#### 2.5.2.3.0.0 Message
+
+2. Validate token & forward request
+
+#### 2.5.2.4.0.0 Sequence Number
+
+2
+
+#### 2.5.2.5.0.0 Type
+
+🔹 Service Invocation
+
+#### 2.5.2.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.2.7.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.2.8.0.0 Is Activation
+
+❌ No
+
+#### 2.5.2.9.0.0 Technical Details
+
+##### 2.5.2.9.1.0 Protocol
+
+Internal Invocation
+
+##### 2.5.2.9.2.0 Method
+
+N/A
+
+##### 2.5.2.9.3.0 Parameters
+
+Request payload is forwarded.
+
+##### 2.5.2.9.4.0 Authentication
+
+The gateway's JWT authorizer validates the token signature and expiry. In this case, it finds the token is expired.
+
+##### 2.5.2.9.5.0 Error Handling
+
+Upon validation failure, the gateway immediately rejects the request.
+
+##### 2.5.2.9.6.0 Performance
+
+###### 2.5.2.9.6.1 Latency
+
+p99 < 10ms
+
+### 2.5.3.0.0.0 API Response
+
+#### 2.5.3.1.0.0 Source Id
+
+api-gateway-002
+
+#### 2.5.3.2.0.0 Target Id
+
+spa-frontend-001
+
+#### 2.5.3.3.0.0 Message
+
+3. Return 401 Unauthorized
+
+#### 2.5.3.4.0.0 Sequence Number
+
+3
+
+#### 2.5.3.5.0.0 Type
+
+🔹 API Response
+
+#### 2.5.3.6.0.0 Is Synchronous
+
+❌ No
+
+#### 2.5.3.7.0.0 Has Return
+
+❌ No
+
+#### 2.5.3.8.0.0 Return Message
+
+
+
+```
+HTTP/1.1 401 Unauthorized
+{
+  "error": "Token has expired"
+}
+```
+
+#### 2.5.3.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.3.10.0.0 Technical Details
+
+##### 2.5.3.10.1.0 Protocol
+
+HTTPS
+
+##### 2.5.3.10.2.0 Method
+
+N/A
+
+##### 2.5.3.10.3.0 Parameters
+
+Response body indicates reason for failure.
+
+##### 2.5.3.10.4.0 Authentication
+
+N/A
+
+##### 2.5.3.10.5.0 Error Handling
+
+N/A
+
+##### 2.5.3.10.6.0 Performance
+
+*No data available*
+
+### 2.5.4.0.0.0 API Request
+
+#### 2.5.4.1.0.0 Source Id
+
+spa-frontend-001
+
+#### 2.5.4.2.0.0 Target Id
+
+api-gateway-002
+
+#### 2.5.4.3.0.0 Message
+
+4. [Interceptor] POST /auth/refresh
+
+#### 2.5.4.4.0.0 Sequence Number
+
+4
+
+#### 2.5.4.5.0.0 Type
+
+🔹 API Request
+
+#### 2.5.4.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.4.7.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.4.8.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.4.9.0.0 Technical Details
+
+##### 2.5.4.9.1.0 Protocol
+
+HTTPS
+
+##### 2.5.4.9.2.0 Method
+
+POST
+
+##### 2.5.4.9.3.0 Parameters
+
+- {'name': 'Cookie', 'value': 'refreshToken=<value>', 'location': 'Header (sent automatically by browser)'}
+
+##### 2.5.4.9.4.0 Authentication
+
+Refresh Token Cookie
+
+##### 2.5.4.9.5.0 Error Handling
+
+If this call fails, the interceptor will clear the user session and redirect to the login page.
+
+##### 2.5.4.9.6.0 Performance
+
+###### 2.5.4.9.6.1 Latency
+
+p99 < 500ms
+
+###### 2.5.4.9.6.2 Timeout
+
+5s
+
+### 2.5.5.0.0.0 Service Invocation
+
+#### 2.5.5.1.0.0 Source Id
+
+api-gateway-002
+
+#### 2.5.5.2.0.0 Target Id
+
+user-management-service-003
+
+#### 2.5.5.3.0.0 Message
+
+5. Forward refresh request
+
+#### 2.5.5.4.0.0 Sequence Number
+
+5
+
+#### 2.5.5.5.0.0 Type
+
+🔹 Service Invocation
+
+#### 2.5.5.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.5.7.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.5.8.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.5.9.0.0 Technical Details
+
+##### 2.5.5.9.1.0 Protocol
+
+Internal Invocation
+
+##### 2.5.5.9.2.0 Method
+
+N/A
+
+##### 2.5.5.9.3.0 Parameters
+
+Full request including headers (for cookie access).
+
+##### 2.5.5.9.4.0 Authentication
+
+No JWT required for this specific endpoint.
+
+##### 2.5.5.9.5.0 Error Handling
+
+N/A
+
+##### 2.5.5.9.6.0 Performance
+
+*No data available*
+
+### 2.5.6.0.0.0 Database Query
+
+#### 2.5.6.1.0.0 Source Id
+
+user-management-service-003
+
+#### 2.5.6.2.0.0 Target Id
+
+oltp-repository-008
+
+#### 2.5.6.3.0.0 Message
+
+6. findValidRefreshToken(refreshToken)
+
+#### 2.5.6.4.0.0 Sequence Number
+
+6
+
+#### 2.5.6.5.0.0 Type
+
+🔹 Database Query
+
+#### 2.5.6.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.6.7.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.6.8.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.6.9.0.0 Technical Details
+
+##### 2.5.6.9.1.0 Protocol
+
+TCP/IP
+
+##### 2.5.6.9.2.0 Method
+
+PrismaClient.refreshToken.findUnique
+
+##### 2.5.6.9.3.0 Parameters
+
+- {'name': 'where', 'value': '{ token: hashedRefreshToken, revoked: false, expiresAt: { gt: new Date() } }'}
+
+##### 2.5.6.9.4.0 Authentication
+
+Database credentials from environment variables.
+
+##### 2.5.6.9.5.0 Error Handling
+
+Handles cases where the token is not found, has been revoked, or is expired. Throws a custom 'InvalidTokenError'.
+
+##### 2.5.6.9.6.0 Performance
+
+###### 2.5.6.9.6.1 Latency
+
+p99 < 50ms
+
+### 2.5.7.0.0.0 Database Response
+
+#### 2.5.7.1.0.0 Source Id
+
+oltp-repository-008
+
+#### 2.5.7.2.0.0 Target Id
+
+user-management-service-003
+
+#### 2.5.7.3.0.0 Message
+
+7. Return valid token object with userId
+
+#### 2.5.7.4.0.0 Sequence Number
+
+7
+
+#### 2.5.7.5.0.0 Type
+
+🔹 Database Response
+
+#### 2.5.7.6.0.0 Is Synchronous
+
+❌ No
+
+#### 2.5.7.7.0.0 Has Return
+
+❌ No
+
+#### 2.5.7.8.0.0 Return Message
+
+{ userId: '...', token: '...', ... }
+
+#### 2.5.7.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.7.10.0.0 Technical Details
+
+##### 2.5.7.10.1.0 Protocol
+
+TCP/IP
+
+##### 2.5.7.10.2.0 Method
+
+N/A
+
+##### 2.5.7.10.3.0 Parameters
+
+Returns full Prisma model for the refresh token.
+
+##### 2.5.7.10.4.0 Authentication
+
+N/A
+
+##### 2.5.7.10.5.0 Error Handling
+
+If token is not found, returns null, which the service interprets as an authentication failure.
+
+##### 2.5.7.10.6.0 Performance
+
+*No data available*
+
+### 2.5.8.0.0.0 Database Transaction
+
+#### 2.5.8.1.0.0 Source Id
+
+user-management-service-003
+
+#### 2.5.8.2.0.0 Target Id
+
+oltp-repository-008
+
+#### 2.5.8.3.0.0 Message
+
+8. rotateRefreshToken(oldToken, newRefreshToken)
+
+#### 2.5.8.4.0.0 Sequence Number
+
+8
+
+#### 2.5.8.5.0.0 Type
+
+🔹 Database Transaction
+
+#### 2.5.8.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.8.7.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.8.8.0.0 Is Activation
+
+❌ No
+
+#### 2.5.8.9.0.0 Technical Details
+
+##### 2.5.8.9.1.0 Protocol
+
+TCP/IP
+
+##### 2.5.8.9.2.0 Method
+
+PrismaClient.$transaction
+
+##### 2.5.8.9.3.0 Parameters
+
+- {'name': 'operations', 'value': '[ update(oldToken, {revoked: true}), create(newRefreshToken) ]'}
+
+##### 2.5.8.9.4.0 Authentication
+
+Database credentials.
+
+##### 2.5.8.9.5.0 Error Handling
+
+The transaction ensures atomicity. If any part fails, the entire operation is rolled back, and an error is thrown.
+
+##### 2.5.8.9.6.0 Performance
+
+###### 2.5.8.9.6.1 Latency
+
+p99 < 100ms
+
+### 2.5.9.0.0.0 Database Response
+
+#### 2.5.9.1.0.0 Source Id
+
+oltp-repository-008
+
+#### 2.5.9.2.0.0 Target Id
+
+user-management-service-003
+
+#### 2.5.9.3.0.0 Message
+
+9. Confirm rotation success
+
+#### 2.5.9.4.0.0 Sequence Number
+
+9
+
+#### 2.5.9.5.0.0 Type
+
+🔹 Database Response
+
+#### 2.5.9.6.0.0 Is Synchronous
+
+❌ No
+
+#### 2.5.9.7.0.0 Has Return
+
+❌ No
+
+#### 2.5.9.8.0.0 Is Activation
+
+❌ No
+
+#### 2.5.9.9.0.0 Technical Details
+
+##### 2.5.9.9.1.0 Protocol
+
+TCP/IP
+
+##### 2.5.9.9.2.0 Method
+
+N/A
+
+##### 2.5.9.9.3.0 Parameters
+
+Returns results of the transaction.
+
+##### 2.5.9.9.4.0 Authentication
+
+N/A
+
+##### 2.5.9.9.5.0 Error Handling
+
+N/A
+
+##### 2.5.9.9.6.0 Performance
+
+*No data available*
+
+### 2.5.10.0.0.0 Log Event
+
+#### 2.5.10.1.0.0 Source Id
+
+user-management-service-003
+
+#### 2.5.10.2.0.0 Target Id
+
+audit-logger-010
+
+#### 2.5.10.3.0.0 Message
+
+10. logEvent('TokenRefreshSuccess')
+
+#### 2.5.10.4.0.0 Sequence Number
+
+10
+
+#### 2.5.10.5.0.0 Type
+
+🔹 Log Event
+
+#### 2.5.10.6.0.0 Is Synchronous
+
+❌ No
+
+#### 2.5.10.7.0.0 Has Return
+
+❌ No
+
+#### 2.5.10.8.0.0 Is Activation
+
+❌ No
+
+#### 2.5.10.9.0.0 Technical Details
+
+##### 2.5.10.9.1.0 Protocol
+
+N/A (Internal Call)
+
+##### 2.5.10.9.2.0 Method
+
+logger.info
+
+##### 2.5.10.9.3.0 Parameters
+
+- {'name': 'event', 'value': "{ eventType: 'TokenRefreshSuccess', userId: '...', outcome: 'success' }"}
+
+##### 2.5.10.9.4.0 Authentication
+
+N/A
+
+##### 2.5.10.9.5.0 Error Handling
+
+Logging failures should not block the main execution flow.
+
+##### 2.5.10.9.6.0 Performance
+
+*No data available*
+
+### 2.5.11.0.0.0 API Response
+
+#### 2.5.11.1.0.0 Source Id
+
+user-management-service-003
+
+#### 2.5.11.2.0.0 Target Id
+
+api-gateway-002
+
+#### 2.5.11.3.0.0 Message
+
+11. Return 200 OK with new tokens
+
+#### 2.5.11.4.0.0 Sequence Number
+
+11
+
+#### 2.5.11.5.0.0 Type
+
+🔹 API Response
+
+#### 2.5.11.6.0.0 Is Synchronous
+
+❌ No
+
+#### 2.5.11.7.0.0 Has Return
+
+❌ No
+
+#### 2.5.11.8.0.0 Return Message
+
+
+
+```
+HTTP/1.1 200 OK
+Set-Cookie: refreshToken=<new_value>; HttpOnly; Secure; SameSite=Strict
+{
+  "accessToken": "<new_short_lived_jwt>"
+}
+```
+
+#### 2.5.11.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.11.10.0.0 Technical Details
+
+##### 2.5.11.10.1.0 Protocol
+
+HTTPS
+
+##### 2.5.11.10.2.0 Method
+
+N/A
+
+##### 2.5.11.10.3.0 Parameters
+
+New access token in body, new refresh token in a secure cookie.
+
+##### 2.5.11.10.4.0 Authentication
+
+N/A
+
+##### 2.5.11.10.5.0 Error Handling
+
+N/A
+
+##### 2.5.11.10.6.0 Performance
+
+*No data available*
+
+### 2.5.12.0.0.0 API Response
+
+#### 2.5.12.1.0.0 Source Id
+
+api-gateway-002
+
+#### 2.5.12.2.0.0 Target Id
+
+spa-frontend-001
+
+#### 2.5.12.3.0.0 Message
+
+12. Forward successful refresh response
+
+#### 2.5.12.4.0.0 Sequence Number
+
+12
+
+#### 2.5.12.5.0.0 Type
+
+🔹 API Response
+
+#### 2.5.12.6.0.0 Is Synchronous
+
+❌ No
+
+#### 2.5.12.7.0.0 Has Return
+
+❌ No
+
+#### 2.5.12.8.0.0 Is Activation
+
+❌ No
+
+#### 2.5.12.9.0.0 Technical Details
+
+##### 2.5.12.9.1.0 Protocol
+
+HTTPS
+
+##### 2.5.12.9.2.0 Method
+
+N/A
+
+##### 2.5.12.9.3.0 Parameters
+
+Browser automatically processes the Set-Cookie header.
+
+##### 2.5.12.9.4.0 Authentication
+
+N/A
+
+##### 2.5.12.9.5.0 Error Handling
+
+N/A
+
+##### 2.5.12.9.6.0 Performance
+
+*No data available*
+
+### 2.5.13.0.0.0 API Request
+
+#### 2.5.13.1.0.0 Source Id
+
+spa-frontend-001
+
+#### 2.5.13.2.0.0 Target Id
+
+api-gateway-002
+
+#### 2.5.13.3.0.0 Message
+
+13. [Interceptor] Retry GET /reports/sales-trends (with new Access Token)
+
+#### 2.5.13.4.0.0 Sequence Number
+
+13
+
+#### 2.5.13.5.0.0 Type
+
+🔹 API Request
+
+#### 2.5.13.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.13.7.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.13.8.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.13.9.0.0 Technical Details
+
+##### 2.5.13.9.1.0 Protocol
+
+HTTPS
+
+##### 2.5.13.9.2.0 Method
+
+GET
+
+##### 2.5.13.9.3.0 Parameters
+
+- {'name': 'Authorization', 'value': 'Bearer <new_short_lived_jwt>', 'location': 'Header'}
+
+##### 2.5.13.9.4.0 Authentication
+
+JWT Bearer Token
+
+##### 2.5.13.9.5.0 Error Handling
+
+If this retry fails, the interceptor will not attempt another refresh and will reject the original promise.
+
+##### 2.5.13.9.6.0 Performance
+
+###### 2.5.13.9.6.1 Latency
+
+p99 < 200ms
+
+### 2.5.14.0.0.0 Service Invocation
+
+#### 2.5.14.1.0.0 Source Id
+
+api-gateway-002
+
+#### 2.5.14.2.0.0 Target Id
+
+analytics-service-004
+
+#### 2.5.14.3.0.0 Message
+
+14. Validate new token & forward request
+
+#### 2.5.14.4.0.0 Sequence Number
+
+14
+
+#### 2.5.14.5.0.0 Type
+
+🔹 Service Invocation
+
+#### 2.5.14.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.14.7.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.14.8.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.14.9.0.0 Technical Details
+
+##### 2.5.14.9.1.0 Protocol
+
+Internal Invocation
+
+##### 2.5.14.9.2.0 Method
+
+N/A
+
+##### 2.5.14.9.3.0 Parameters
+
+Request payload is forwarded.
+
+##### 2.5.14.9.4.0 Authentication
+
+Gateway's JWT authorizer successfully validates the new token.
+
+##### 2.5.14.9.5.0 Error Handling
+
+N/A
+
+##### 2.5.14.9.6.0 Performance
+
+###### 2.5.14.9.6.1 Latency
+
+p99 < 10ms
+
+### 2.5.15.0.0.0 Service Response
+
+#### 2.5.15.1.0.0 Source Id
+
+analytics-service-004
+
+#### 2.5.15.2.0.0 Target Id
+
+api-gateway-002
+
+#### 2.5.15.3.0.0 Message
+
+15. Return 200 OK with report data
+
+#### 2.5.15.4.0.0 Sequence Number
+
+15
+
+#### 2.5.15.5.0.0 Type
+
+🔹 Service Response
+
+#### 2.5.15.6.0.0 Is Synchronous
+
+❌ No
+
+#### 2.5.15.7.0.0 Has Return
+
+❌ No
+
+#### 2.5.15.8.0.0 Return Message
+
+
+
+```
+HTTP/1.1 200 OK
+{
+  "data": { ... }
+}
+```
+
+#### 2.5.15.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.15.10.0.0 Technical Details
+
+##### 2.5.15.10.1.0 Protocol
+
+Internal
+
+##### 2.5.15.10.2.0 Method
+
+N/A
+
+##### 2.5.15.10.3.0 Parameters
+
+Response contains the requested sales report data.
+
+##### 2.5.15.10.4.0 Authentication
+
+N/A
+
+##### 2.5.15.10.5.0 Error Handling
+
+N/A
+
+##### 2.5.15.10.6.0 Performance
+
+*No data available*
+
+### 2.5.16.0.0.0 API Response
+
+#### 2.5.16.1.0.0 Source Id
+
+api-gateway-002
+
+#### 2.5.16.2.0.0 Target Id
+
+spa-frontend-001
+
+#### 2.5.16.3.0.0 Message
+
+16. Forward final successful response
+
+#### 2.5.16.4.0.0 Sequence Number
+
+16
+
+#### 2.5.16.5.0.0 Type
+
+🔹 API Response
+
+#### 2.5.16.6.0.0 Is Synchronous
+
+❌ No
+
+#### 2.5.16.7.0.0 Has Return
+
+❌ No
+
+#### 2.5.16.8.0.0 Is Activation
+
+❌ No
+
+#### 2.5.16.9.0.0 Technical Details
+
+##### 2.5.16.9.1.0 Protocol
+
+HTTPS
+
+##### 2.5.16.9.2.0 Method
+
+N/A
+
+##### 2.5.16.9.3.0 Parameters
+
+The original promise from the API client is resolved with this data.
+
+##### 2.5.16.9.4.0 Authentication
+
+N/A
+
+##### 2.5.16.9.5.0 Error Handling
+
+N/A
+
+##### 2.5.16.9.6.0 Performance
+
+*No data available*
+
+## 2.6.0.0.0.0 Notes
+
+### 2.6.1.0.0.0 Content
+
+#### 2.6.1.1.0.0 Content
+
+The client-side API interceptor (e.g., using Axios) is the core component that orchestrates this entire flow. It holds the original request, triggers the refresh, and then retries the original request upon success.
+
+#### 2.6.1.2.0.0 Position
+
+top-left
+
+#### 2.6.1.3.0.0 Participant Id
+
+spa-frontend-001
+
+#### 2.6.1.4.0.0 Sequence Number
+
+4
+
+### 2.6.2.0.0.0 Content
+
+#### 2.6.2.1.0.0 Content
+
+INVALID TOKEN: If step 6 or 7 fails (token not found, expired, or revoked), the Auth Service MUST return a 401/403 Unauthorized. The SPA interceptor will then immediately log the user out and redirect to the login page.
+
+#### 2.6.2.2.0.0 Position
+
+bottom-right
+
+#### 2.6.2.3.0.0 Participant Id
+
+user-management-service-003
+
+#### 2.6.2.4.0.0 Sequence Number
+
+7
+
+## 2.7.0.0.0.0 Implementation Guidance
+
+| Property | Value |
+|----------|-------|
+| Security Requirements | Refresh Token Cookie MUST be configured as `HttpOn... |
+| Performance Targets | The entire refresh flow (interactions 4-12) must h... |
+| Error Handling Strategy | If the refresh token is invalid, expired, or revok... |
+| Testing Considerations | E2E tests using Playwright are essential to simula... |
+| Monitoring Requirements | The `/auth/refresh` endpoint should be monitored f... |
+| Deployment Considerations | Cookie domain and path settings must be correctly ... |
+

@@ -1,0 +1,2 @@
+"security_area","test_type","security_risk","compliance_requirement","test_frequency","testing_tools","test_scenarios","acceptance_criteria","remediation_sla","responsible_team","reporting_requirements","trend_analysis"
+"Multi-Tenant Isolation","Automated Security Scan","Critical","GDPR; Data Privacy","Every Release","Custom Middleware Validator; Jest","[""Access Merchant B data with Merchant A token"",""AI RAG Query Cross-Pollination""]","100% rejection of cross-tenant requests","Critical: Immediate Rollback","Security Engineer","Automated Audit Log","Zero incidents target"

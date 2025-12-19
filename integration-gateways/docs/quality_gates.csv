@@ -1,0 +1,4 @@
+"gate_id","gate_name","sprint","gate_type","criteria","responsible_team","gate_date","approval_required"
+"QG-001","Sprint 1 Auth & Security Gate","Sprint 1","Security","JWT verification unit tests passing; Tenant isolation integration tests passing.","Lead Architect","2025-05-16","true"
+"QG-002","Sprint 2 Data Integrity Gate","Sprint 2","Data Quality","Data sync job successfully processes 1000 orders without timeout; Data matches source.","Backend Team","2025-05-30","true"
+"QG-003","Sprint 3 Performance Gate","Sprint 3","Performance","Dashboard API p95 latency < 200ms; LCP < 2.5s.","Frontend Team","2025-06-13","true"

@@ -1,0 +1,3 @@
+"gate_id","gate_name","sprint","gate_type","criteria","responsible_team","gate_date","approval_required","approver","bypass_criteria","automation_level","tools_used","success_metrics"
+"QG-001","Sprint 1 Security Gate","Sprint 1","Security","Auth service passes all unit tests; Tokens encrypted at rest; No secrets in code","Backend Team","2025-02-13","true","backend.lead@company.com","None - Critical Security","Partially Automated","Jest,SonarQube","0 Critical Vulnerabilities"
+"QG-002","Sprint 2 Data Integrity Gate","Sprint 2","Data Quality","CDC pipeline latency < 5 min; Data checksums match between Postgres and ClickHouse","Data Team","2025-02-27","true","tech.lead@company.com","None","Automated","Custom Scripts,Axiom","Data Consistency > 99.9%"

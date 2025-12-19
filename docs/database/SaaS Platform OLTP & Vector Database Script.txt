@@ -1,0 +1,342 @@
+-- Enable necessary extensions
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- Create a function to automatically update 'updatedAt' timestamps
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+   NEW."updatedAt" = NOW();
+   RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- ========= TABLE CREATION =========
+
+CREATE TABLE "User" (
+    "userId" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "email" VARCHAR(255) NOT NULL UNIQUE,
+    "firstName" VARCHAR(100),
+    "lastName" VARCHAR(100),
+    "passwordHash" VARCHAR(255) NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "PasswordResetToken" (
+    "passwordResetTokenId" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "userId" UUID NOT NULL,
+    "tokenHash" VARCHAR(255) NOT NULL UNIQUE,
+    "expiresAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "MerchantAccount" (
+    "merchantAccountId" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "accountName" VARCHAR(255) NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "Role" (
+    "roleId" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "roleName" VARCHAR(50) NOT NULL UNIQUE CHECK ("roleName" IN ('Owner', 'Admin', 'Analyst', 'Marketer'))
+);
+
+CREATE TABLE "UserMerchantAccount" (
+    "userMerchantAccountId" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "userId" UUID NOT NULL,
+    "merchantAccountId" UUID NOT NULL,
+    "roleId" UUID NOT NULL,
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE ("userId", "merchantAccountId")
+);
+
+CREATE TABLE "Invitation" (
+    "invitationId" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "merchantAccountId" UUID NOT NULL,
+    "invitedByUserId" UUID NOT NULL,
+    "roleId" UUID NOT NULL,
+    "inviteeEmail" VARCHAR(255) NOT NULL,
+    "invitationTokenHash" VARCHAR(255) NOT NULL UNIQUE,
+    "status" VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK ("status" IN ('pending', 'accepted', 'expired')),
+    "expiresAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "Customer" (
+    "customerId" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "merchantAccountId" UUID NOT NULL,
+    "email" VARCHAR(255) NOT NULL,
+    "firstName" VARCHAR(100),
+    "lastName" VARCHAR(100),
+    "city" VARCHAR(100),
+    "country" VARCHAR(100),
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE ("merchantAccountId", "email")
+);
+
+CREATE TABLE "Category" (
+    "categoryId" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "merchantAccountId" UUID NOT NULL,
+    "name" VARCHAR(100) NOT NULL,
+    "parentCategoryId" UUID,
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE ("merchantAccountId", "name", "parentCategoryId")
+);
+
+CREATE TABLE "Product" (
+    "productId" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "merchantAccountId" UUID NOT NULL,
+    "categoryId" UUID NOT NULL,
+    "name" VARCHAR(255) NOT NULL,
+    "description" TEXT,
+    "price" DECIMAL(10, 2) NOT NULL CHECK ("price" > 0),
+    "sku" VARCHAR(100),
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE ("merchantAccountId", "sku")
+);
+
+CREATE TABLE "SalesOrder" (
+    "salesOrderId" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "merchantAccountId" UUID NOT NULL,
+    "customerId" UUID NOT NULL,
+    "orderDate" TIMESTAMP WITH TIME ZONE NOT NULL,
+    "totalAmount" DECIMAL(10, 2) NOT NULL CHECK ("totalAmount" > 0),
+    "status" VARCHAR(50) NOT NULL DEFAULT 'completed' CHECK ("status" IN ('pending', 'completed', 'shipped', 'cancelled', 'refunded')),
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY ("salesOrderId", "orderDate")
+) PARTITION BY RANGE ("orderDate");
+
+CREATE TABLE "OrderItem" (
+    "orderItemId" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "salesOrderId" UUID NOT NULL,
+    "productId" UUID NOT NULL,
+    "quantity" INT NOT NULL CHECK ("quantity" > 0),
+    "priceAtPurchase" DECIMAL(10, 2) NOT NULL CHECK ("priceAtPurchase" > 0),
+    "merchantAccountId" UUID NOT NULL,
+    "orderDate" TIMESTAMP WITH TIME ZONE NOT NULL,
+    PRIMARY KEY ("orderItemId", "orderDate")
+) PARTITION BY RANGE ("orderDate");
+
+CREATE TABLE "AbandonedCart" (
+    "abandonedCartId" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "merchantAccountId" UUID NOT NULL,
+    "customerId" UUID NOT NULL,
+    "campaignId" UUID,
+    "status" VARCHAR(20) NOT NULL DEFAULT 'active' CHECK ("status" IN ('active', 'recovered', 'purged')),
+    "recoveryToken" VARCHAR(255) UNIQUE,
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "AbandonedCartItem" (
+    "abandonedCartItemId" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "abandonedCartId" UUID NOT NULL,
+    "productId" UUID NOT NULL,
+    "quantity" INT NOT NULL CHECK ("quantity" > 0),
+    "price" DECIMAL(10, 2) NOT NULL CHECK ("price" > 0)
+);
+
+CREATE TABLE "EmailTemplate" (
+    "emailTemplateId" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "merchantAccountId" UUID NOT NULL,
+    "name" VARCHAR(255) NOT NULL,
+    "subject" VARCHAR(255) NOT NULL,
+    "body" TEXT NOT NULL,
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE ("merchantAccountId", "name")
+);
+
+CREATE TABLE "Campaign" (
+    "campaignId" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "merchantAccountId" UUID NOT NULL,
+    "name" VARCHAR(255) NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE ("merchantAccountId", "name")
+);
+
+CREATE TABLE "CampaignStep" (
+    "campaignStepId" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "campaignId" UUID NOT NULL,
+    "emailTemplateId" UUID NOT NULL,
+    "delayHours" INT NOT NULL CHECK ("delayHours" >= 0),
+    "stepOrder" INT NOT NULL CHECK ("stepOrder" >= 1),
+    UNIQUE ("campaignId", "stepOrder")
+);
+
+CREATE TABLE "Unsubscribe" (
+    "unsubscribeId" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "merchantAccountId" UUID NOT NULL,
+    "customerEmail" VARCHAR(255) NOT NULL,
+    "reason" TEXT,
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE ("merchantAccountId", "customerEmail")
+);
+
+CREATE TABLE "DomainAuthentication" (
+    "domainAuthenticationId" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "merchantAccountId" UUID NOT NULL UNIQUE,
+    "domainName" VARCHAR(255) NOT NULL,
+    "spfRecord" TEXT NOT NULL,
+    "dkimRecord" TEXT NOT NULL,
+    "isSpfVerified" BOOLEAN NOT NULL DEFAULT false,
+    "isDkimVerified" BOOLEAN NOT NULL DEFAULT false,
+    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "AuditLog" (
+    "auditLogId" BIGSERIAL NOT NULL,
+    "merchantAccountId" UUID,
+    "userId" UUID,
+    "eventTimestamp" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "eventType" VARCHAR(100) NOT NULL,
+    "targetResource" VARCHAR(255),
+    "outcome" VARCHAR(20) NOT NULL CHECK ("outcome" IN ('success', 'failure')),
+    "details" JSONB,
+    PRIMARY KEY ("auditLogId", "eventTimestamp")
+) PARTITION BY RANGE ("eventTimestamp");
+
+CREATE TABLE "AIInsightCard" (
+    "aiInsightCardId" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "merchantAccountId" UUID NOT NULL,
+    "title" VARCHAR(255) NOT NULL,
+    "content" TEXT NOT NULL,
+    "insightType" VARCHAR(50) NOT NULL CHECK ("insightType" IN ('trend', 'anomaly', 'suggestion')),
+    "isDismissed" BOOLEAN NOT NULL DEFAULT false,
+    "generatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "KnowledgeBaseChunk" (
+    "chunkId" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "merchantAccountId" UUID NOT NULL,
+    "sourceType" VARCHAR(50) NOT NULL,
+    "sourceId" VARCHAR(255) NOT NULL,
+    "chunkText" TEXT NOT NULL,
+    "embedding" vector(1536) NOT NULL,
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "UserPreference" (
+    "userPreferenceId" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "userId" UUID NOT NULL UNIQUE,
+    "theme" VARCHAR(20) NOT NULL DEFAULT 'system' CHECK ("theme" IN ('light', 'dark', 'system')),
+    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "DataSubjectRequest" (
+    "dataSubjectRequestId" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "merchantAccountId" UUID NOT NULL,
+    "customerIdentifier" VARCHAR(255) NOT NULL,
+    "requestType" VARCHAR(20) NOT NULL CHECK ("requestType" IN ('export', 'delete')),
+    "status" VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK ("status" IN ('pending', 'completed', 'failed')),
+    "requestedByUserId" UUID NOT NULL,
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "completedAt" TIMESTAMP WITH TIME ZONE
+);
+
+
+-- ========= FOREIGN KEY CONSTRAINTS =========
+
+ALTER TABLE "PasswordResetToken" ADD CONSTRAINT "fk_passwordresettoken_user" FOREIGN KEY ("userId") REFERENCES "User"("userId") ON DELETE CASCADE;
+ALTER TABLE "UserMerchantAccount" ADD CONSTRAINT "fk_usermerchantaccount_user" FOREIGN KEY ("userId") REFERENCES "User"("userId") ON DELETE CASCADE;
+ALTER TABLE "UserMerchantAccount" ADD CONSTRAINT "fk_usermerchantaccount_merchant" FOREIGN KEY ("merchantAccountId") REFERENCES "MerchantAccount"("merchantAccountId") ON DELETE CASCADE;
+ALTER TABLE "UserMerchantAccount" ADD CONSTRAINT "fk_usermerchantaccount_role" FOREIGN KEY ("roleId") REFERENCES "Role"("roleId");
+ALTER TABLE "Invitation" ADD CONSTRAINT "fk_invitation_merchant" FOREIGN KEY ("merchantAccountId") REFERENCES "MerchantAccount"("merchantAccountId") ON DELETE CASCADE;
+ALTER TABLE "Invitation" ADD CONSTRAINT "fk_invitation_inviter" FOREIGN KEY ("invitedByUserId") REFERENCES "User"("userId") ON DELETE SET NULL;
+ALTER TABLE "Invitation" ADD CONSTRAINT "fk_invitation_role" FOREIGN KEY ("roleId") REFERENCES "Role"("roleId");
+ALTER TABLE "Customer" ADD CONSTRAINT "fk_customer_merchant" FOREIGN KEY ("merchantAccountId") REFERENCES "MerchantAccount"("merchantAccountId") ON DELETE CASCADE;
+ALTER TABLE "Category" ADD CONSTRAINT "fk_category_merchant" FOREIGN KEY ("merchantAccountId") REFERENCES "MerchantAccount"("merchantAccountId") ON DELETE CASCADE;
+ALTER TABLE "Category" ADD CONSTRAINT "fk_category_parent" FOREIGN KEY ("parentCategoryId") REFERENCES "Category"("categoryId") ON DELETE SET NULL;
+ALTER TABLE "Product" ADD CONSTRAINT "fk_product_merchant" FOREIGN KEY ("merchantAccountId") REFERENCES "MerchantAccount"("merchantAccountId") ON DELETE CASCADE;
+ALTER TABLE "Product" ADD CONSTRAINT "fk_product_category" FOREIGN KEY ("categoryId") REFERENCES "Category"("categoryId");
+ALTER TABLE "SalesOrder" ADD CONSTRAINT "fk_salesorder_merchant" FOREIGN KEY ("merchantAccountId") REFERENCES "MerchantAccount"("merchantAccountId") ON DELETE RESTRICT;
+ALTER TABLE "SalesOrder" ADD CONSTRAINT "fk_salesorder_customer" FOREIGN KEY ("customerId") REFERENCES "Customer"("customerId") ON DELETE RESTRICT;
+ALTER TABLE "OrderItem" ADD CONSTRAINT "fk_orderitem_salesorder" FOREIGN KEY ("salesOrderId", "orderDate") REFERENCES "SalesOrder"("salesOrderId", "orderDate") ON DELETE CASCADE;
+ALTER TABLE "OrderItem" ADD CONSTRAINT "fk_orderitem_product" FOREIGN KEY ("productId") REFERENCES "Product"("productId") ON DELETE RESTRICT;
+ALTER TABLE "AbandonedCart" ADD CONSTRAINT "fk_abandonedcart_merchant" FOREIGN KEY ("merchantAccountId") REFERENCES "MerchantAccount"("merchantAccountId") ON DELETE CASCADE;
+ALTER TABLE "AbandonedCart" ADD CONSTRAINT "fk_abandonedcart_customer" FOREIGN KEY ("customerId") REFERENCES "Customer"("customerId") ON DELETE CASCADE;
+ALTER TABLE "AbandonedCart" ADD CONSTRAINT "fk_abandonedcart_campaign" FOREIGN KEY ("campaignId") REFERENCES "Campaign"("campaignId") ON DELETE SET NULL;
+ALTER TABLE "AbandonedCartItem" ADD CONSTRAINT "fk_abandonedcartitem_cart" FOREIGN KEY ("abandonedCartId") REFERENCES "AbandonedCart"("abandonedCartId") ON DELETE CASCADE;
+ALTER TABLE "AbandonedCartItem" ADD CONSTRAINT "fk_abandonedcartitem_product" FOREIGN KEY ("productId") REFERENCES "Product"("productId") ON DELETE CASCADE;
+ALTER TABLE "EmailTemplate" ADD CONSTRAINT "fk_emailtemplate_merchant" FOREIGN KEY ("merchantAccountId") REFERENCES "MerchantAccount"("merchantAccountId") ON DELETE CASCADE;
+ALTER TABLE "Campaign" ADD CONSTRAINT "fk_campaign_merchant" FOREIGN KEY ("merchantAccountId") REFERENCES "MerchantAccount"("merchantAccountId") ON DELETE CASCADE;
+ALTER TABLE "CampaignStep" ADD CONSTRAINT "fk_campaignstep_campaign" FOREIGN KEY ("campaignId") REFERENCES "Campaign"("campaignId") ON DELETE CASCADE;
+ALTER TABLE "CampaignStep" ADD CONSTRAINT "fk_campaignstep_template" FOREIGN KEY ("emailTemplateId") REFERENCES "EmailTemplate"("emailTemplateId") ON DELETE CASCADE;
+ALTER TABLE "Unsubscribe" ADD CONSTRAINT "fk_unsubscribe_merchant" FOREIGN KEY ("merchantAccountId") REFERENCES "MerchantAccount"("merchantAccountId") ON DELETE CASCADE;
+ALTER TABLE "DomainAuthentication" ADD CONSTRAINT "fk_domainauth_merchant" FOREIGN KEY ("merchantAccountId") REFERENCES "MerchantAccount"("merchantAccountId") ON DELETE CASCADE;
+ALTER TABLE "AuditLog" ADD CONSTRAINT "fk_auditlog_merchant" FOREIGN KEY ("merchantAccountId") REFERENCES "MerchantAccount"("merchantAccountId") ON DELETE SET NULL;
+ALTER TABLE "AuditLog" ADD CONSTRAINT "fk_auditlog_user" FOREIGN KEY ("userId") REFERENCES "User"("userId") ON DELETE SET NULL;
+ALTER TABLE "AIInsightCard" ADD CONSTRAINT "fk_aiinsightcard_merchant" FOREIGN KEY ("merchantAccountId") REFERENCES "MerchantAccount"("merchantAccountId") ON DELETE CASCADE;
+ALTER TABLE "KnowledgeBaseChunk" ADD CONSTRAINT "fk_knowledgebase_merchant" FOREIGN KEY ("merchantAccountId") REFERENCES "MerchantAccount"("merchantAccountId") ON DELETE CASCADE;
+ALTER TABLE "UserPreference" ADD CONSTRAINT "fk_userpreference_user" FOREIGN KEY ("userId") REFERENCES "User"("userId") ON DELETE CASCADE;
+ALTER TABLE "DataSubjectRequest" ADD CONSTRAINT "fk_datasubjectrequest_merchant" FOREIGN KEY ("merchantAccountId") REFERENCES "MerchantAccount"("merchantAccountId") ON DELETE CASCADE;
+ALTER TABLE "DataSubjectRequest" ADD CONSTRAINT "fk_datasubjectrequest_user" FOREIGN KEY ("requestedByUserId") REFERENCES "User"("userId") ON DELETE CASCADE;
+
+-- ========= INDEXES =========
+
+-- User Indexes
+CREATE INDEX "idx_user_fullname" ON "User"("firstName", "lastName");
+
+-- PasswordResetToken Indexes
+CREATE INDEX "idx_passwordresettoken_expiresat" ON "PasswordResetToken"("expiresAt");
+
+-- MerchantAccount Indexes
+CREATE INDEX "idx_merchantaccount_accountname" ON "MerchantAccount"("accountName");
+
+-- UserMerchantAccount Indexes
+CREATE INDEX "idx_usermerchantaccount_merchant_role" ON "UserMerchantAccount"("merchantAccountId", "roleId");
+
+-- Invitation Indexes
+CREATE INDEX "idx_invitation_status_expiresat" ON "Invitation"("status", "expiresAt");
+
+-- Customer Indexes
+CREATE INDEX "idx_customer_merchant_location" ON "Customer"("merchantAccountId", "country", "city");
+
+-- Product Indexes (Full-Text Search)
+CREATE INDEX "idx_product_fts" ON "Product" USING GIN (to_tsvector('english', "name" || ' ' || "description"));
+
+-- SalesOrder Indexes
+CREATE INDEX "idx_salesorder_merchant_orderdate" ON "SalesOrder"("merchantAccountId", "orderDate" DESC);
+CREATE INDEX "idx_salesorder_merchant_customer_orderdate" ON "SalesOrder"("merchantAccountId", "customerId", "orderDate" DESC);
+
+-- OrderItem Indexes
+CREATE INDEX "idx_orderitem_productid" ON "OrderItem"("productId");
+
+-- AbandonedCart Indexes
+CREATE INDEX "idx_abandonedcart_status_createdat" ON "AbandonedCart"("status", "createdAt");
+CREATE INDEX "idx_abandonedcart_merchant_customer_status" ON "AbandonedCart"("merchantAccountId", "customerId", "status");
+
+-- AuditLog Indexes
+CREATE INDEX "idx_auditlog_merchant_timestamp" ON "AuditLog"("merchantAccountId", "eventTimestamp" DESC);
+CREATE INDEX "idx_auditlog_details_gin" ON "AuditLog" USING GIN ("details");
+
+-- AIInsightCard Indexes
+CREATE INDEX "idx_aiinsightcard_merchant_dismissed_generated" ON "AIInsightCard"("merchantAccountId", "isDismissed", "generatedAt" DESC);
+
+-- KnowledgeBaseChunk Indexes (Vector Search)
+CREATE INDEX "idx_knowledgebasechunk_embedding_hnsw" ON "KnowledgeBaseChunk" USING HNSW (embedding vector_l2_ops);
+
+-- DataSubjectRequest Indexes
+CREATE INDEX "idx_datasubjectrequest_merchant_status" ON "DataSubjectRequest"("merchantAccountId", "status");
+
+-- ========= TRIGGERS FOR 'updatedAt' =========
+
+CREATE TRIGGER trg_update_user_updatedat BEFORE UPDATE ON "User" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER trg_update_merchantaccount_updatedat BEFORE UPDATE ON "MerchantAccount" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER trg_update_customer_updatedat BEFORE UPDATE ON "Customer" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER trg_update_category_updatedat BEFORE UPDATE ON "Category" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER trg_update_product_updatedat BEFORE UPDATE ON "Product" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER trg_update_abandonedcart_updatedat BEFORE UPDATE ON "AbandonedCart" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER trg_update_emailtemplate_updatedat BEFORE UPDATE ON "EmailTemplate" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER trg_update_campaign_updatedat BEFORE UPDATE ON "Campaign" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER trg_update_domainauthentication_updatedat BEFORE UPDATE ON "DomainAuthentication" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER trg_update_userpreference_updatedat BEFORE UPDATE ON "UserPreference" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

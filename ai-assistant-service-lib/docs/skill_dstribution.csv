@@ -1,0 +1,4 @@
+"skill_category","total_hours_required","available_capacity","utilization_rate","team_members_with_skill","experience_distribution","critical_path_impact","skill_gap_risk","cross_training_opportunities","recommendation"
+"Backend & Architecture","117.8","160","73.6","[""backend.lead"",""backend.dev""]","1 Lead, 1 Mid-Senior","High","Medium","Train backend.dev on Security/Auth patterns","Redistribute Sprint 1 load from Lead to Dev or slip non-critical tasks"
+"Frontend & UX","32.5","120","27","[""frontend.lead"",""frontend.dev""]","1 Senior, 1 Mid","Low","Low","Frontend team can assist with documentation and testing","Utilize excess frontend capacity for comprehensive E2E test writing"
+"Data Engineering","22.6","40","56.5","[""data.engineer"",""backend.dev""]","1 Senior, 1 Mid (Learning)","Medium","Medium","Backend Dev learning ClickHouse integration","Data Engineer must strictly review Schema and Pipeline logic"

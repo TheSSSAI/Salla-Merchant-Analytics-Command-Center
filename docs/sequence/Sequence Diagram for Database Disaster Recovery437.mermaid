@@ -1,0 +1,48 @@
+sequenceDiagram
+    participant "Monitoring System" as MonitoringSystem
+    participant "PagerDuty" as PagerDuty
+    participant "On-Call Engineer" as OnCallEngineer
+    participant "Cloud Provider DB Service" as CloudProviderDBService
+    participant "App Config Mgmt (Vercel)" as AppConfigMgmtVercel
+    participant "CI/CD Pipeline" as CICDPipeline
+    participant "Application Services" as ApplicationServices
+
+    activate MonitoringSystem
+    ApplicationServices->>MonitoringSystem: 1. 1. Fails health checks and reports high error rate due to DB connection loss.
+    activate PagerDuty
+    MonitoringSystem->>PagerDuty: 2. 2. Triggers Critical Alert: 'Primary OLTP Database is Unresponsive'
+    PagerDuty-->>MonitoringSystem: 2.1. HTTP 202 Accepted
+    activate OnCallEngineer
+    PagerDuty->>OnCallEngineer: 3. 3. Sends alert notification (Push, SMS, Call)
+    OnCallEngineer->>PagerDuty: 4. 4. Acknowledges alert via PagerDuty app/website
+    PagerDuty-->>OnCallEngineer: 4.1. Incident Acknowledged
+    OnCallEngineer->>MonitoringSystem: 5. 5. Investigates dashboards; confirms unrecoverable DB failure.
+    MonitoringSystem-->>OnCallEngineer: 5.1. Displays logs and metrics showing sustained failure.
+    activate CloudProviderDBService
+    OnCallEngineer->>CloudProviderDBService: 6. 6. Initiates Point-in-Time Recovery via Cloud Console/CLI
+    CloudProviderDBService-->>OnCallEngineer: 6.1. Restore process started successfully.
+    CloudProviderDBService->>CloudProviderDBService: 7. 7. Provisions new DB instance and restores data from snapshot.
+    CloudProviderDBService->>OnCallEngineer: 8. 8. Notifies that restore is complete (e.g., via email or console status update)
+    OnCallEngineer->>CloudProviderDBService: 9. 9. Connects to new DB instance to perform data validation
+    CloudProviderDBService-->>OnCallEngineer: 9.1. Connection successful
+    activate AppConfigMgmtVercel
+    OnCallEngineer->>AppConfigMgmtVercel: 10. 10. Updates DATABASE_URL environment variable with new connection string
+    AppConfigMgmtVercel-->>OnCallEngineer: 10.1. HTTP 200 OK
+    activate CICDPipeline
+    OnCallEngineer->>CICDPipeline: 11. 11. Triggers redeployment of production application
+    CICDPipeline-->>OnCallEngineer: 11.1. New build/deployment pipeline initiated.
+    activate ApplicationServices
+    CICDPipeline->>ApplicationServices: 12. 12. Deploys new version of the application with updated configuration
+    ApplicationServices->>CloudProviderDBService: 13. 13. Establishes successful connections to restored database
+    CloudProviderDBService-->>ApplicationServices: 13.1. Connection successful
+    OnCallEngineer->>MonitoringSystem: 14. 14. Monitors application health and resolves incident
+    MonitoringSystem-->>OnCallEngineer: 14.1. Dashboards show healthy status (2xx responses, low latency).
+
+
+    deactivate ApplicationServices
+    deactivate CICDPipeline
+    deactivate AppConfigMgmtVercel
+    deactivate CloudProviderDBService
+    deactivate OnCallEngineer
+    deactivate PagerDuty
+    deactivate MonitoringSystem

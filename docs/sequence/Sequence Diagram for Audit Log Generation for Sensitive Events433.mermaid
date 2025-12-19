@@ -1,0 +1,22 @@
+sequenceDiagram
+    actor "User Management Service" as UserManagementService
+    participant "Audit Event Queue" as AuditEventQueue
+    participant "Audit Logger Service" as AuditLoggerService
+    participant "OLTP Repository" as OLTPRepository
+
+    activate UserManagementService
+    UserManagementService->>UserManagementService: 1. 1. Successfully processes a security-sensitive operation (e.g., updateUserRole) after all business logic, validation, and authorization checks are complete.
+    UserManagementService->>AuditEventQueue: 2. 2. Publishes SecurityEventOccurred event. Payload includes: { eventType: 'USER_ROLE_CHANGED', actingUserId: '...', merchantId: '...', targetResource: 'user:...', outcome: 'success', details: { oldRole: '...', newRole: '...' } }.
+    activate AuditLoggerService
+    AuditEventQueue->>AuditLoggerService: 3. 3. Triggers the consumer with the event message.
+    AuditLoggerService->>AuditLoggerService: 4. 4. Validates and transforms the event payload into a structured, immutable AuditLog record.
+    AuditLoggerService->>OLTPRepository: 5. 5. Persists the AuditLog record to the audit_logs database table.
+    OLTPRepository-->>AuditLoggerService: 5.1. Returns success confirmation or throws a database exception.
+    AuditLoggerService->>AuditEventQueue: 6. 6. On successful database write, the Lambda function execution completes successfully, causing SQS to automatically delete the message from the queue.
+
+    note over UserManagementService: Trigger: This entire flow is initiated by an internal, post-processing step of a successful, auth...
+    note over AuditLoggerService: Dead Letter Queue (DLQ): A DLQ is configured for the Audit Event Queue. If the Audit Logger Servi...
+    note over OLTPRepository: Database Security: The audit_logs table is designed to be append-only. The database user role ass...
+
+    deactivate AuditLoggerService
+    deactivate UserManagementService

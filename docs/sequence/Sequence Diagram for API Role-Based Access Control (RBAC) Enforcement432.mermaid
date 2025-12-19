@@ -1,0 +1,33 @@
+sequenceDiagram
+    actor "User Browser" as UserBrowser
+    participant "Frontend SPA" as FrontendSPA
+    participant "API Gateway" as APIGateway
+    actor "User Management Service (RBAC Middleware)" as UserManagementServiceRBACMiddleware
+    participant "OLTP Repository" as OLTPRepository
+    participant "Audit Logger" as AuditLogger
+
+    activate FrontendSPA
+    UserBrowser->>FrontendSPA: 1. 1. User initiates an action requiring protected data (e.g., clicks 'Edit Campaign').
+    activate APIGateway
+    FrontendSPA->>APIGateway: 2. 2. PUT /api/v1/campaigns/{campaignId}
+    APIGateway-->>FrontendSPA: 13. HTTP 200 OK | HTTP 403 Forbidden
+    APIGateway->>APIGateway: 3. 3. [Security Checkpoint] Validate JWT signature and expiry.
+    APIGateway-->>APIGateway: If invalid: HTTP 401 Unauthorized
+    activate UserManagementServiceRBACMiddleware
+    APIGateway->>UserManagementServiceRBACMiddleware: 4. 4. Invoke RBAC Authorizer with request context.
+    UserManagementServiceRBACMiddleware-->>APIGateway: 12. Authorization Decision (Allow/Deny)
+    UserManagementServiceRBACMiddleware->>OLTPRepository: 5. 5. getUserRoleForMerchant(userId, merchantId)
+    OLTPRepository-->>UserManagementServiceRBACMiddleware: 6. UserRole object (e.g., { role: 'Marketer' })
+    UserManagementServiceRBACMiddleware->>UserManagementServiceRBACMiddleware: 7. 7. [Security Checkpoint] Verify permission against RBAC policy.
+    UserManagementServiceRBACMiddleware-->>UserManagementServiceRBACMiddleware: Result: PERMITTED | DENIED
+    UserManagementServiceRBACMiddleware->>AuditLogger: 8. 8. [ALT: Unauthorized] logEvent('AuthorizationFailure')
+    UserManagementServiceRBACMiddleware->>APIGateway: 9. 9. [ALT: Unauthorized] Return Deny Policy
+    UserManagementServiceRBACMiddleware->>AuditLogger: 10. 10. [SUCCESS] logEvent('AuthorizationSuccess')
+    UserManagementServiceRBACMiddleware->>APIGateway: 11. 11. [SUCCESS] Return Allow Policy
+
+    note over UserManagementServiceRBACMiddleware: RBAC Policy Map is a configuration file (e.g., JSON/YAML) mapping roles to allowed [resource, act...
+    note over APIGateway: A 401 Unauthorized error is returned for authentication failures (bad token), while a 403 Forbidd...
+
+    deactivate UserManagementServiceRBACMiddleware
+    deactivate APIGateway
+    deactivate FrontendSPA

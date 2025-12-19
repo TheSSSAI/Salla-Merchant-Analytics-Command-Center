@@ -1,0 +1,2 @@
+"environment_name","environment_type","deployment_frequency","data_refresh_frequency","infrastructure_stack","service_dependencies","monitoring_tools","access_control","backup_strategy","disaster_recovery","cost_optimization","maintenance_window"
+"Staging","Pre-Production","Continuous (on merge)","Weekly (Anonymized)","Vercel Preview; ClickHouse Dev; Upstash Dev","Mocked Salla API; Mocked OpenAI (optional); Real Postmark Sandbox","Axiom; Vercel Logs","Internal Team Only","Daily DB Snapshots","N/A","Auto-sleep resources","Ad-hoc"

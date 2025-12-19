@@ -1,0 +1,4 @@
+"risk_id","risk_category","description","impact","mitigation","status"
+"RES-001","Bottleneck","backend.dev is overloaded in Sprint 1 (Auth/Security) compared to other members","High - Could delay OAuth integration","Shift RBAC Middleware (TASK-002-02) to backend.lead","Open"
+"RES-002","Skill Gap","ClickHouse expertise confined to single Data Engineer","Medium - Bus factor of 1 for analytics pipeline","Pair programming with Backend Lead during Schema setup","Open"
+"RES-003","Inefficiency","Frontend resources have near-zero utilization in Sprint 1 and 2","Medium - Burn rate without output","Assign frontend.dev to build UI mocks/prototypes or assist with Integration testing","Open"

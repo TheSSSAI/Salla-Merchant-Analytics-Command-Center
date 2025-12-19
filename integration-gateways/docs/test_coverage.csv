@@ -1,0 +1,5 @@
+"component_name","business_criticality","technical_complexity","change_frequency","test_types_required","unit_test_coverage","integration_test_coverage","e2e_test_coverage","automation_percentage","manual_test_effort","automated_test_effort","total_test_cases","risk_mitigation_score","quality_confidence","maintenance_overhead","tool_compatibility","team_skill_alignment"
+"Authentication & RBAC","Critical","Medium","Low","[""Unit"",""Integration"",""Security""]","98","95","90","90","4","24","35","0.98","Very High","Low","Excellent","High"
+"Data Ingestion Pipeline (Sync)","Critical","Very High","Medium","[""Unit"",""Integration"",""Performance"",""Chaos""]","90","85","70","80","16","60","45","0.9","High","High","Good","Medium"
+"Deep Analytics (Dashboard)","High","High","High","[""Integration"",""UI"",""Performance""]","80","85","60","70","20","40","40","0.85","Medium","Medium","Good","High"
+"Cart Recovery Automation","High","Medium","Medium","[""Unit"",""Integration"",""E2E""]","90","90","85","85","8","32","25","0.95","High","Low","Excellent","High"

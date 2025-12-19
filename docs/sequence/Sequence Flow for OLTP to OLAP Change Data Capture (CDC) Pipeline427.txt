@@ -1,0 +1,674 @@
+# 1 Overview
+
+## 1.1 Diagram Id
+
+SEQ-DF-001
+
+## 1.2 Name
+
+OLTP to OLAP Change Data Capture (CDC) Pipeline
+
+## 1.3 Description
+
+A change (insert, update, delete) is committed to the PostgreSQL OLTP database. A Change Data Capture (CDC) mechanism captures this change, publishes it as an event to a message queue. A processor function consumes the event, transforms the data (denormalizes), and loads it into the ClickHouse OLAP data warehouse.
+
+## 1.4 Type
+
+🔹 DataFlow
+
+## 1.5 Purpose
+
+To continuously synchronize data from the transactional database (OLTP) to the analytical data warehouse (OLAP) with low latency, enabling fast and up-to-date analytics as required by REQ-DATA-002 and REQ-TEC-003.
+
+## 1.6 Complexity
+
+High
+
+## 1.7 Priority
+
+🚨 Critical
+
+## 1.8 Frequency
+
+OnDemand
+
+## 1.9 Participants
+
+- oltp-repository-008
+- data-pipeline-processor-014
+- async-task-queue-013
+- olap-repository-008
+
+## 1.10 Key Interactions
+
+- A transaction is committed in PostgreSQL (e.g., from a Webhook event in SEQ-IF-001).
+- A CDC service (e.g., Debezium, AWS DMS) captures the row-level change from the database's transaction log (WAL).
+- The change event is serialized and published to a message queue (e.g., SQS, QStash).
+- The Data Pipeline Processor (a Lambda function) is triggered by messages in the queue.
+- The processor transforms the data (e.g., denormalizes by joining related entities) into a wide analytical record for the 'SalesFact' table.
+- The transformed data is batch-inserted into the appropriate fact table in ClickHouse for analytical performance.
+
+## 1.11 Triggers
+
+- Any data modification in the source OLTP tables (e.g., orders, customers, products).
+
+## 1.12 Outcomes
+
+- The OLAP data warehouse is updated with the latest changes from the OLTP system within the 5-minute freshness target.
+- Analytics dashboards and reports reflect the new data.
+
+## 1.13 Business Rules
+
+- Data freshness in OLAP must be under 5 minutes (REQ-TEC-003).
+- The pipeline must handle data transformation and denormalization logic.
+- Messages that fail processing after retries must be sent to a Dead-Letter Queue (DLQ) for analysis.
+
+## 1.14 Error Scenarios
+
+- Transformation logic fails for a message, which is then moved to the DLQ after exhausting retries.
+- ClickHouse is unavailable, causing the processor to retry with exponential backoff before failing the message to the DLQ.
+
+## 1.15 Integration Points
+
+*No items available*
+
+# 2.0 Details
+
+## 2.1 Diagram Id
+
+SEQ-DF-001
+
+## 2.2 Name
+
+Implementation-Ready: OLTP to OLAP Change Data Capture (CDC) Pipeline
+
+## 2.3 Description
+
+Provides a detailed technical specification for the asynchronous data pipeline that captures transactional changes from the PostgreSQL OLTP database and replicates them to the ClickHouse OLAP data warehouse. This sequence details the entire flow, including WAL log reading, message queuing, event-driven processing, data transformation (ELT), and batch insertion, ensuring the 5-minute data freshness requirement of REQ-TEC-003 is met.
+
+## 2.4 Participants
+
+### 2.4.1 Actor
+
+#### 2.4.1.1 Repository Id
+
+external-system
+
+#### 2.4.1.2 Display Name
+
+Application Service
+
+#### 2.4.1.3 Type
+
+🔹 Actor
+
+#### 2.4.1.4 Technology
+
+AWS Lambda (Node.js)
+
+#### 2.4.1.5 Order
+
+1
+
+#### 2.4.1.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | actor |
+| Color | #999999 |
+| Stereotype | <<Actor>> |
+
+### 2.4.2.0 Database
+
+#### 2.4.2.1 Repository Id
+
+oltp-repository-008
+
+#### 2.4.2.2 Display Name
+
+OLTP Database
+
+#### 2.4.2.3 Type
+
+🔹 Database
+
+#### 2.4.2.4 Technology
+
+PostgreSQL 16
+
+#### 2.4.2.5 Order
+
+2
+
+#### 2.4.2.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | database |
+| Color | #22577A |
+| Stereotype | <<PostgreSQL>> |
+
+### 2.4.3.0 DataCaptureService
+
+#### 2.4.3.1 Repository Id
+
+cdc-service-001
+
+#### 2.4.3.2 Display Name
+
+CDC Service
+
+#### 2.4.3.3 Type
+
+🔹 DataCaptureService
+
+#### 2.4.3.4 Technology
+
+AWS DMS / Debezium
+
+#### 2.4.3.5 Order
+
+3
+
+#### 2.4.3.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #38A3A5 |
+| Stereotype | <<CDC>> |
+
+### 2.4.4.0 Queue
+
+#### 2.4.4.1 Repository Id
+
+async-task-queue-013
+
+#### 2.4.4.2 Display Name
+
+Message Queue
+
+#### 2.4.4.3 Type
+
+🔹 Queue
+
+#### 2.4.4.4 Technology
+
+AWS SQS
+
+#### 2.4.4.5 Order
+
+4
+
+#### 2.4.4.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | queue |
+| Color | #FFC400 |
+| Stereotype | <<SQS>> |
+
+### 2.4.5.0 ServerlessFunction
+
+#### 2.4.5.1 Repository Id
+
+data-pipeline-processor-014
+
+#### 2.4.5.2 Display Name
+
+Data Pipeline Processor
+
+#### 2.4.5.3 Type
+
+🔹 ServerlessFunction
+
+#### 2.4.5.4 Technology
+
+AWS Lambda (Node.js 20.x)
+
+#### 2.4.5.5 Order
+
+5
+
+#### 2.4.5.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #57CC99 |
+| Stereotype | <<Lambda>> |
+
+### 2.4.6.0 Database
+
+#### 2.4.6.1 Repository Id
+
+olap-repository-008
+
+#### 2.4.6.2 Display Name
+
+OLAP Data Warehouse
+
+#### 2.4.6.3 Type
+
+🔹 Database
+
+#### 2.4.6.4 Technology
+
+ClickHouse Cloud
+
+#### 2.4.6.5 Order
+
+6
+
+#### 2.4.6.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | database |
+| Color | #80ED99 |
+| Stereotype | <<ClickHouse>> |
+
+## 2.5.0.0 Interactions
+
+### 2.5.1.0 DatabaseWrite
+
+#### 2.5.1.1 Source Id
+
+external-system
+
+#### 2.5.1.2 Target Id
+
+oltp-repository-008
+
+#### 2.5.1.3 Message
+
+1. COMMIT TRANSACTION
+
+#### 2.5.1.4 Sequence Number
+
+1
+
+#### 2.5.1.5 Type
+
+🔹 DatabaseWrite
+
+#### 2.5.1.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.1.7 Return Message
+
+COMMIT SUCCESS
+
+#### 2.5.1.8 Has Return
+
+✅ Yes
+
+#### 2.5.1.9 Is Activation
+
+✅ Yes
+
+#### 2.5.1.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | SQL |
+| Method | COMMIT |
+| Parameters | Example: INSERT INTO orders (...) VALUES (...); UP... |
+| Authentication | Database credentials managed via AWS Secrets Manag... |
+| Error Handling | Standard ACID transaction error handling (rollback... |
+| Performance | Transaction should complete in < 50ms. |
+
+### 2.5.2.0 LogStreaming
+
+#### 2.5.2.1 Source Id
+
+oltp-repository-008
+
+#### 2.5.2.2 Target Id
+
+cdc-service-001
+
+#### 2.5.2.3 Message
+
+2. [Internal] Read change from Write-Ahead Log (WAL)
+
+#### 2.5.2.4 Sequence Number
+
+2
+
+#### 2.5.2.5 Type
+
+🔹 LogStreaming
+
+#### 2.5.2.6 Is Synchronous
+
+❌ No
+
+#### 2.5.2.7 Return Message
+
+
+
+#### 2.5.2.8 Has Return
+
+❌ No
+
+#### 2.5.2.9 Is Activation
+
+✅ Yes
+
+#### 2.5.2.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | PostgreSQL Logical Replication |
+| Method | pg_output |
+| Parameters | Stream of row-level changes (INSERT, UPDATE, DELET... |
+| Authentication | Replication user with appropriate permissions. |
+| Error Handling | Service maintains a checkpoint (LSN) to resume str... |
+| Performance | Sub-second latency from commit to log read. |
+
+### 2.5.3.0 MessagePublish
+
+#### 2.5.3.1 Source Id
+
+cdc-service-001
+
+#### 2.5.3.2 Target Id
+
+async-task-queue-013
+
+#### 2.5.3.3 Message
+
+3. PublishMessage(changeEvent)
+
+#### 2.5.3.4 Sequence Number
+
+3
+
+#### 2.5.3.5 Type
+
+🔹 MessagePublish
+
+#### 2.5.3.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.3.7 Return Message
+
+MessageID, MD5OfBody
+
+#### 2.5.3.8 Has Return
+
+✅ Yes
+
+#### 2.5.3.9 Is Activation
+
+❌ No
+
+#### 2.5.3.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | AWS SQS API |
+| Method | SendMessage |
+| Parameters | Payload: JSON object with { schema, payload: { bef... |
+| Authentication | IAM Role with sqs:SendMessage permission. |
+| Error Handling | Retry with exponential backoff on transient API er... |
+| Performance | p99 < 100ms. |
+
+### 2.5.4.0 EventTrigger
+
+#### 2.5.4.1 Source Id
+
+async-task-queue-013
+
+#### 2.5.4.2 Target Id
+
+data-pipeline-processor-014
+
+#### 2.5.4.3 Message
+
+4. [Trigger] Invoke with Batch of Messages
+
+#### 2.5.4.4 Sequence Number
+
+4
+
+#### 2.5.4.5 Type
+
+🔹 EventTrigger
+
+#### 2.5.4.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.4.7 Return Message
+
+
+
+#### 2.5.4.8 Has Return
+
+❌ No
+
+#### 2.5.4.9 Is Activation
+
+✅ Yes
+
+#### 2.5.4.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | SQS-Lambda Integration |
+| Method | Invoke |
+| Parameters | Event payload contains `Records` array, each with ... |
+| Authentication | IAM Role-based invocation permission. |
+| Error Handling | Lambda service polls SQS. On function error, the b... |
+| Performance | Polling is near-instantaneous. |
+
+### 2.5.5.0 DataProcessing
+
+#### 2.5.5.1 Source Id
+
+data-pipeline-processor-014
+
+#### 2.5.5.2 Target Id
+
+data-pipeline-processor-014
+
+#### 2.5.5.3 Message
+
+5. Deserialize, Validate, and Transform Data
+
+#### 2.5.5.4 Sequence Number
+
+5
+
+#### 2.5.5.5 Type
+
+🔹 DataProcessing
+
+#### 2.5.5.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.5.7 Return Message
+
+
+
+#### 2.5.5.8 Has Return
+
+❌ No
+
+#### 2.5.5.9 Is Activation
+
+❌ No
+
+#### 2.5.5.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | In-Memory |
+| Method | ELT Logic |
+| Parameters | Iterates through message batch. For each message, ... |
+| Authentication | N/A |
+| Error Handling | Messages failing validation/transformation are log... |
+| Performance | Transformation logic must be optimized to process ... |
+
+### 2.5.6.0 DatabaseWrite
+
+#### 2.5.6.1 Source Id
+
+data-pipeline-processor-014
+
+#### 2.5.6.2 Target Id
+
+olap-repository-008
+
+#### 2.5.6.3 Message
+
+6. Batch INSERT INTO SalesFact(...)
+
+#### 2.5.6.4 Sequence Number
+
+6
+
+#### 2.5.6.5 Type
+
+🔹 DatabaseWrite
+
+#### 2.5.6.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.6.7 Return Message
+
+Success / Failure
+
+#### 2.5.6.8 Has Return
+
+✅ Yes
+
+#### 2.5.6.9 Is Activation
+
+❌ No
+
+#### 2.5.6.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | ClickHouse HTTP API |
+| Method | POST / |
+| Parameters | Body: Transformed data in CSV or JSONCompact forma... |
+| Authentication | Database credentials managed via AWS Secrets Manag... |
+| Error Handling | Retry on transient connection errors. On persisten... |
+| Performance | Optimized for high-throughput batch inserts. Shoul... |
+
+### 2.5.7.0 MessageAcknowledge
+
+#### 2.5.7.1 Source Id
+
+data-pipeline-processor-014
+
+#### 2.5.7.2 Target Id
+
+async-task-queue-013
+
+#### 2.5.7.3 Message
+
+7. [On Success] Delete processed messages from queue
+
+#### 2.5.7.4 Sequence Number
+
+7
+
+#### 2.5.7.5 Type
+
+🔹 MessageAcknowledge
+
+#### 2.5.7.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.7.7 Return Message
+
+
+
+#### 2.5.7.8 Has Return
+
+❌ No
+
+#### 2.5.7.9 Is Activation
+
+❌ No
+
+#### 2.5.7.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | SQS-Lambda Integration |
+| Method | DeleteMessageBatch |
+| Parameters | If the Lambda function returns successfully, the S... |
+| Authentication | N/A - part of integration. |
+| Error Handling | If deletion fails, message may be reprocessed, req... |
+| Performance | Handled by the AWS service. |
+
+## 2.6.0.0 Notes
+
+### 2.6.1.0 Content
+
+#### 2.6.1.1 Content
+
+
+
+```
+Denormalization Logic (Step 5):
+The processor is responsible for creating a single, wide record for the 'SalesFact' table. This involves combining data from different change events (e.g., an OrderItem event may require looking up Product and Customer details if they are not included in the event). This is an ELT (Extract-Load-Transform) pattern.
+```
+
+#### 2.6.1.2 Position
+
+right
+
+#### 2.6.1.3 Participant Id
+
+data-pipeline-processor-014
+
+#### 2.6.1.4 Sequence Number
+
+5
+
+### 2.6.2.0 Content
+
+#### 2.6.2.1 Content
+
+
+
+```
+Idempotency is CRITICAL:
+Because SQS provides an at-least-once delivery guarantee, the Data Pipeline Processor must be idempotent to prevent duplicate data in ClickHouse. This can be achieved using a versioning field or a unique constraint on a composite key in the target table.
+```
+
+#### 2.6.2.2 Position
+
+bottom
+
+#### 2.6.2.3 Participant Id
+
+data-pipeline-processor-014
+
+#### 2.6.2.4 Sequence Number
+
+4
+
+## 2.7.0.0 Implementation Guidance
+
+| Property | Value |
+|----------|-------|
+| Security Requirements | The CDC service, SQS queue, Lambda processor, and ... |
+| Performance Targets | The primary SLO is an end-to-end data freshness of... |
+| Error Handling Strategy | The SQS queue MUST be configured with a Dead-Lette... |
+| Testing Considerations | A critical part of the test suite is an automated ... |
+| Monitoring Requirements | Key metrics for monitoring this pipeline are: SQS ... |
+| Deployment Considerations | The entire data pipeline infrastructure (SQS queue... |
+

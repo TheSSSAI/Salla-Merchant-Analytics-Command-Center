@@ -1,0 +1,69 @@
+flowchart TD
+    %% Root Entry
+    User((Authenticated User)) --> AppShell[Application Shell / Layout]
+
+    %% Global Elements
+    subgraph Global_Nav [Global Navigation & Tools]
+        AppShell --> Nav{Main Navigation Bar}
+        AppShell --> GlobalTools[Global Tools]
+        GlobalTools --> AcctSwitch[Account Switcher]
+        GlobalTools --> AIAssist[AI Assistant Overlay]
+        GlobalTools --> Help[Knowledge Base / Help]
+    end
+
+    %% Module: Dashboard
+    Nav --> |Default View| Dashboard[Main Dashboard]
+    subgraph Mod_Dashboard [Dashboard Module]
+        Dashboard --> DB_KPIs[Key Performance Indicators]
+        Dashboard --> DB_Filter[Global Date Filter]
+        Dashboard --> DB_Insights[AI Insights & Alerts]
+        Dashboard --> DB_Forecast[30-Day Sales Forecast Widget]
+    end
+
+    %% Module: Deep Analytics
+    Nav --> Analytics[Deep Analytics]
+    subgraph Mod_Analytics [Analytics Module]
+        Analytics --> Rep_Sales[Sales Trends Report]
+        Analytics --> Rep_Prod[Product Performance]
+        Analytics --> Rep_Cust[Customer Segmentation]
+        Rep_Cust --> Cust_Loc[Location Analysis]
+        Rep_Cust --> Cust_Value[New vs Returning / RFM]
+    end
+
+    %% Module: Cart Recovery
+    Nav --> CartRec[Cart Recovery]
+    subgraph Mod_CartRec [Cart Recovery Module]
+        CartRec --> CR_List[Abandoned Carts List]
+        CartRec --> CR_Seqs[Automated Sequences]
+        CR_Seqs --> CR_EditSeq[Sequence Editor]
+        CartRec --> CR_Tmpl[Email Templates]
+        CR_Tmpl --> CR_EditTmpl[Rich Text Editor]
+        CartRec --> CR_Stats[Performance Dashboard]
+    end
+
+    %% Module: Settings
+    Nav --> Settings[Settings]
+    subgraph Mod_Settings [Settings & Config]
+        Settings --> Set_Profile[User Profile]
+        Settings --> Set_Team[Team Management]
+        Set_Team --> Act_Invite[Invite Member]
+        Settings --> Set_Integ[Salla Integration]
+        Settings --> Set_Domain[Sending Domain Config]
+        Settings --> Set_Compl[Compliance / DSAR]
+    end
+
+    %% Relationships and Cross-Links
+    DB_Insights -.-> |Drill Down| Rep_Sales
+    CR_List -.-> |Manual Recovery| CR_Tmpl
+    Set_Team -.-> |RBAC Control| AppShell
+
+    %% Styling
+    classDef shell fill:#f5f5f5,stroke:#333,stroke-width:2px,color:#000
+    classDef module fill:#e1f5fe,stroke:#0277bd,stroke-width:2px,color:#000
+    classDef page fill:#ffffff,stroke:#0277bd,stroke-width:1px,color:#000
+    classDef tool fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,stroke-dasharray: 5 5,color:#000
+
+    class AppShell shell
+    class Dashboard,Analytics,CartRec,Settings module
+    class DB_KPIs,DB_Filter,DB_Insights,DB_Forecast,Rep_Sales,Rep_Prod,Rep_Cust,Cust_Loc,Cust_Value,CR_List,CR_Seqs,CR_EditSeq,CR_Tmpl,CR_EditTmpl,CR_Stats,Set_Profile,Set_Team,Act_Invite,Set_Integ,Set_Domain,Set_Compl page
+    class AcctSwitch,AIAssist,Help tool

@@ -1,0 +1,3 @@
+"optimization_area","current_state","recommended_action","expected_benefit","implementation_cost","timeline","success_metrics","roi_calculation"
+"Task Reallocation","Frontend Engineer underutilized (46%); Backend Engineer overloaded (114%) in Sprint 4.","Move TASK-CART-003 (Template Rendering) to Frontend Engineer.","Balances load: Backend ~95%, Frontend ~65%.","2","Sprint 4","Zero sprint carry-over for Backend Engineer.","Prevents 1 week delay in release ($2500 value)."
+"Skill Development","Only Lead Arch knows ClickHouse optimization.","Backend Dev to shadow Lead Arch during Schema Design.","Reduces Bus Factor for Data Pipeline maintenance.","4","Sprint 2","Backend Dev can deploy ClickHouse migration independently.","Risk reduction for long-term maintenance."

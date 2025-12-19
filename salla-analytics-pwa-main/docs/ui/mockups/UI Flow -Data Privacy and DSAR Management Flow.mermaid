@@ -1,0 +1,67 @@
+flowchart TD
+    subgraph User_Interface ["Merchant Dashboard (Frontend)"]
+        Start([Start: Owner Navigates to DSAR Page]) --> Input[Input Customer Email & Select Type]
+        Input --> Submit(Click Submit Request)
+        Submit --> Confirm{Request Type?}
+        Confirm -- Erasure --> Modal[Show Warning Confirmation Modal]
+        Modal -- "Cancel" --> Stop([End: Action Cancelled])
+        Modal -- "Confirm Erasure" --> API_Call
+        Confirm -- Access --> API_Call
+    end
+
+    subgraph Backend_API ["Compliance Service (API)"]
+        API_Call(POST /api/v1/dsar) --> Auth{Role == 'Owner'?}
+        Auth -- No --> Deny[Return 403 Forbidden]
+        Deny --> UI_Error[Display 'Access Denied']
+        Auth -- Yes --> Validate{Customer Exists in Merchant DB?}
+        Validate -- No --> NotFound[Return 404 Not Found]
+        NotFound --> UI_NotFound[Display 'Customer Not Found' Error]
+        Validate -- Yes --> CreateRecord[Create DSAR Record\nStatus: PENDING]
+        CreateRecord --> Audit[Log 'DSAR Submitted' to Audit Trail]
+        Audit --> QueueJob[Enqueue Job to QStash]
+        QueueJob --> ReturnSuccess[Return 202 Accepted]
+        ReturnSuccess --> UI_Update[UI Displays 'Request Pending']
+    end
+
+    subgraph Background_Processing ["Async Worker (Serverless)"]
+        QueueJob -.-> PickJob(Worker Consumes Job)
+        PickJob --> UpdateProcessing[Update Status: PROCESSING]
+        UpdateProcessing --> TypeCheck{Request Type?}
+        
+        %% Export Path
+        TypeCheck -- Access --> FetchData[Aggregate Customer PII & Order History]
+        FetchData --> GenFile[Generate JSON Data File]
+        GenFile --> Upload[Upload to Secure Storage R2]
+        Upload --> GenLink[Generate Signed Download URL\n(Expires in 7 days)]
+        GenLink --> FinalizeAccess[Update Status: COMPLETED\nSave Download URL]
+
+        %% Erasure Path
+        TypeCheck -- Erasure --> AnonData[Execute Anonymization Script\n(Scrub PII, Retain Metrics)]
+        AnonData --> Verify[Verify PII Removal Consistency]
+        Verify -- "Verification Failed" --> ErrorHandler
+        Verify -- "Success" --> FinalizeErasure[Update Status: COMPLETED]
+        
+        %% Error Handling
+        ErrorHandler[Log Critical Error & Alert Ops] --> UpdateFailed[Update Status: FAILED]
+    end
+
+    subgraph Notifications ["Notification System"]
+        FinalizeAccess --> NotifyEmail[Send Completion Email to Owner]
+        FinalizeErasure --> NotifyEmail
+        UpdateFailed --> NotifyError[Send Failure Alert to Owner]
+    end
+
+    %% Styles
+    classDef ui fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000
+    classDef api fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000
+    classDef worker fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    classDef decision fill:#fff9c4,stroke:#fbc02d,stroke-width:2px,color:#000
+    classDef error fill:#ffebee,stroke:#c62828,stroke-width:2px,color:#000
+    classDef success fill:#f1f8e9,stroke:#33691e,stroke-width:2px,color:#000
+
+    class Start,Input,Submit,Modal,Stop,UI_Update,UI_Error,UI_NotFound ui
+    class API_Call,CreateRecord,Audit,QueueJob,ReturnSuccess api
+    class PickJob,UpdateProcessing,FetchData,GenFile,Upload,GenLink,AnonData,Verify,ErrorHandler,UpdateFailed worker
+    class FinalizeAccess,FinalizeErasure,NotifyEmail,NotifyError success
+    class Auth,Validate,TypeCheck,Confirm decision
+    class Deny,NotFound,ErrorHandler,UpdateFailed error

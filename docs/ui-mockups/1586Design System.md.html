@@ -1,0 +1,327 @@
+
+{
+  "visual_foundation": {
+    "typography": {
+      "font_families": {
+        "primary": "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        "secondary": "'Inter', sans-serif",
+        "monospace": "'JetBrains Mono', 'Fira Code', monospace"
+      },
+      "font_scale": {
+        "h1": {
+          "size": "3.0rem",
+          "weight": "700",
+          "line_height": "1.1",
+          "letter_spacing": "-0.02em"
+        },
+        "h2": {
+          "size": "2.25rem",
+          "weight": "600",
+          "line_height": "1.2",
+          "letter_spacing": "-0.01em"
+        },
+        "h3": {
+          "size": "1.5rem",
+          "weight": "600",
+          "line_height": "1.3",
+          "letter_spacing": "normal"
+        },
+        "h4": {
+          "size": "1.25rem",
+          "weight": "600",
+          "line_height": "1.4",
+          "letter_spacing": "normal"
+        },
+        "body_large": {
+          "size": "1.125rem",
+          "weight": "400",
+          "line_height": "1.6",
+          "letter_spacing": "normal"
+        },
+        "body": {
+          "size": "1rem",
+          "weight": "400",
+          "line_height": "1.5",
+          "letter_spacing": "normal"
+        },
+        "caption": {
+          "size": "0.875rem",
+          "weight": "400",
+          "line_height": "1.4",
+          "letter_spacing": "0.01em"
+        },
+        "tiny": {
+          "size": "0.75rem",
+          "weight": "500",
+          "line_height": "1.2",
+          "letter_spacing": "0.02em"
+        }
+      },
+      "responsive_scaling": "Fluid typography using clamp() functions for headings; fixed rem units for body text to maintain readability on mobile."
+    },
+    "color_palette": {
+      "primary": {
+        "50": "#eef2ff",
+        "100": "#e0e7ff",
+        "200": "#c7d2fe",
+        "300": "#a5b4fc",
+        "400": "#818cf8",
+        "500": "#6366f1",
+        "600": "#4f46e5",
+        "700": "#4338ca",
+        "800": "#3730a3",
+        "900": "#312e81"
+      },
+      "secondary": {
+        "50": "#f0fdfa",
+        "500": "#14b8a6",
+        "900": "#134e4a"
+      },
+      "neutrals": {
+        "white": "#ffffff",
+        "gray_50": "#f8fafc",
+        "gray_100": "#f1f5f9",
+        "gray_200": "#e2e8f0",
+        "gray_300": "#cbd5e1",
+        "gray_400": "#94a3b8",
+        "gray_500": "#64748b",
+        "gray_600": "#475569",
+        "gray_700": "#334155",
+        "gray_800": "#1e293b",
+        "gray_900": "#0f172a",
+        "black": "#020617"
+      },
+      "semantic": {
+        "success": "#10b981",
+        "success_bg": "#ecfdf5",
+        "warning": "#f59e0b",
+        "warning_bg": "#fffbeb",
+        "error": "#ef4444",
+        "error_bg": "#fef2f2",
+        "info": "#3b82f6",
+        "info_bg": "#eff6ff"
+      },
+      "data_visualization": {
+        "series_1": "#4f46e5",
+        "series_2": "#10b981",
+        "series_3": "#f59e0b",
+        "series_4": "#ec4899",
+        "series_5": "#8b5cf6"
+      }
+    },
+    "spacing_system": {
+      "scale": [
+        "0px",
+        "4px",
+        "8px",
+        "12px",
+        "16px",
+        "24px",
+        "32px",
+        "48px",
+        "64px",
+        "96px",
+        "128px"
+      ],
+      "grid_system": "12-column grid with 24px gutters (desktop), 16px gutters (tablet), 4-column with 16px gutters (mobile)",
+      "container_widths": {
+        "mobile": "100%",
+        "tablet": "768px",
+        "desktop": "1280px",
+        "wide": "1536px"
+      },
+      "responsive_spacing": "Density increases on mobile; padding reduces by 1 step on scale (e.g., 24px desktop -> 16px mobile) for containers."
+    }
+  },
+  "component_specifications": {
+    "buttons": {
+      "primary": {
+        "default_state": {
+          "background": "var(--color-primary-600)",
+          "text": "var(--color-white)",
+          "padding": "10px 20px",
+          "border_radius": "6px",
+          "font_weight": "500"
+        },
+        "hover_state": {
+          "background": "var(--color-primary-700)",
+          "elevation": "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+        },
+        "active_state": {
+          "background": "var(--color-primary-800)",
+          "transform": "scale(0.98)"
+        },
+        "disabled_state": {
+          "background": "var(--color-gray-200)",
+          "text": "var(--color-gray-400)",
+          "cursor": "not-allowed"
+        },
+        "focus_state": {
+          "outline": "2px solid var(--color-primary-600)",
+          "outline_offset": "2px"
+        }
+      },
+      "secondary": {
+        "default_state": {
+          "background": "var(--color-white)",
+          "border": "1px solid var(--color-gray-300)",
+          "text": "var(--color-gray-700)"
+        },
+        "hover_state": {
+          "background": "var(--color-gray-50)",
+          "border": "1px solid var(--color-gray-400)"
+        }
+      },
+      "accessibility": "Minimum 44px touch target. Aria-label required for icon-only buttons. Focus visible state mandatory."
+    },
+    "form_inputs": {
+      "text_input": {
+        "default_state": {
+          "background": "var(--color-white)",
+          "border": "1px solid var(--color-gray-300)",
+          "padding": "10px 12px",
+          "border_radius": "6px",
+          "text": "var(--color-gray-900)"
+        },
+        "focus_state": {
+          "border": "1px solid var(--color-primary-500)",
+          "box_shadow": "0 0 0 3px var(--color-primary-100)"
+        },
+        "error_state": {
+          "border": "1px solid var(--color-error)",
+          "box_shadow": "0 0 0 1px var(--color-error)"
+        },
+        "disabled_state": {
+          "background": "var(--color-gray-100)",
+          "text": "var(--color-gray-400)",
+          "cursor": "not-allowed"
+        },
+        "accessibility": "Labels must be visible and associated via 'for' attribute. Error messages linked via aria-describedby."
+      }
+    },
+    "navigation": {
+      "header": {
+        "desktop_layout": "Sticky top bar, 64px height, contains Global Search, Notifications, User Profile.",
+        "mobile_layout": "Sticky top bar with Hamburger trigger, Logo, and Notifications.",
+        "active_states": "Border-bottom or distinct background color for active tab.",
+        "accessibility": "Skip-to-content link as first focusable element. Aria-current='page' for active links."
+      },
+      "sidebar": {
+        "desktop_layout": "Fixed left, 256px width. Collapsible to 64px icon-only mode.",
+        "mobile_layout": "Off-canvas drawer sliding from left, overlaying content with backdrop blur.",
+        "active_states": "Background: var(--color-primary-50), Text: var(--color-primary-700), Left-border: 3px solid var(--color-primary-600)."
+      }
+    },
+    "data_display": {
+      "cards": {
+        "default_card": {
+          "background": "var(--color-white)",
+          "border": "1px solid var(--color-gray-200)",
+          "border_radius": "8px",
+          "padding": "24px",
+          "shadow": "0 1px 3px 0 rgba(0, 0, 0, 0.1)"
+        },
+        "hover_state": {
+          "shadow": "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+          "border": "1px solid var(--color-gray-300)"
+        },
+        "content_structure": "Header (Title + Action), Body (Chart/Metric), Footer (Trend/Context)"
+      },
+      "data_tables": {
+        "header": {
+          "background": "var(--color-gray-50)",
+          "text": "var(--color-gray-600)",
+          "font_weight": "600",
+          "text_transform": "uppercase",
+          "font_size": "0.75rem"
+        },
+        "row": {
+          "border_bottom": "1px solid var(--color-gray-200)",
+          "hover_background": "var(--color-gray-50)"
+        }
+      }
+    },
+    "feedback": {
+      "alerts": {
+        "success": {
+          "background": "var(--color-success-bg)",
+          "border": "1px solid var(--color-success)",
+          "text": "var(--color-gray-900)",
+          "icon_color": "var(--color-success)"
+        },
+        "error": {
+          "background": "var(--color-error-bg)",
+          "border": "1px solid var(--color-error)",
+          "text": "var(--color-gray-900)",
+          "icon_color": "var(--color-error)"
+        },
+        "accessibility": "Role='alert' for dynamic errors. Role='status' for success messages."
+      },
+      "skeleton_loader": {
+        "background": "linear-gradient(90deg, var(--color-gray-100) 25%, var(--color-gray-200) 50%, var(--color-gray-100) 75%)",
+        "animation": "shimmer 1.5s infinite"
+      }
+    }
+  },
+  "interaction_patterns": {
+    "micro_interactions": [
+      {
+        "pattern_name": "Button Press",
+        "trigger": "Active (mousedown/touchstart)",
+        "animation": "transform: scale(0.98); transition: transform 100ms ease-out;",
+        "accessibility": "Disable transform if prefers-reduced-motion: reduce"
+      },
+      {
+        "pattern_name": "Input Focus",
+        "trigger": "Focus",
+        "animation": "transition: border-color 200ms ease, box-shadow 200ms ease;",
+        "accessibility": "High contrast focus ring must remain visible"
+      }
+    ],
+    "loading_states": [
+      {
+        "pattern_name": "Initial Data Sync",
+        "visual": "Determinate progress bar in header + Skeleton screens in dashboard widgets",
+        "duration": "Real-time updates via WebSocket/Polling",
+        "accessibility": "aria-valuenow updated dynamically on progress bar. Live region announces 'Syncing X% complete'."
+      },
+      {
+        "pattern_name": "AI Thinking",
+        "visual": "Pulsing gradient border on chat input or 'typing' dots animation",
+        "duration": "Indeterminate",
+        "accessibility": "Aria-label 'AI is generating response'"
+      }
+    ]
+  },
+  "implementation_guidelines": {
+    "css_architecture": {
+      "custom_properties": {
+        "--color-primary-600": "#4f46e5",
+        "--color-gray-200": "#e2e8f0",
+        "--spacing-4": "16px",
+        "--font-sans": "'Inter', sans-serif",
+        "--radius-md": "6px",
+        "--shadow-sm": "0 1px 2px 0 rgb(0 0 0 / 0.05)"
+      },
+      "naming_conventions": "BEM (Block Element Modifier) for global styles; Utility-first (Tailwind-like) for layout composition.",
+      "component_organization": "Atomic structure: /atoms (buttons, inputs), /molecules (form fields, cards), /organisms (tables, sidebars), /templates (dashboard layouts).",
+      "utility_classes": "Use standard spacing/sizing utilities (e.g., .p-4, .m-2, .flex, .gap-4) to maintain consistency."
+    },
+    "responsive_strategy": {
+      "breakpoints": {
+        "mobile": "320px",
+        "tablet": "768px",
+        "desktop": "1024px",
+        "wide": "1280px"
+      },
+      "approach": "Mobile-first. Default styles are for mobile; min-width media queries add complexity for larger screens.",
+      "component_adaptations": "Data tables switch to stacked cards on mobile. Sidebar becomes a drawer. Charts hide legends/tooltips to save space."
+    },
+    "accessibility_implementation": {
+      "focus_management": "All interactive elements must have a visible :focus-visible state (outline: 2px solid primary). Modals must trap focus.",
+      "color_contrast": "Text must meet 4.5:1 ratio against background. Large text 3:1. UI components (borders) 3:1.",
+      "screen_reader_support": "Use semantic HTML5 (<nav>, <main>, <article>). Charts must have a visually hidden <table> fallback or detailed aria-description.",
+      "keyboard_navigation": "Logical tab order (top-left to bottom-right). Escape key closes modals/drawers/menus. Enter/Space activates buttons."
+    }
+  }
+}

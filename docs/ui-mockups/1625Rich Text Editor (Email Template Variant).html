@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rich Text Editor Organism</title>
+  <style>
+    /* =========================================
+       1. Design System Tokens & Reset
+       ========================================= */
+    :root {
+      /* Palette */
+      --color-primary-50: #eef2ff;
+      --color-primary-100: #e0e7ff;
+      --color-primary-500: #6366f1;
+      --color-primary-600: #4f46e5;
+      --color-primary-700: #4338ca;
+      
+      --color-white: #ffffff;
+      --color-gray-50: #f8fafc;
+      --color-gray-100: #f1f5f9;
+      --color-gray-200: #e2e8f0;
+      --color-gray-300: #cbd5e1;
+      --color-gray-400: #94a3b8;
+      --color-gray-500: #64748b;
+      --color-gray-600: #475569;
+      --color-gray-700: #334155;
+      --color-gray-800: #1e293b;
+      --color-gray-900: #0f172a;
+      
+      --color-success: #10b981;
+      --color-success-bg: #ecfdf5;
+      --color-error: #ef4444;
+      
+      /* Typography */
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+      
+      /* Spacing & Sizing */
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 8px;
+      
+      /* Effects */
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      
+      /* Transitions */
+      --transition-base: all 0.2s ease;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--color-gray-50);
+      color: var(--color-gray-900);
+      padding: 2rem;
+      line-height: 1.5;
+    }
+
+    h2, h3 {
+      color: var(--color-gray-800);
+      margin-bottom: 1rem;
+    }
+
+    /* =========================================
+       2. Base Atoms (Inputs, Buttons, Labels)
+       ========================================= */
+    .label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-gray-700);
+      margin-bottom: 0.375rem;
+    }
+
+    .input-text {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.875rem;
+      color: var(--color-gray-900);
+      background-color: var(--color-white);
+      border: 1px solid var(--color-gray-300);
+      border-radius: var(--radius-md);
+      transition: var(--transition-base);
+    }
+
+    .input-text:focus {
+      outline: none;
+      border-color: var(--color-primary-600);
+      box-shadow: 0 0 0 2px var(--color-primary-100);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition-base);
+      border: 1px solid transparent;
+      gap: 0.5rem;
+    }
+
+    .btn--primary {
+      background-color: var(--color-primary-600);
+      color: var(--color-white);
+    }
+    .btn--primary:hover {
+      background-color: var(--color-primary-700);
+    }
+    .btn--primary:focus-visible {
+      outline: 2px solid var(--color-primary-600);
+      outline-offset: 2px;
+    }
+
+    .btn--secondary {
+      background-color: var(--color-white);
+      border-color: var(--color-gray-300);
+      color: var(--color-gray-700);
+    }
+    .btn--secondary:hover {
+      background-color: var(--color-gray-50);
+      border-color: var(--color-gray-400);
+    }
+
+    .btn--ghost {
+      background-color: transparent;
+      color: var(--color-gray-600);
+      padding: 0.25rem;
+    }
+    .btn--ghost:hover {
+      background-color: var(--color-gray-100);
+      color: var(--color-gray-900);
+    }
+
+    /* Icon Utility */
+    .icon {
+      width: 16px;
+      height: 16px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* =========================================
+       3. Organism: Rich Text Editor
+       ========================================= */
+    .rte-container {
+      background: var(--color-white);
+      border: 1px solid var(--color-gray-200);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* --- Meta Header Section --- */
+    .rte-header {
+      padding: var(--spacing-lg);
+      border-bottom: 1px solid var(--color-gray-200);
+      display: grid;
+      gap: var(--spacing-md);
+      background-color: var(--color-gray-50);
+    }
+
+    .rte-header__row {
+      display: grid;
+      grid-template-columns: 120px 1fr;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    @media (max-width: 640px) {
+      .rte-header__row {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-xs);
+      }
+    }
+
+    /* --- Toolbar Section --- */
+    .rte-toolbar {
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-bottom: 1px solid var(--color-gray-200);
+      background-color: var(--color-white);
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-sm);
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      padding-right: var(--spacing-sm);
+      margin-right: var(--spacing-sm);
+      border-right: 1px solid var(--color-gray-200);
+    }
+    
+    .toolbar-group:last-child {
+      border-right: none;
+      margin-right: 0;
+    }
+
+    .toolbar-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-sm);
+      color: var(--color-gray-600);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: var(--transition-base);
+    }
+
+    .toolbar-btn:hover {
+      background-color: var(--color-gray-100);
+      color: var(--color-gray-900);
+    }
+
+    .toolbar-btn[aria-pressed="true"] {
+      background-color: var(--color-primary-50);
+      color: var(--color-primary-600);
+    }
+
+    .toolbar-btn:focus-visible {
+      outline: 2px solid var(--color-primary-600);
+      outline-offset: -2px;
+    }
+
+    /* Special Toolbar Elements */
+    .toolbar-select {
+      height: 32px;
+      padding: 0 24px 0 8px;
+      font-size: 0.875rem;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      background-color: transparent;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 4px center;
+      color: var(--color-gray-700);
+    }
+    .toolbar-select:hover {
+      background-color: var(--color-gray-100);
+    }
+
+    .btn-variable {
+      padding: 0 10px;
+      width: auto;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--color-primary-600);
+      background-color: var(--color-primary-50);
+      border: 1px dashed var(--color-primary-200);
+    }
+    .btn-variable:hover {
+      background-color: var(--color-primary-100);
+      border-color: var(--color-primary-600);
+    }
+
+    /* --- Editor Content Area --- */
+    .rte-content {
+      padding: var(--spacing-xl);
+      min-height: 400px;
+      background-color: var(--color-white);
+      color: var(--color-gray-900);
+      font-size: 1rem;
+      outline: none;
+      overflow-y: auto;
+    }
+
+    .rte-content p { margin-bottom: 1em; }
+    .rte-content h1, .rte-content h2, .rte-content h3 { margin-bottom: 0.5em; margin-top: 1em; color: var(--color-gray-900); }
+    .rte-content ul, .rte-content ol { margin-left: 1.5em; margin-bottom: 1em; }
+    .rte-content blockquote { border-left: 3px solid var(--color-primary-500); padding-left: 1em; color: var(--color-gray-600); margin-bottom: 1em; }
+    
+    /* Variable Chips inside content */
+    .variable-chip {
+      display: inline-block;
+      background-color: var(--color-primary-50);
+      color: var(--color-primary-700);
+      padding: 0 6px;
+      border-radius: var(--radius-sm);
+      font-size: 0.875em;
+      font-family: var(--font-mono);
+      border: 1px solid var(--color-primary-100);
+      vertical-align: middle;
+      cursor: default;
+      user-select: none;
+    }
+
+    /* --- Footer Action Area --- */
+    .rte-footer {
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-top: 1px solid var(--color-gray-200);
+      background-color: var(--color-gray-50);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .save-status {
+      font-size: 0.75rem;
+      color: var(--color-gray-500);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--color-success);
+    }
+
+    .footer-actions {
+      display: flex;
+      gap: var(--spacing-sm);
+    }
+
+    /* --- States & Variants --- */
+    
+    /* Preview Mode */
+    .rte-container--preview .rte-toolbar {
+      display: none;
+    }
+    .rte-container--preview .rte-content {
+      background-color: var(--color-gray-50);
+      pointer-events: none;
+    }
+    .rte-container--preview .rte-header {
+      border-bottom: none;
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    /* Readonly Mode */
+    .rte-container--readonly .rte-toolbar {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .rte-container--readonly .rte-content {
+      background-color: var(--color-gray-50);
+      color: var(--color-gray-600);
+    }
+
+    /* Mobile Responsive Tweaks */
+    @media (max-width: 768px) {
+      .rte-container {
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+      }
+      .rte-content {
+        padding: var(--spacing-md);
+      }
+      .toolbar-group {
+        border-right: none;
+        margin-right: 0;
+        padding-right: var(--spacing-xs);
+      }
+      .rte-footer {
+        flex-direction: column-reverse;
+        gap: var(--spacing-md);
+        align-items: stretch;
+      }
+      .footer-actions {
+        flex-direction: column;
+      }
+      .footer-actions .btn {
+        width: 100%;
+      }
+      .save-status {
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Component Variations Section -->
+  
+  <div style="max-width: 900px; margin: 0 auto;">
+    <h2>Component Showcase: Rich Text Editor</h2>
+    
+    <!-- VARIANT 1: Editing State -->
+    <div style="margin-bottom: 4rem;">
+      <h3>Variant: Email Template Editor (Default/Editing)</h3>
+      <p style="margin-bottom: 1rem; color: var(--color-gray-600);">Full featured editor for composing email templates with formatting tools and dynamic variable insertion.</p>
+      
+      <!-- Component HTML Start -->
+      <div class="rte-container">
+        <!-- 1. Header: Context Inputs -->
+        <div class="rte-header">
+          <div class="rte-header__row">
+            <label class="label" for="template-name">Template Name</label>
+            <input type="text" id="template-name" class="input-text" value="Abandoned Cart - 24h Reminder" placeholder="e.g. Welcome Series #1">
+          </div>
+          <div class="rte-header__row">
+            <label class="label" for="email-subject">Subject Line</label>
+            <div style="display: flex; gap: 8px; width: 100%;">
+              <input type="text" id="email-subject" class="input-text" value="Hi {{customer_name}}, you left something behind!" placeholder="Email subject...">
+              <button class="btn btn--secondary" style="padding: 0.5rem;" title="Add Variable to Subject" aria-label="Add variable">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Toolbar -->
+        <div class="rte-toolbar" role="toolbar" aria-label="Text formatting">
+          <!-- Text Style -->
+          <div class="toolbar-group">
+            <select class="toolbar-select" aria-label="Heading level">
+              <option value="p">Normal</option>
+              <option value="h1">Heading 1</option>
+              <option value="h2">Heading 2</option>
+              <option value="h3">Heading 3</option>
+            </select>
+          </div>
+
+          <!-- Basic Formatting -->
+          <div class="toolbar-group">
+            <button class="toolbar-btn" aria-label="Bold" title="Bold (Ctrl+B)">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>
+            </button>
+            <button class="toolbar-btn" aria-label="Italic" title="Italic (Ctrl+I)" aria-pressed="true">
+              <svg class="icon" viewBox="0 0 24 24"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
+            </button>
+            <button class="toolbar-btn" aria-label="Underline" title="Underline (Ctrl+U)">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></svg>
+            </button>
+          </div>
+
+          <!-- Lists & Alignment -->
+          <div class="toolbar-group">
+            <button class="toolbar-btn" aria-label="Bullet List" title="Bullet List">
+              <svg class="icon" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            </button>
+            <button class="toolbar-btn" aria-label="Ordered List" title="Ordered List">
+              <svg class="icon" viewBox="0 0 24 24"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></svg>
+            </button>
+          </div>
+
+          <!-- Inserts -->
+          <div class="toolbar-group">
+            <button class="toolbar-btn" aria-label="Insert Link" title="Link">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            </button>
+            <button class="toolbar-btn btn-variable" aria-label="Insert Variable" title="Insert Dynamic Variable">
+              <span style="margin-right: 4px;">{}</span> Vars
+            </button>
+          </div>
+
+          <!-- Undo/Redo -->
+          <div class="toolbar-group" style="margin-left: auto; border: none;">
+            <button class="toolbar-btn" aria-label="Undo" title="Undo">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+            </button>
+            <button class="toolbar-btn" aria-label="Redo" title="Redo">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. Editable Content -->
+        <div class="rte-content" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Email body content">
+          <p>Hi <span class="variable-chip" contenteditable="false">{{customer_name}}</span>,</p>
+          <p>It looks like you left some great items in your cart. We saved them for you!</p>
+          <blockquote>
+            "Fast shipping and great quality!" - <em>Happy Customer</em>
+          </blockquote>
+          <h3>Your Cart Items:</h3>
+          <ul>
+            <li>Vintage Leather Jacket</li>
+            <li>Denim Jeans (Size 32)</li>
+          </ul>
+          <p>Click below to complete your purchase:</p>
+          <p><a href="#" style="color: #4f46e5; text-decoration: underline;">Return to Cart</a></p>
+          <p>Best,<br>The Team</p>
+        </div>
+
+        <!-- 4. Footer Actions -->
+        <div class="rte-footer">
+          <div class="save-status">
+            <span class="status-dot"></span>
+            Last saved at 10:42 AM
+          </div>
+          <div class="footer-actions">
+            <button class="btn btn--secondary">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              Preview
+            </button>
+            <button class="btn btn--primary">Save Template</button>
+          </div>
+        </div>
+      </div>
+      <!-- Component HTML End -->
+    </div>
+
+    <!-- VARIANT 2: Preview Mode -->
+    <div style="margin-bottom: 4rem;">
+      <h3>Variant: Preview Mode</h3>
+      <p style="margin-bottom: 1rem; color: var(--color-gray-600);">Read-only view simulating how the email renders. Toolbar is hidden and inputs disabled.</p>
+      
+      <div class="rte-container rte-container--preview">
+        <div class="rte-header">
+          <div class="rte-header__row">
+            <label class="label">Template Name</label>
+            <input type="text" class="input-text" value="Abandoned Cart - 24h Reminder" disabled>
+          </div>
+        </div>
+        <div class="rte-content" aria-label="Preview content">
+          <p>Hi <strong>John Doe</strong>,</p>
+          <p>It looks like you left some great items in your cart. We saved them for you!</p>
+          <h3>Your Cart Items:</h3>
+          <ul>
+            <li>Vintage Leather Jacket</li>
+            <li>Denim Jeans (Size 32)</li>
+          </ul>
+          <p><a href="#" style="color: #4f46e5;">Return to Cart</a></p>
+        </div>
+        <div class="rte-footer">
+          <div></div>
+          <div class="footer-actions">
+            <button class="btn btn--secondary">Edit Template</button>
+            <button class="btn btn--primary">Send Test Email</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

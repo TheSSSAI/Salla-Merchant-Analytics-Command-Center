@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AI Assistant | Merchant Analytics Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    /* -----------------------------------------------------------------------------
+     * DESIGN SYSTEM TOKENS & RESET
+     * ----------------------------------------------------------------------------- */
+    :root {
+      /* Color Palette - Primary */
+      --color-primary-50: #eef2ff;
+      --color-primary-100: #e0e7ff;
+      --color-primary-500: #6366f1;
+      --color-primary-600: #4f46e5;
+      --color-primary-700: #4338ca;
+      --color-primary-800: #3730a3;
+
+      /* Color Palette - Neutrals */
+      --color-white: #ffffff;
+      --color-gray-50: #f8fafc;
+      --color-gray-100: #f1f5f9;
+      --color-gray-200: #e2e8f0;
+      --color-gray-300: #cbd5e1;
+      --color-gray-400: #94a3b8;
+      --color-gray-500: #64748b;
+      --color-gray-600: #475569;
+      --color-gray-700: #334155;
+      --color-gray-800: #1e293b;
+      --color-gray-900: #0f172a;
+
+      /* Semantic Colors */
+      --color-success: #10b981;
+      --color-success-bg: #ecfdf5;
+      --color-warning: #f59e0b;
+      --color-error: #ef4444;
+
+      /* Spacing */
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --spacing-xl: 32px;
+      --spacing-2xl: 48px;
+
+      /* Typography */
+      --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --text-xs: 0.75rem;
+      --text-sm: 0.875rem;
+      --text-base: 1rem;
+      --text-lg: 1.125rem;
+      --text-xl: 1.25rem;
+      --text-2xl: 1.5rem;
+
+      /* UI Elements */
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-full: 9999px;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      --header-height: 64px;
+      --sidebar-width: 256px;
+    }
+
+    /* Reset */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-primary);
+      color: var(--color-gray-900);
+      background-color: var(--color-gray-50);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      height: 100vh;
+      overflow: hidden; /* App-like feel */
+    }
+
+    button, input, textarea {
+      font-family: inherit;
+      font-size: inherit;
+    }
+
+    /* -----------------------------------------------------------------------------
+     * LAYOUT COMPONENTS
+     * ----------------------------------------------------------------------------- */
+    .app-shell {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background-color: var(--color-white);
+      border-right: 1px solid var(--color-gray-200);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      transition: transform 0.3s ease;
+      z-index: 20;
+    }
+
+    .sidebar__logo {
+      height: var(--header-height);
+      display: flex;
+      align-items: center;
+      padding: 0 var(--spacing-lg);
+      font-weight: 700;
+      font-size: var(--text-xl);
+      color: var(--color-primary-600);
+      border-bottom: 1px solid var(--color-gray-100);
+    }
+
+    .sidebar__nav {
+      flex: 1;
+      padding: var(--spacing-md) var(--spacing-sm);
+      overflow-y: auto;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-sm) var(--spacing-md);
+      color: var(--color-gray-600);
+      text-decoration: none;
+      border-radius: var(--radius-md);
+      margin-bottom: var(--spacing-xs);
+      font-weight: 500;
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    .nav-item:hover {
+      background-color: var(--color-gray-50);
+      color: var(--color-gray-900);
+    }
+
+    .nav-item.active {
+      background-color: var(--color-primary-50);
+      color: var(--color-primary-700);
+    }
+
+    .sidebar__user {
+      padding: var(--spacing-md);
+      border-top: 1px solid var(--color-gray-200);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-full);
+      background-color: var(--color-primary-100);
+      color: var(--color-primary-700);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: var(--text-sm);
+    }
+
+    /* Main Content Area */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      background-color: var(--color-white);
+      position: relative;
+    }
+
+    /* Header */
+    .header {
+      height: var(--header-height);
+      border-bottom: 1px solid var(--color-gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--spacing-lg);
+      background-color: var(--color-white);
+      flex-shrink: 0;
+    }
+
+    .header__title {
+      font-size: var(--text-lg);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .header__actions {
+      display: flex;
+      gap: var(--spacing-sm);
+    }
+
+    .btn-icon {
+      background: none;
+      border: 1px solid var(--color-gray-200);
+      border-radius: var(--radius-md);
+      padding: 8px;
+      cursor: pointer;
+      color: var(--color-gray-600);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .btn-icon:hover {
+      background-color: var(--color-gray-50);
+      color: var(--color-gray-900);
+    }
+
+    .mobile-menu-trigger {
+      display: none;
+      margin-right: var(--spacing-md);
+    }
+
+    /* -----------------------------------------------------------------------------
+     * CHAT INTERFACE
+     * ----------------------------------------------------------------------------- */
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background-color: var(--color-gray-50);
+    }
+
+    /* Message History */
+    .chat-history {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--spacing-lg);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xl);
+      scroll-behavior: smooth;
+    }
+
+    .message-group {
+      display: flex;
+      gap: var(--spacing-md);
+      max-width: 900px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .message-group--user {
+      flex-direction: row-reverse;
+    }
+
+    .message-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: var(--text-xs);
+    }
+
+    .message-avatar--ai {
+      background-color: var(--color-primary-600);
+      color: var(--color-white);
+    }
+
+    .message-avatar--user {
+      background-color: var(--color-gray-200);
+      color: var(--color-gray-600);
+    }
+
+    .message-content {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+      max-width: 80%;
+    }
+
+    .message-bubble {
+      padding: var(--spacing-md);
+      border-radius: var(--radius-lg);
+      font-size: var(--text-base);
+      line-height: 1.5;
+      position: relative;
+    }
+
+    .message-bubble--ai {
+      background-color: var(--color-white);
+      border: 1px solid var(--color-gray-200);
+      color: var(--color-gray-800);
+      border-top-left-radius: 0;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .message-bubble--user {
+      background-color: var(--color-primary-600);
+      color: var(--color-white);
+      border-top-right-radius: 0;
+      box-shadow: var(--shadow-md);
+    }
+
+    .message-timestamp {
+      font-size: var(--text-xs);
+      color: var(--color-gray-500);
+      margin-top: 4px;
+    }
+
+    .message-group--user .message-timestamp {
+      text-align: right;
+    }
+
+    /* Suggestion Chips */
+    .suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-sm);
+      margin-top: var(--spacing-sm);
+    }
+
+    .suggestion-chip {
+      background-color: var(--color-white);
+      border: 1px solid var(--color-primary-100);
+      color: var(--color-primary-700);
+      padding: 6px 12px;
+      border-radius: var(--radius-full);
+      font-size: var(--text-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .suggestion-chip:hover {
+      background-color: var(--color-primary-50);
+      border-color: var(--color-primary-300);
+    }
+
+    /* Data Cards within Chat */
+    .data-card {
+      background-color: var(--color-white);
+      border: 1px solid var(--color-gray-200);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-lg);
+      margin-top: var(--spacing-sm);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .data-card__title {
+      font-size: var(--text-sm);
+      color: var(--color-gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .data-card__value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--color-gray-900);
+      display: flex;
+      align-items: baseline;
+      gap: var(--spacing-sm);
+    }
+
+    .data-card__trend {
+      font-size: var(--text-sm);
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+    }
+
+    .trend--up {
+      background-color: var(--color-success-bg);
+      color: var(--color-success);
+    }
+
+    /* Chat Input Area */
+    .chat-input-wrapper {
+      background-color: var(--color-white);
+      border-top: 1px solid var(--color-gray-200);
+      padding: var(--spacing-lg);
+      position: relative;
+      z-index: 10;
+    }
+
+    .chat-input-container {
+      max-width: 900px;
+      margin: 0 auto;
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      gap: var(--spacing-sm);
+      background-color: var(--color-white);
+      border: 1px solid var(--color-gray-300);
+      border-radius: var(--radius-lg);
+      padding: 12px;
+      box-shadow: var(--shadow-sm);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .chat-input-container:focus-within {
+      border-color: var(--color-primary-500);
+      box-shadow: 0 0 0 3px var(--color-primary-100);
+    }
+
+    .chat-textarea {
+      flex: 1;
+      border: none;
+      resize: none;
+      max-height: 120px;
+      min-height: 24px;
+      padding: 0;
+      font-size: var(--text-base);
+      color: var(--color-gray-900);
+      background: transparent;
+      outline: none;
+      line-height: 1.5;
+    }
+
+    .chat-textarea::placeholder {
+      color: var(--color-gray-400);
+    }
+
+    .send-btn {
+      background-color: var(--color-primary-600);
+      color: var(--color-white);
+      border: none;
+      border-radius: var(--radius-md);
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      flex-shrink: 0;
+    }
+
+    .send-btn:hover {
+      background-color: var(--color-primary-700);
+    }
+
+    .send-btn:disabled {
+      background-color: var(--color-gray-200);
+      cursor: not-allowed;
+    }
+
+    /* Thinking Indicator */
+    .thinking-dots {
+      display: flex;
+      gap: 4px;
+      padding: 8px 4px;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      background-color: var(--color-gray-400);
+      border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+
+    .dot:nth-child(1) { animation-delay: -0.32s; }
+    .dot:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
+    }
+
+    /* Markdown Styles within Bubbles */
+    .prose p { margin-bottom: 0.5em; }
+    .prose p:last-child { margin-bottom: 0; }
+    .prose ul { margin-left: 1.5em; margin-bottom: 0.5em; }
+    .prose strong { font-weight: 600; color: var(--color-gray-900); }
+
+    /* -----------------------------------------------------------------------------
+     * RESPONSIVE ADJUSTMENTS
+     * ----------------------------------------------------------------------------- */
+    @media (max-width: 1024px) {
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(-100%);
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+        box-shadow: 0 0 20px rgba(0,0,0,0.2);
+      }
+
+      .mobile-menu-trigger {
+        display: block;
+      }
+
+      .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 15;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      }
+
+      .overlay.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+    }
+
+    @media (max-width: 768px) {
+      :root {
+        --header-height: 56px;
+        --spacing-lg: 16px;
+      }
+
+      .chat-history {
+        padding: var(--spacing-md);
+      }
+
+      .message-group {
+        gap: var(--spacing-sm);
+      }
+
+      .message-bubble {
+        padding: 12px;
+        font-size: 0.9375rem;
+      }
+
+      .data-card__value {
+        font-size: 1.5rem;
+      }
+
+      .chat-input-wrapper {
+        padding: var(--spacing-md);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-shell">
+    
+    <!-- Mobile Overlay -->
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar__logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 12px; color: var(--color-primary-600);">
+          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+        </svg>
+        NexAnalytic
+      </div>
+      
+      <nav class="sidebar__nav">
+        <a href="#" class="nav-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          Dashboard
+        </a>
+        <a href="#" class="nav-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"></line><line x1="18" y1="20" x2="18" y2="4"></line><line x1="6" y1="20" x2="6" y2="16"></line></svg>
+          Reports
+        </a>
+        <a href="#" class="nav-item active">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+          AI Assistant
+        </a>
+        <a href="#" class="nav-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+          Cart Recovery
+        </a>
+        <a href="#" class="nav-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          Team
+        </a>
+      </nav>
+
+      <div class="sidebar__user">
+        <div class="user-avatar">AD</div>
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-weight: 500; font-size: var(--text-sm); truncate">Alex Doe</div>
+          <div style="font-size: var(--text-xs); color: var(--color-gray-500);">Store Owner</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      
+      <!-- Header -->
+      <header class="header">
+        <div class="header__title">
+          <button class="btn-icon mobile-menu-trigger" onclick="toggleSidebar()" aria-label="Toggle Menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          </button>
+          <span>AI Assistant</span>
+        </div>
+        <div class="header__actions">
+          <button class="btn-icon" aria-label="Clear Chat History">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+          </button>
+          <button class="btn-icon" aria-label="Help">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          </button>
+        </div>
+      </header>
+
+      <!-- Chat Container -->
+      <main class="chat-container">
+        
+        <!-- Chat History -->
+        <div class="chat-history" id="chatHistory" role="log" aria-live="polite">
+          
+          <!-- AI Welcome Message -->
+          <div class="message-group">
+            <div class="message-avatar message-avatar--ai" aria-hidden="true">AI</div>
+            <div class="message-content">
+              <div class="message-bubble message-bubble--ai prose">
+                <p>Hello Alex! I've analyzed your latest store data. How can I help you today?</p>
+                
+                <div class="suggestions">
+                  <button class="suggestion-chip" onclick="fillInput('What were my total sales last week?')">Total sales last week?</button>
+                  <button class="suggestion-chip" onclick="fillInput('Show me top 5 products by revenue')">Top 5 products?</button>
+                  <button class="suggestion-chip" onclick="fillInput('Any anomalies in cart abandonment?')">Check abandoned carts</button>
+                </div>
+              </div>
+              <span class="message-timestamp">10:02 AM</span>
+            </div>
+          </div>
+
+          <!-- User Query -->
+          <div class="message-group message-group--user">
+            <div class="message-avatar message-avatar--user" aria-hidden="true">AD</div>
+            <div class="message-content">
+              <div class="message-bubble message-bubble--user">
+                What were my total sales last week compared to the week before?
+              </div>
+              <span class="message-timestamp">10:03 AM</span>
+            </div>
+          </div>
+
+          <!-- AI Response with Data Card -->
+          <div class="message-group">
+            <div class="message-avatar message-avatar--ai" aria-hidden="true">AI</div>
+            <div class="message-content">
+              <div class="message-bubble message-bubble--ai">
+                <div class="prose">
+                  <p>Here is the sales comparison for last week (Oct 22 - Oct 28) versus the previous week.</p>
+                </div>
+                
+                <div class="data-card">
+                  <div class="data-card__title">Total Sales (Last Week)</div>
+                  <div class="data-card__value">
+                    $12,450.00
+                    <span class="data-card__trend trend--up">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 2px;"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+                      15.2%
+                    </span>
+                  </div>
+                  <div style="font-size: var(--text-sm); color: var(--color-gray-500); margin-top: 4px;">
+                    vs $10,805.00 previous week
+                  </div>
+                </div>
+                
+                <div class="prose" style="margin-top: 12px;">
+                  <p>Great job! The increase was primarily driven by the "Fall Collection" launch on Tuesday.</p>
+                </div>
+              </div>
+              <span class="message-timestamp">10:03 AM</span>
+            </div>
+          </div>
+
+          <!-- User Query 2 -->
+          <div class="message-group message-group--user">
+            <div class="message-avatar message-avatar--user" aria-hidden="true">AD</div>
+            <div class="message-content">
+              <div class="message-bubble message-bubble--user">
+                Which products from that collection are performing best?
+              </div>
+              <span class="message-timestamp">10:04 AM</span>
+            </div>
+          </div>
+
+          <!-- AI Thinking State -->
+          <div class="message-group" id="thinkingBubble">
+            <div class="message-avatar message-avatar--ai" aria-hidden="true">AI</div>
+            <div class="message-content">
+              <div class="message-bubble message-bubble--ai">
+                <div class="thinking-dots" aria-label="AI is thinking">
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                  <div class="dot"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Input Area -->
+        <div class="chat-input-wrapper">
+          <div class="chat-input-container">
+            <textarea 
+              class="chat-textarea" 
+              placeholder="Ask a question about your data..." 
+              rows="1" 
+              id="chatInput"
+              aria-label="Chat input"></textarea>
+            <button class="send-btn" id="sendBtn" aria-label="Send message">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+          </div>
+          <div style="text-align: center; font-size: 11px; color: var(--color-gray-400); margin-top: 8px;">
+            AI can make mistakes. Please verify important information.
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // Mobile Sidebar Toggle Logic
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('overlay');
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('active');
+    }
+
+    // Input Auto-resize Logic
+    const textarea = document.getElementById('chatInput');
+    textarea.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+      if(this.value === '') {
+        this.style.height = '24px'; // Reset to min-height
+      }
+    });
+
+    // Helper to fill input from chips (Mock functionality)
+    function fillInput(text) {
+      textarea.value = text;
+      textarea.focus();
+      // Trigger resize
+      textarea.style.height = 'auto'; 
+      textarea.style.height = (textarea.scrollHeight) + 'px';
+    }
+
+    // Scroll to bottom on load
+    const history = document.getElementById('chatHistory');
+    history.scrollTop = history.scrollHeight;
+
+    // Handle Enter key to send (Mock)
+    textarea.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        // Visual feedback only for this mockup
+        if(this.value.trim() !== '') {
+          this.value = '';
+          this.style.height = '24px';
+        }
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+"environment_name","environment_type","deployment_frequency","data_refresh_frequency","infrastructure_stack","service_dependencies","monitoring_tools","access_control","backup_strategy","disaster_recovery","cost_optimization","maintenance_window"
+"Preview (Ephemeral)","Isolated","Per PR","On Creation","Vercel Preview; Neon Branch; ClickHouse Dev","Mocked External APIs (Salla/OpenAI)","Vercel Analytics","Dev Team","N/A","Rebuild on push","Auto-destroy after merge","None"
+"Staging","Shared Mirror","Daily","Weekly (Anonymized Prod Data)","Vercel Prod; Supabase; ClickHouse Cloud","Real External APIs (Sandboxes)","Axiom; Sentry","Dev + QA + PM","Daily","4-hour RTO","Resource caps","Weekend"

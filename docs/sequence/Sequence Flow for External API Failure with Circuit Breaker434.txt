@@ -1,0 +1,883 @@
+# 1 Overview
+
+## 1.1 Diagram Id
+
+SEQ-EH-001
+
+## 1.2 Name
+
+External API Failure with Circuit Breaker
+
+## 1.3 Description
+
+The AI Assistant Service attempts to call the OpenAI API, but the calls are failing or timing out. A circuit breaker pattern is implemented around the API client. After a threshold of consecutive failures is met, the circuit 'opens', and subsequent calls fail immediately without attempting to contact the API, returning a fallback response to the user. After a timeout, the circuit moves to a 'half-open' state to test if the external service has recovered.
+
+## 1.4 Type
+
+🔹 ErrorHandling
+
+## 1.5 Purpose
+
+To improve system resilience and prevent cascading failures when a critical external dependency like the OpenAI API is unavailable. It ensures the application remains responsive to the user instead of hanging on long timeouts.
+
+## 1.6 Complexity
+
+Medium
+
+## 1.7 Priority
+
+🔴 High
+
+## 1.8 Frequency
+
+OnDemand
+
+## 1.9 Participants
+
+- ai-assistant-service-005
+- openai-gateway-012
+
+## 1.10 Key Interactions
+
+- The openai-gateway-012 makes a call to the OpenAI API, which fails (e.g., timeout or 5xx error).
+- The failure is recorded by the circuit breaker logic.
+- This repeats until the failure count exceeds the configured threshold (e.g., 5 failures within 30 seconds).
+- The circuit breaker state transitions to 'Open', and a timer is started.
+- The next API call to the AI Assistant Service is immediately rejected by the circuit breaker without calling the OpenAI API.
+- A fallback response is returned to the user (e.g., 'AI Assistant is temporarily unavailable').
+- After the reset timeout (e.g., 60 seconds), the circuit moves to 'Half-Open'.
+- The next call is allowed through. If it succeeds, the circuit closes. If it fails, it re-opens and resets the timer.
+
+## 1.11 Triggers
+
+- An external dependency (OpenAI API) becomes unresponsive or consistently returns errors.
+
+## 1.12 Outcomes
+
+- The system gracefully handles the external service outage.
+- Users receive a fast, informative error message instead of a long wait or application timeout.
+- System resources (e.g., serverless function concurrency) are protected from being tied up by failing requests.
+
+## 1.13 Business Rules
+
+- A user-friendly fallback response must be provided when the circuit is open.
+- The state of the circuit breaker should be monitored, and an alert should be triggered when it opens.
+
+## 1.14 Error Scenarios
+
+- The entire sequence is an error handling scenario.
+
+## 1.15 Integration Points
+
+- OpenAI API (via OpenAI Gateway).
+
+# 2.0 Details
+
+## 2.1 Diagram Id
+
+SEQ-EH-001
+
+## 2.2 Name
+
+External API Failure Handling with Circuit Breaker Pattern
+
+## 2.3 Description
+
+Demonstrates the implementation of the Circuit Breaker pattern for handling failures of a critical external dependency (OpenAI API). When the failure rate exceeds a configured threshold, the circuit opens, causing subsequent requests to fail fast and return a graceful fallback response. This protects the system from cascading failures and improves user experience by avoiding long timeouts.
+
+## 2.4 Participants
+
+### 2.4.1 FrontendApplication
+
+#### 2.4.1.1 Repository Id
+
+user-client-spa
+
+#### 2.4.1.2 Display Name
+
+User/Client (SPA)
+
+#### 2.4.1.3 Type
+
+🔹 FrontendApplication
+
+#### 2.4.1.4 Technology
+
+React 18, TypeScript 5.4
+
+#### 2.4.1.5 Order
+
+1
+
+#### 2.4.1.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | actor |
+| Color | #E0E0E0 |
+| Stereotype | User Interface |
+
+### 2.4.2.0 Serverless Function Group
+
+#### 2.4.2.1 Repository Id
+
+ai-assistant-service-005
+
+#### 2.4.2.2 Display Name
+
+AIAssistantService
+
+#### 2.4.2.3 Type
+
+🔹 Serverless Function Group
+
+#### 2.4.2.4 Technology
+
+AWS Lambda, Node.js 20.x
+
+#### 2.4.2.5 Order
+
+2
+
+#### 2.4.2.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #D1C4E9 |
+| Stereotype | Application Service |
+
+### 2.4.3.0 Gateway
+
+#### 2.4.3.1 Repository Id
+
+openai-gateway-012
+
+#### 2.4.3.2 Display Name
+
+OpenAIGateway
+
+#### 2.4.3.3 Type
+
+🔹 Gateway
+
+#### 2.4.3.4 Technology
+
+TypeScript Library (e.g., Opossum)
+
+#### 2.4.3.5 Order
+
+3
+
+#### 2.4.3.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #C5CAE9 |
+| Stereotype | Infrastructure Gateway |
+
+### 2.4.4.0 ExternalService
+
+#### 2.4.4.1 Repository Id
+
+external-openai-api
+
+#### 2.4.4.2 Display Name
+
+OpenAI API
+
+#### 2.4.4.3 Type
+
+🔹 ExternalService
+
+#### 2.4.4.4 Technology
+
+REST API
+
+#### 2.4.4.5 Order
+
+4
+
+#### 2.4.4.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | boundary |
+| Color | #B3E5FC |
+| Stereotype | External Dependency |
+
+### 2.4.5.0 ObservabilityPlatform
+
+#### 2.4.5.1 Repository Id
+
+monitoring-system
+
+#### 2.4.5.2 Display Name
+
+Monitoring System
+
+#### 2.4.5.3 Type
+
+🔹 ObservabilityPlatform
+
+#### 2.4.5.4 Technology
+
+AWS CloudWatch
+
+#### 2.4.5.5 Order
+
+5
+
+#### 2.4.5.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | database |
+| Color | #FFECB3 |
+| Stereotype | Monitoring & Alerting |
+
+## 2.5.0.0 Interactions
+
+### 2.5.1.0 Synchronous Request
+
+#### 2.5.1.1 Source Id
+
+user-client-spa
+
+#### 2.5.1.2 Target Id
+
+ai-assistant-service-005
+
+#### 2.5.1.3 Message
+
+1. POST /ai/query (query: string)
+
+#### 2.5.1.4 Sequence Number
+
+1
+
+#### 2.5.1.5 Type
+
+🔹 Synchronous Request
+
+#### 2.5.1.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.1.7 Return Message
+
+Fallback Response (e.g., 'AI Assistant is temporarily unavailable.') or Successful Response
+
+#### 2.5.1.8 Has Return
+
+✅ Yes
+
+#### 2.5.1.9 Is Activation
+
+✅ Yes
+
+#### 2.5.1.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | HTTPS/REST |
+| Method | POST /api/v1/ai/query |
+| Parameters | {"query": "..."} |
+| Authentication | JWT Bearer Token |
+| Error Handling | Client handles 200, 4xx, 5xx responses. |
+| Performance | Waits for response or timeout. |
+
+### 2.5.2.0 Internal Method Call
+
+#### 2.5.2.1 Source Id
+
+ai-assistant-service-005
+
+#### 2.5.2.2 Target Id
+
+openai-gateway-012
+
+#### 2.5.2.3 Message
+
+2. generateCompletion(prompt)
+
+#### 2.5.2.4 Sequence Number
+
+2
+
+#### 2.5.2.5 Type
+
+🔹 Internal Method Call
+
+#### 2.5.2.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.2.7 Return Message
+
+Throws CircuitBreakerOpenError or returns completion string
+
+#### 2.5.2.8 Has Return
+
+✅ Yes
+
+#### 2.5.2.9 Is Activation
+
+✅ Yes
+
+#### 2.5.2.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | In-process function call |
+| Method | OpenAIGateway.generateCompletion |
+| Parameters | prompt: string |
+| Authentication | N/A (Internal) |
+| Error Handling | Catches specific errors like CircuitBreakerOpenErr... |
+| Performance | Depends on gateway's internal logic and circuit st... |
+
+#### 2.5.2.11 Nested Interactions
+
+##### 2.5.2.11.1 Loop Fragment
+
+###### 2.5.2.11.1.1 Source Id
+
+openai-gateway-012
+
+###### 2.5.2.11.1.2 Target Id
+
+openai-gateway-012
+
+###### 2.5.2.11.1.3 Message
+
+3. [LOOP 5 times] Attempt API Call with Circuit Closed
+
+###### 2.5.2.11.1.4 Sequence Number
+
+3
+
+###### 2.5.2.11.1.5 Type
+
+🔹 Loop Fragment
+
+###### 2.5.2.11.1.6 Is Synchronous
+
+✅ Yes
+
+###### 2.5.2.11.1.7 Has Return
+
+❌ No
+
+###### 2.5.2.11.1.8 Nested Interactions
+
+####### 2.5.2.11.1.8.1 External API Call
+
+######## 2.5.2.11.1.8.1.1 Source Id
+
+openai-gateway-012
+
+######## 2.5.2.11.1.8.1.2 Target Id
+
+external-openai-api
+
+######## 2.5.2.11.1.8.1.3 Message
+
+3.1. POST /v1/chat/completions
+
+######## 2.5.2.11.1.8.1.4 Sequence Number
+
+4
+
+######## 2.5.2.11.1.8.1.5 Type
+
+🔹 External API Call
+
+######## 2.5.2.11.1.8.1.6 Is Synchronous
+
+✅ Yes
+
+######## 2.5.2.11.1.8.1.7 Return Message
+
+HTTP 503 Service Unavailable or Timeout
+
+######## 2.5.2.11.1.8.1.8 Has Return
+
+✅ Yes
+
+######## 2.5.2.11.1.8.1.9 Is Activation
+
+✅ Yes
+
+######## 2.5.2.11.1.8.1.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | HTTPS/REST |
+| Method | POST |
+| Parameters | Payload with model and messages |
+| Authentication | API Key in Authorization Header |
+| Error Handling | Handles timeouts and 5xx status codes as failures. |
+| Performance | Configured with a 15s timeout. |
+
+####### 2.5.2.11.1.8.2.0 Internal State Update
+
+######## 2.5.2.11.1.8.2.1 Source Id
+
+openai-gateway-012
+
+######## 2.5.2.11.1.8.2.2 Target Id
+
+openai-gateway-012
+
+######## 2.5.2.11.1.8.2.3 Message
+
+3.2. recordFailure()
+
+######## 2.5.2.11.1.8.2.4 Sequence Number
+
+5
+
+######## 2.5.2.11.1.8.2.5 Type
+
+🔹 Internal State Update
+
+######## 2.5.2.11.1.8.2.6 Is Synchronous
+
+✅ Yes
+
+######## 2.5.2.11.1.8.2.7 Return Message
+
+failureCount++
+
+######## 2.5.2.11.1.8.2.8 Has Return
+
+✅ Yes
+
+######## 2.5.2.11.1.8.2.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | In-memory |
+| Method | CircuitBreaker.recordFailure |
+| Parameters | N/A |
+| Authentication | N/A |
+| Error Handling | N/A |
+| Performance | < 1ms |
+
+##### 2.5.2.11.2.0.0.0 Alternative Fragment
+
+###### 2.5.2.11.2.1.0.0 Source Id
+
+openai-gateway-012
+
+###### 2.5.2.11.2.2.0.0 Target Id
+
+openai-gateway-012
+
+###### 2.5.2.11.2.3.0.0 Message
+
+4. [ALT] Failure Threshold Reached: Transition to 'Open' state
+
+###### 2.5.2.11.2.4.0.0 Sequence Number
+
+6
+
+###### 2.5.2.11.2.5.0.0 Type
+
+🔹 Alternative Fragment
+
+###### 2.5.2.11.2.6.0.0 Is Synchronous
+
+✅ Yes
+
+###### 2.5.2.11.2.7.0.0 Has Return
+
+❌ No
+
+###### 2.5.2.11.2.8.0.0 Nested Interactions
+
+####### 2.5.2.11.2.8.1.0 Asynchronous Metric Emission
+
+######## 2.5.2.11.2.8.1.1 Source Id
+
+openai-gateway-012
+
+######## 2.5.2.11.2.8.1.2 Target Id
+
+monitoring-system
+
+######## 2.5.2.11.2.8.1.3 Message
+
+4.1. emitMetric('circuit.state', {state: 'open'})
+
+######## 2.5.2.11.2.8.1.4 Sequence Number
+
+7
+
+######## 2.5.2.11.2.8.1.5 Type
+
+🔹 Asynchronous Metric Emission
+
+######## 2.5.2.11.2.8.1.6 Is Synchronous
+
+❌ No
+
+######## 2.5.2.11.2.8.1.7 Has Return
+
+❌ No
+
+######## 2.5.2.11.2.8.1.8 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | CloudWatch Custom Metrics API |
+| Method | putMetricData |
+| Parameters | Metric payload with dimensions |
+| Authentication | IAM Role |
+| Error Handling | Fire-and-forget |
+| Performance | < 50ms |
+
+####### 2.5.2.11.2.8.2.0 Internal Process
+
+######## 2.5.2.11.2.8.2.1 Source Id
+
+monitoring-system
+
+######## 2.5.2.11.2.8.2.2 Target Id
+
+monitoring-system
+
+######## 2.5.2.11.2.8.2.3 Message
+
+4.2. Trigger 'Circuit Breaker Open' Alarm
+
+######## 2.5.2.11.2.8.2.4 Sequence Number
+
+8
+
+######## 2.5.2.11.2.8.2.5 Type
+
+🔹 Internal Process
+
+######## 2.5.2.11.2.8.2.6 Is Synchronous
+
+✅ Yes
+
+######## 2.5.2.11.2.8.2.7 Return Message
+
+Sends notification to on-call team
+
+######## 2.5.2.11.2.8.2.8 Has Return
+
+✅ Yes
+
+######## 2.5.2.11.2.8.2.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Internal (e.g., SNS -> PagerDuty) |
+| Method | N/A |
+| Parameters | Alarm context |
+| Authentication | N/A |
+| Error Handling | Managed by alerting service. |
+| Performance | Varies |
+
+####### 2.5.2.11.2.8.3.0 Exception
+
+######## 2.5.2.11.2.8.3.1 Source Id
+
+openai-gateway-012
+
+######## 2.5.2.11.2.8.3.2 Target Id
+
+ai-assistant-service-005
+
+######## 2.5.2.11.2.8.3.3 Message
+
+4.3. throw new CircuitBreakerOpenError()
+
+######## 2.5.2.11.2.8.3.4 Sequence Number
+
+9
+
+######## 2.5.2.11.2.8.3.5 Type
+
+🔹 Exception
+
+######## 2.5.2.11.2.8.3.6 Is Synchronous
+
+✅ Yes
+
+######## 2.5.2.11.2.8.3.7 Return Message
+
+Error object
+
+######## 2.5.2.11.2.8.3.8 Has Return
+
+✅ Yes
+
+######## 2.5.2.11.2.8.3.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | In-process |
+| Method | N/A |
+| Parameters | Custom error object |
+| Authentication | N/A |
+| Error Handling | N/A |
+| Performance | N/A |
+
+##### 2.5.2.11.3.0.0.0 Alternative Fragment
+
+###### 2.5.2.11.3.1.0.0 Source Id
+
+openai-gateway-012
+
+###### 2.5.2.11.3.2.0.0 Target Id
+
+openai-gateway-012
+
+###### 2.5.2.11.3.3.0.0 Message
+
+5. [ALT] Circuit is 'Open': Fail Fast
+
+###### 2.5.2.11.3.4.0.0 Sequence Number
+
+10
+
+###### 2.5.2.11.3.5.0.0 Type
+
+🔹 Alternative Fragment
+
+###### 2.5.2.11.3.6.0.0 Is Synchronous
+
+✅ Yes
+
+###### 2.5.2.11.3.7.0.0 Has Return
+
+❌ No
+
+###### 2.5.2.11.3.8.0.0 Nested Interactions
+
+- {'sourceId': 'openai-gateway-012', 'targetId': 'ai-assistant-service-005', 'message': '5.1. throw new CircuitBreakerOpenError()', 'sequenceNumber': 11, 'type': 'Exception', 'isSynchronous': True, 'returnMessage': 'Error object', 'hasReturn': True, 'technicalDetails': {'protocol': 'In-process', 'method': 'N/A', 'parameters': "Custom error with message 'Circuit is open'.", 'authentication': 'N/A', 'errorHandling': 'This is the error being handled.', 'performance': '< 1ms'}}
+
+##### 2.5.2.11.4.0.0.0 Alternative Fragment
+
+###### 2.5.2.11.4.1.0.0 Source Id
+
+openai-gateway-012
+
+###### 2.5.2.11.4.2.0.0 Target Id
+
+openai-gateway-012
+
+###### 2.5.2.11.4.3.0.0 Message
+
+6. [ALT] Reset Timeout Expires: Transition to 'Half-Open'
+
+###### 2.5.2.11.4.4.0.0 Sequence Number
+
+12
+
+###### 2.5.2.11.4.5.0.0 Type
+
+🔹 Alternative Fragment
+
+###### 2.5.2.11.4.6.0.0 Is Synchronous
+
+✅ Yes
+
+###### 2.5.2.11.4.7.0.0 Has Return
+
+❌ No
+
+###### 2.5.2.11.4.8.0.0 Nested Interactions
+
+####### 2.5.2.11.4.8.1.0 External API Call
+
+######## 2.5.2.11.4.8.1.1 Source Id
+
+openai-gateway-012
+
+######## 2.5.2.11.4.8.1.2 Target Id
+
+external-openai-api
+
+######## 2.5.2.11.4.8.1.3 Message
+
+6.1. Allow one trial request: POST /v1/chat/completions
+
+######## 2.5.2.11.4.8.1.4 Sequence Number
+
+13
+
+######## 2.5.2.11.4.8.1.5 Type
+
+🔹 External API Call
+
+######## 2.5.2.11.4.8.1.6 Is Synchronous
+
+✅ Yes
+
+######## 2.5.2.11.4.8.1.7 Return Message
+
+HTTP 200 OK or HTTP 5xx
+
+######## 2.5.2.11.4.8.1.8 Has Return
+
+✅ Yes
+
+######## 2.5.2.11.4.8.1.9 Is Activation
+
+✅ Yes
+
+######## 2.5.2.11.4.8.1.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | HTTPS/REST |
+| Method | POST |
+| Parameters | Payload |
+| Authentication | API Key |
+| Error Handling | Success or failure determines next state. |
+| Performance | Waits for response or timeout. |
+
+####### 2.5.2.11.4.8.2.0 Internal State Update
+
+######## 2.5.2.11.4.8.2.1 Source Id
+
+openai-gateway-012
+
+######## 2.5.2.11.4.8.2.2 Target Id
+
+openai-gateway-012
+
+######## 2.5.2.11.4.8.2.3 Message
+
+6.2. If success, transition to 'Closed' and reset failures. If fail, transition back to 'Open'.
+
+######## 2.5.2.11.4.8.2.4 Sequence Number
+
+14
+
+######## 2.5.2.11.4.8.2.5 Type
+
+🔹 Internal State Update
+
+######## 2.5.2.11.4.8.2.6 Is Synchronous
+
+✅ Yes
+
+######## 2.5.2.11.4.8.2.7 Has Return
+
+❌ No
+
+### 2.5.3.0.0.0.0.0 Synchronous Response
+
+#### 2.5.3.1.0.0.0.0 Source Id
+
+ai-assistant-service-005
+
+#### 2.5.3.2.0.0.0.0 Target Id
+
+user-client-spa
+
+#### 2.5.3.3.0.0.0.0 Message
+
+7. return fallback response { message: '...' }
+
+#### 2.5.3.4.0.0.0.0 Sequence Number
+
+15
+
+#### 2.5.3.5.0.0.0.0 Type
+
+🔹 Synchronous Response
+
+#### 2.5.3.6.0.0.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.3.7.0.0.0.0 Has Return
+
+❌ No
+
+#### 2.5.3.8.0.0.0.0 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | HTTPS/REST |
+| Method | HTTP 503 |
+| Parameters | JSON payload |
+| Authentication | N/A |
+| Error Handling | N/A |
+| Performance | < 10ms |
+
+## 2.6.0.0.0.0.0.0 Notes
+
+### 2.6.1.0.0.0.0.0 Content
+
+#### 2.6.1.1.0.0.0.0 Content
+
+Circuit Breaker State: CLOSED. Requests are allowed through. Failures are counted.
+
+#### 2.6.1.2.0.0.0.0 Position
+
+Top
+
+#### 2.6.1.3.0.0.0.0 Participant Id
+
+openai-gateway-012
+
+#### 2.6.1.4.0.0.0.0 Sequence Number
+
+4
+
+### 2.6.2.0.0.0.0.0 Content
+
+#### 2.6.2.1.0.0.0.0 Content
+
+Circuit Breaker State: OPEN. Threshold breached. Requests fail immediately. Reset timer (60s) starts.
+
+#### 2.6.2.2.0.0.0.0 Position
+
+Middle
+
+#### 2.6.2.3.0.0.0.0 Participant Id
+
+openai-gateway-012
+
+#### 2.6.2.4.0.0.0.0 Sequence Number
+
+7
+
+### 2.6.3.0.0.0.0.0 Content
+
+#### 2.6.3.1.0.0.0.0 Content
+
+Circuit Breaker State: HALF-OPEN. Reset timer elapsed. A single trial request is permitted to check dependency health.
+
+#### 2.6.3.2.0.0.0.0 Position
+
+Bottom
+
+#### 2.6.3.3.0.0.0.0 Participant Id
+
+openai-gateway-012
+
+#### 2.6.3.4.0.0.0.0 Sequence Number
+
+13
+
+## 2.7.0.0.0.0.0.0 Implementation Guidance
+
+| Property | Value |
+|----------|-------|
+| Security Requirements | Ensure that error messages returned from the OpenA... |
+| Performance Targets | When the circuit is open, the 'fail fast' response... |
+| Error Handling Strategy | The Circuit Breaker pattern is the primary error h... |
+| Testing Considerations | A dedicated suite of integration tests is required... |
+| Monitoring Requirements | The following metrics must be tracked for the Open... |
+| Deployment Considerations | The circuit breaker library (e.g., opossum for Nod... |
+

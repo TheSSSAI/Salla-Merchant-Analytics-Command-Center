@@ -1,0 +1,4 @@
+"skill_category","total_hours_required","available_capacity","utilization_rate","coverage_status","risk_assessment","recommendation"
+"Backend Development","85","120","70.8","Adequate","High dependency on backend.dev for security tasks","backend.lead to take ownership of some API tasks in Sprint 3"
+"Frontend Development","23.2","120","19.3","Surplus","Significant underutilization of frontend resources in early sprints","Pull forward Sprint 3 visualization tasks or reduce frontend allocation until Sprint 3"
+"Data Engineering","26.6","60","44.3","Optimal","Sprint 2 is intensive; idle in other sprints","Assign SQL optimization and Analytics API support to Data Eng in Sprint 3"

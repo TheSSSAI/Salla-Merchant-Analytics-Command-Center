@@ -1,0 +1,887 @@
+# 1 Overview
+
+## 1.1 Diagram Id
+
+SEQ-DF-002
+
+## 1.2 Name
+
+Initial Historical Data Synchronization
+
+## 1.3 Description
+
+After a successful Salla store connection, a background job is triggered to perform a bulk import of historical data. The job makes a series of paginated API calls to the Salla REST API to fetch orders, customers, and products for the selected time period (12 or 24 months). The data is transformed and loaded into the OLTP database.
+
+## 1.4 Type
+
+🔹 DataFlow
+
+## 1.5 Purpose
+
+To populate the system with a merchant's complete historical dataset, which is required for comprehensive analytics, year-over-year comparisons, and sales forecasting, as defined in FR-104.
+
+## 1.6 Complexity
+
+High
+
+## 1.7 Priority
+
+🚨 Critical
+
+## 1.8 Frequency
+
+OnDemand
+
+## 1.9 Participants
+
+- user-management-service-003
+- async-task-queue-013
+- data-pipeline-processor-014
+- salla-platform
+- oltp-repository-008
+
+## 1.10 Key Interactions
+
+- The User Management Service queues a HistoricalSyncRequested job after successful OAuth.
+- A background worker (part of the data-pipeline-processor) consumes the job.
+- The worker retrieves the merchant's securely stored Salla API tokens.
+- The worker makes paginated GET requests to Salla's API endpoints (e.g., /orders, /customers, /products).
+- Each page of data is processed through an anti-corruption layer to map it to the internal data model.
+- The transformed data is inserted into the PostgreSQL OLTP database in batches to optimize performance.
+- The worker respects Salla's API rate limits, pausing and retrying with exponential backoff if necessary.
+- Upon completion, the job updates the sync status in the database and notifies the user via email and in-app notification.
+
+## 1.11 Triggers
+
+- Successful connection of a Salla store to a new merchant account.
+
+## 1.12 Outcomes
+
+- The system's OLTP database contains the merchant's historical data.
+- All dashboards and reports become fully populated and functional.
+- The CDC pipeline (SEQ-DF-001) will subsequently process these bulk inserts to populate the OLAP database.
+
+## 1.13 Business Rules
+
+- The system must implement a rate limiter to respect Salla API limits (RISK-001 Mitigation).
+- The sync process must be robust, with automatic retries for recoverable API errors.
+- Incoming data must be validated; records that fail validation are logged and skipped to prevent complete sync failure.
+
+## 1.14 Error Scenarios
+
+- The Salla API returns persistent errors, causing the sync to fail completely; the user is notified with instructions to restart.
+- The sync job is rate-limited by the Salla API, causing the process to slow down.
+- The job fails midway through; upon restart, it should ideally be able to resume from where it left off.
+
+## 1.15 Integration Points
+
+- Salla Platform (REST API).
+
+# 2.0 Details
+
+## 2.1 Diagram Id
+
+SEQ-DF-002
+
+## 2.2 Name
+
+Implementation-Ready: Initial Historical Data Synchronization
+
+## 2.3 Description
+
+A comprehensive data flow sequence detailing the asynchronous, background process for importing a merchant's historical data from the Salla platform. This process is triggered after successful OAuth authorization, enqueues a job, which is then consumed by a long-running background worker. The worker implements a resilient ETL process, fetching paginated data from the Salla REST API, respecting rate limits, transforming data via an anti-corruption layer, and loading it in batches into the OLTP database. The process maintains state to support resumability and provides user notifications upon completion or failure.
+
+## 2.4 Participants
+
+### 2.4.1 Serverless Function Group
+
+#### 2.4.1.1 Repository Id
+
+user-management-service-003
+
+#### 2.4.1.2 Display Name
+
+User Management Service
+
+#### 2.4.1.3 Type
+
+🔹 Serverless Function Group
+
+#### 2.4.1.4 Technology
+
+AWS Lambda / Node.js 20.x
+
+#### 2.4.1.5 Order
+
+1
+
+#### 2.4.1.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | actor |
+| Color | #D3E5FF |
+| Stereotype | Application Service |
+
+### 2.4.2.0 Queue
+
+#### 2.4.2.1 Repository Id
+
+async-task-queue-013
+
+#### 2.4.2.2 Display Name
+
+Async Task Queue
+
+#### 2.4.2.3 Type
+
+🔹 Queue
+
+#### 2.4.2.4 Technology
+
+AWS SQS
+
+#### 2.4.2.5 Order
+
+2
+
+#### 2.4.2.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | database |
+| Color | #FFC9A8 |
+| Stereotype | Message Queue |
+
+### 2.4.3.0 Background Process
+
+#### 2.4.3.1 Repository Id
+
+data-pipeline-processor-014
+
+#### 2.4.3.2 Display Name
+
+Data Pipeline Processor
+
+#### 2.4.3.3 Type
+
+🔹 Background Process
+
+#### 2.4.3.4 Technology
+
+AWS Lambda (Long Timeout)
+
+#### 2.4.3.5 Order
+
+3
+
+#### 2.4.3.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | actor |
+| Color | #D3E5FF |
+| Stereotype | Background Worker |
+
+### 2.4.4.0 Repository
+
+#### 2.4.4.1 Repository Id
+
+oltp-repository-008
+
+#### 2.4.4.2 Display Name
+
+OLTP Repository
+
+#### 2.4.4.3 Type
+
+🔹 Repository
+
+#### 2.4.4.4 Technology
+
+Prisma / PostgreSQL 16
+
+#### 2.4.4.5 Order
+
+4
+
+#### 2.4.4.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | database |
+| Color | #B4E8C5 |
+| Stereotype | Database |
+
+### 2.4.5.0 External API
+
+#### 2.4.5.1 Repository Id
+
+salla-platform
+
+#### 2.4.5.2 Display Name
+
+Salla Platform
+
+#### 2.4.5.3 Type
+
+🔹 External API
+
+#### 2.4.5.4 Technology
+
+Salla REST API
+
+#### 2.4.5.5 Order
+
+5
+
+#### 2.4.5.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | cloud |
+| Color | #F5B7B1 |
+| Stereotype | External System |
+
+## 2.5.0.0 Interactions
+
+### 2.5.1.0 Enqueue
+
+#### 2.5.1.1 Source Id
+
+user-management-service-003
+
+#### 2.5.1.2 Target Id
+
+async-task-queue-013
+
+#### 2.5.1.3 Message
+
+Enqueues 'HistoricalSyncRequested' job
+
+#### 2.5.1.4 Sequence Number
+
+1
+
+#### 2.5.1.5 Type
+
+🔹 Enqueue
+
+#### 2.5.1.6 Is Synchronous
+
+❌ No
+
+#### 2.5.1.7 Has Return
+
+❌ No
+
+#### 2.5.1.8 Is Activation
+
+✅ Yes
+
+#### 2.5.1.9 Technical Details
+
+##### 2.5.1.9.1 Protocol
+
+AWS SDK
+
+##### 2.5.1.9.2 Method
+
+SQS.sendMessage
+
+##### 2.5.1.9.3 Parameters
+
+| Property | Value |
+|----------|-------|
+| Queue Url | historical-sync-queue-url |
+| Message Body | {"jobType": "HISTORICAL_SYNC", "merchantId": "uuid... |
+
+##### 2.5.1.9.4 Authentication
+
+IAM Role for Lambda
+
+##### 2.5.1.9.5 Error Handling
+
+SDK-managed retries. On persistent failure, log error.
+
+### 2.5.2.0.0 Dequeue
+
+#### 2.5.2.1.0 Source Id
+
+data-pipeline-processor-014
+
+#### 2.5.2.2.0 Target Id
+
+async-task-queue-013
+
+#### 2.5.2.3.0 Message
+
+Consumes job from queue
+
+#### 2.5.2.4.0 Sequence Number
+
+2
+
+#### 2.5.2.5.0 Type
+
+🔹 Dequeue
+
+#### 2.5.2.6.0 Is Synchronous
+
+❌ No
+
+#### 2.5.2.7.0 Has Return
+
+✅ Yes
+
+#### 2.5.2.8.0 Return Message
+
+Job payload
+
+#### 2.5.2.9.0 Is Activation
+
+✅ Yes
+
+#### 2.5.2.10.0 Technical Details
+
+##### 2.5.2.10.1 Protocol
+
+Lambda Event Source Mapping
+
+##### 2.5.2.10.2 Method
+
+N/A (Trigger)
+
+##### 2.5.2.10.3 Parameters
+
+| Property | Value |
+|----------|-------|
+| Batch Size | 1 |
+
+##### 2.5.2.10.4 Authentication
+
+IAM Role
+
+##### 2.5.2.10.5 Error Handling
+
+On processing failure, the message is returned to the queue based on visibility timeout. After max retries, it moves to a DLQ.
+
+### 2.5.3.0.0 Database Write
+
+#### 2.5.3.1.0 Source Id
+
+data-pipeline-processor-014
+
+#### 2.5.3.2.0 Target Id
+
+oltp-repository-008
+
+#### 2.5.3.3.0 Message
+
+Updates sync status to 'IN_PROGRESS'
+
+#### 2.5.3.4.0 Sequence Number
+
+3
+
+#### 2.5.3.5.0 Type
+
+🔹 Database Write
+
+#### 2.5.3.6.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.3.7.0 Has Return
+
+✅ Yes
+
+#### 2.5.3.8.0 Return Message
+
+Updated status record
+
+#### 2.5.3.9.0 Technical Details
+
+##### 2.5.3.9.1 Protocol
+
+Prisma Client
+
+##### 2.5.3.9.2 Method
+
+prisma.merchantSyncStatus.upsert
+
+##### 2.5.3.9.3 Parameters
+
+| Property | Value |
+|----------|-------|
+| Where | {'merchantId': 'uuid'} |
+| Update | {'status': 'IN_PROGRESS', 'startedAt': 'now()'} |
+| Create | {'merchantId': 'uuid', 'status': 'IN_PROGRESS', 'startedAt': 'now()'} |
+
+##### 2.5.3.9.4 Authentication
+
+Database credentials from Secrets Manager
+
+##### 2.5.3.9.5 Error Handling
+
+Throw exception on DB connection or query failure.
+
+### 2.5.4.0.0 Database Read
+
+#### 2.5.4.1.0 Source Id
+
+data-pipeline-processor-014
+
+#### 2.5.4.2.0 Target Id
+
+oltp-repository-008
+
+#### 2.5.4.3.0 Message
+
+Retrieves Salla API credentials
+
+#### 2.5.4.4.0 Sequence Number
+
+4
+
+#### 2.5.4.5.0 Type
+
+🔹 Database Read
+
+#### 2.5.4.6.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.4.7.0 Has Return
+
+✅ Yes
+
+#### 2.5.4.8.0 Return Message
+
+Encrypted access and refresh tokens
+
+#### 2.5.4.9.0 Technical Details
+
+##### 2.5.4.9.1 Protocol
+
+Prisma Client
+
+##### 2.5.4.9.2 Method
+
+prisma.merchant.findUnique
+
+##### 2.5.4.9.3 Parameters
+
+| Property | Value |
+|----------|-------|
+| Where | {'id': 'uuid'} |
+| Select | {'sallaAccessToken': True, 'sallaRefreshToken': True} |
+
+##### 2.5.4.9.4 Authentication
+
+Database credentials
+
+##### 2.5.4.9.5 Error Handling
+
+If credentials not found, mark job as FAILED and terminate.
+
+### 2.5.5.0.0 API Call
+
+#### 2.5.5.1.0 Source Id
+
+data-pipeline-processor-014
+
+#### 2.5.5.2.0 Target Id
+
+salla-platform
+
+#### 2.5.5.3.0 Message
+
+GET /orders?page={n}&per_page=100
+
+#### 2.5.5.4.0 Sequence Number
+
+5
+
+#### 2.5.5.5.0 Type
+
+🔹 API Call
+
+#### 2.5.5.6.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.5.7.0 Has Return
+
+✅ Yes
+
+#### 2.5.5.8.0 Return Message
+
+200 OK with paginated order data
+
+#### 2.5.5.9.0 Is Activation
+
+✅ Yes
+
+#### 2.5.5.10.0 Technical Details
+
+##### 2.5.5.10.1 Protocol
+
+HTTPS/REST
+
+##### 2.5.5.10.2 Method
+
+GET
+
+##### 2.5.5.10.3 Parameters
+
+| Property | Value |
+|----------|-------|
+| Headers | {'Authorization': 'Bearer {accessToken}'} |
+
+##### 2.5.5.10.4 Authentication
+
+OAuth 2.0 Bearer Token
+
+##### 2.5.5.10.5 Error Handling
+
+Handles 429 (Rate Limit) with exponential backoff. Handles 401 (Unauthorized) by attempting token refresh. Handles 5xx with retries. On persistent failure, transitions to failure state.
+
+##### 2.5.5.10.6 Performance
+
+Respects 'X-RateLimit-Remaining' header. Implements a client-side rate limiter to avoid hitting the ceiling.
+
+#### 2.5.5.11.0 Nested Interactions
+
+##### 2.5.5.11.1 Internal Processing
+
+###### 2.5.5.11.1.1 Source Id
+
+data-pipeline-processor-014
+
+###### 2.5.5.11.1.2 Target Id
+
+data-pipeline-processor-014
+
+###### 2.5.5.11.1.3 Message
+
+Transforms Salla API DTOs to internal domain models (Anti-Corruption Layer)
+
+###### 2.5.5.11.1.4 Sequence Number
+
+5.1
+
+###### 2.5.5.11.1.5 Type
+
+🔹 Internal Processing
+
+###### 2.5.5.11.1.6 Is Synchronous
+
+✅ Yes
+
+###### 2.5.5.11.1.7 Has Return
+
+❌ No
+
+##### 2.5.5.11.2.0 Database Write
+
+###### 2.5.5.11.2.1 Source Id
+
+data-pipeline-processor-014
+
+###### 2.5.5.11.2.2 Target Id
+
+oltp-repository-008
+
+###### 2.5.5.11.2.3 Message
+
+Inserts batch of transformed orders
+
+###### 2.5.5.11.2.4 Sequence Number
+
+5.2
+
+###### 2.5.5.11.2.5 Type
+
+🔹 Database Write
+
+###### 2.5.5.11.2.6 Is Synchronous
+
+✅ Yes
+
+###### 2.5.5.11.2.7 Has Return
+
+✅ Yes
+
+###### 2.5.5.11.2.8 Return Message
+
+Count of created records
+
+###### 2.5.5.11.2.9 Technical Details
+
+####### 2.5.5.11.2.9.1 Protocol
+
+Prisma Client
+
+####### 2.5.5.11.2.9.2 Method
+
+prisma.order.createMany
+
+####### 2.5.5.11.2.9.3 Parameters
+
+| Property | Value |
+|----------|-------|
+| Data | [...transformedOrderData] |
+| Skip Duplicates | ✅ |
+
+####### 2.5.5.11.2.9.4 Authentication
+
+Database credentials
+
+####### 2.5.5.11.2.9.5 Error Handling
+
+Wraps call in a transaction. On validation error, logs failed records and continues. On DB failure, retries batch.
+
+##### 2.5.5.11.3.0.0 Database Write
+
+###### 2.5.5.11.3.1.0 Source Id
+
+data-pipeline-processor-014
+
+###### 2.5.5.11.3.2.0 Target Id
+
+oltp-repository-008
+
+###### 2.5.5.11.3.3.0 Message
+
+Updates sync progress (checkpoint)
+
+###### 2.5.5.11.3.4.0 Sequence Number
+
+5.3
+
+###### 2.5.5.11.3.5.0 Type
+
+🔹 Database Write
+
+###### 2.5.5.11.3.6.0 Is Synchronous
+
+✅ Yes
+
+###### 2.5.5.11.3.7.0 Has Return
+
+❌ No
+
+###### 2.5.5.11.3.8.0 Technical Details
+
+####### 2.5.5.11.3.8.1 Protocol
+
+Prisma Client
+
+####### 2.5.5.11.3.8.2 Method
+
+prisma.merchantSyncStatus.update
+
+####### 2.5.5.11.3.8.3 Parameters
+
+| Property | Value |
+|----------|-------|
+| Where | {'merchantId': 'uuid'} |
+| Data | {'lastProcessedCursor': 'next_page_cursor', 'progressPercentage': 25} |
+
+####### 2.5.5.11.3.8.4 Authentication
+
+Database credentials
+
+####### 2.5.5.11.3.8.5 Error Handling
+
+Best-effort update. Failure does not stop the main sync process but impacts resumability.
+
+### 2.5.6.0.0.0.0 Database Write
+
+#### 2.5.6.1.0.0.0 Source Id
+
+data-pipeline-processor-014
+
+#### 2.5.6.2.0.0.0 Target Id
+
+oltp-repository-008
+
+#### 2.5.6.3.0.0.0 Message
+
+Updates sync status to 'COMPLETED'
+
+#### 2.5.6.4.0.0.0 Sequence Number
+
+6
+
+#### 2.5.6.5.0.0.0 Type
+
+🔹 Database Write
+
+#### 2.5.6.6.0.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.6.7.0.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.6.8.0.0.0 Return Message
+
+Final status record
+
+#### 2.5.6.9.0.0.0 Technical Details
+
+##### 2.5.6.9.1.0.0 Protocol
+
+Prisma Client
+
+##### 2.5.6.9.2.0.0 Method
+
+prisma.merchantSyncStatus.update
+
+##### 2.5.6.9.3.0.0 Parameters
+
+| Property | Value |
+|----------|-------|
+| Where | {'merchantId': 'uuid'} |
+| Data | {'status': 'COMPLETED', 'completedAt': 'now()', 'progressPercentage': 100} |
+
+##### 2.5.6.9.4.0.0 Authentication
+
+Database credentials
+
+##### 2.5.6.9.5.0.0 Error Handling
+
+If final update fails, log a critical error for manual intervention.
+
+### 2.5.7.0.0.0.0 Enqueue
+
+#### 2.5.7.1.0.0.0 Source Id
+
+data-pipeline-processor-014
+
+#### 2.5.7.2.0.0.0 Target Id
+
+async-task-queue-013
+
+#### 2.5.7.3.0.0.0 Message
+
+Enqueues 'SyncCompleteNotification' job
+
+#### 2.5.7.4.0.0.0 Sequence Number
+
+7
+
+#### 2.5.7.5.0.0.0 Type
+
+🔹 Enqueue
+
+#### 2.5.7.6.0.0.0 Is Synchronous
+
+❌ No
+
+#### 2.5.7.7.0.0.0 Has Return
+
+❌ No
+
+#### 2.5.7.8.0.0.0 Technical Details
+
+##### 2.5.7.8.1.0.0 Protocol
+
+AWS SDK
+
+##### 2.5.7.8.2.0.0 Method
+
+SQS.sendMessage
+
+##### 2.5.7.8.3.0.0 Parameters
+
+| Property | Value |
+|----------|-------|
+| Queue Url | notifications-queue-url |
+| Message Body | {"notificationType": "SYNC_COMPLETE", "merchantId"... |
+
+##### 2.5.7.8.4.0.0 Authentication
+
+IAM Role for Lambda
+
+##### 2.5.7.8.5.0.0 Error Handling
+
+Best-effort. Failure to enqueue does not fail the data sync job.
+
+## 2.6.0.0.0.0.0 Notes
+
+### 2.6.1.0.0.0.0 Content
+
+#### 2.6.1.1.0.0.0 Content
+
+A 'loop' fragment begins here, iterating through all required Salla API endpoints (Orders, Customers, Products) and all pages for each endpoint until all data for the specified 'syncDepthMonths' is retrieved.
+
+#### 2.6.1.2.0.0.0 Position
+
+top
+
+#### 2.6.1.3.0.0.0 Participant Id
+
+data-pipeline-processor-014
+
+#### 2.6.1.4.0.0.0 Sequence Number
+
+5
+
+### 2.6.2.0.0.0.0 Content
+
+#### 2.6.2.1.0.0.0 Content
+
+
+
+```
+An 'alt' fragment is used here for error handling.
+[Success] -> Continue loop
+[429 Rate Limit] -> Perform exponential backoff and retry request
+[Persistent Failure] -> Update status to FAILED and enqueue failure notification
+```
+
+#### 2.6.2.2.0.0.0 Position
+
+bottom
+
+#### 2.6.2.3.0.0.0 Participant Id
+
+salla-platform
+
+#### 2.6.2.4.0.0.0 Sequence Number
+
+5
+
+### 2.6.3.0.0.0.0 Content
+
+#### 2.6.3.1.0.0.0 Content
+
+Loop completes when all pages for all required resources have been processed. The processor then proceeds to final status update.
+
+#### 2.6.3.2.0.0.0 Position
+
+bottom
+
+#### 2.6.3.3.0.0.0 Participant Id
+
+data-pipeline-processor-014
+
+#### 2.6.3.4.0.0.0 Sequence Number
+
+5
+
+## 2.7.0.0.0.0.0 Implementation Guidance
+
+| Property | Value |
+|----------|-------|
+| Security Requirements | Salla API access/refresh tokens must be encrypted ... |
+| Performance Targets | Must meet NFR-106: sync for a store with 50,000 or... |
+| Error Handling Strategy | The SQS queue for this job MUST have a Dead-Letter... |
+| Testing Considerations | Develop a comprehensive mock of the Salla API to s... |
+| Monitoring Requirements | The worker function must emit structured logs with... |
+| Deployment Considerations | This is a resource-intensive job. The Lambda funct... |
+

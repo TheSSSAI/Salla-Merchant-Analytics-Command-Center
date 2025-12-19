@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sequence Stepper Component</title>
+  <style>
+    /* =========================================
+       1. Design System Tokens & Reset
+       ========================================= */
+    :root {
+      /* Color Palette */
+      --color-primary-50: #eef2ff;
+      --color-primary-100: #e0e7ff;
+      --color-primary-500: #6366f1;
+      --color-primary-600: #4f46e5;
+      --color-primary-700: #4338ca;
+      
+      --color-white: #ffffff;
+      --color-gray-50: #f8fafc;
+      --color-gray-100: #f1f5f9;
+      --color-gray-200: #e2e8f0;
+      --color-gray-300: #cbd5e1;
+      --color-gray-400: #94a3b8;
+      --color-gray-500: #64748b;
+      --color-gray-600: #475569;
+      --color-gray-700: #334155;
+      --color-gray-800: #1e293b;
+      --color-gray-900: #0f172a;
+      
+      --color-success: #10b981;
+      --color-success-bg: #ecfdf5;
+      --color-warning: #f59e0b;
+      --color-error: #ef4444;
+      --color-error-bg: #fef2f2;
+
+      /* Typography */
+      --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-weight-regular: 400;
+      --font-weight-medium: 500;
+      --font-weight-semibold: 600;
+      --font-weight-bold: 700;
+      
+      --text-xs: 0.75rem;
+      --text-sm: 0.875rem;
+      --text-base: 1rem;
+      --text-lg: 1.125rem;
+      --text-xl: 1.25rem;
+
+      /* Spacing */
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 16px;
+      --spacing-lg: 24px;
+      --spacing-xl: 32px;
+      --spacing-2xl: 48px;
+
+      /* Borders & Shadows */
+      --radius-md: 6px;
+      --radius-lg: 8px;
+      --radius-full: 9999px;
+      --border-width: 1px;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      
+      /* Layout */
+      --marker-size: 32px;
+      --line-width: 2px;
+    }
+
+    /* Reset */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-family);
+      background-color: var(--color-gray-50);
+      color: var(--color-gray-900);
+      line-height: 1.5;
+      padding: var(--spacing-lg);
+    }
+
+    /* =========================================
+       2. Atomic Components (Simulated Dependencies)
+       ========================================= */
+    
+    /* Button Atom */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 20px;
+      border-radius: var(--radius-md);
+      font-weight: var(--font-weight-medium);
+      font-size: var(--text-sm);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+      text-decoration: none;
+    }
+    
+    .btn--primary {
+      background-color: var(--color-primary-600);
+      color: var(--color-white);
+    }
+    .btn--primary:hover {
+      background-color: var(--color-primary-700);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn--secondary {
+      background-color: var(--color-white);
+      border-color: var(--color-gray-300);
+      color: var(--color-gray-700);
+    }
+    .btn--secondary:hover {
+      background-color: var(--color-gray-50);
+      border-color: var(--color-gray-400);
+    }
+
+    /* Card Atom */
+    .card {
+      background: var(--color-white);
+      border: 1px solid var(--color-gray-200);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Badge Atom */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      font-size: var(--text-xs);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.2;
+    }
+    .badge--neutral { background: var(--color-gray-100); color: var(--color-gray-600); }
+    .badge--error { background: var(--color-error-bg); color: var(--color-error); }
+
+    /* Icons */
+    .icon {
+      width: 16px;
+      height: 16px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Accessibility Utilities */
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border-width: 0;
+    }
+
+    /* =========================================
+       3. Organism: Sequence Stepper
+       ========================================= */
+    
+    .stepper {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .stepper__list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      position: relative;
+    }
+
+    /* Step Container */
+    .stepper__step {
+      display: flex;
+      position: relative;
+      padding-bottom: var(--spacing-xl); /* Spacing between steps */
+    }
+
+    .stepper__step:last-child {
+      padding-bottom: 0;
+    }
+
+    /* Left Column: Marker & Line */
+    .stepper__indicator {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-right: var(--spacing-lg);
+      min-width: var(--marker-size);
+    }
+
+    /* The Circle Marker */
+    .stepper__marker {
+      width: var(--marker-size);
+      height: var(--marker-size);
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--text-sm);
+      font-weight: var(--font-weight-semibold);
+      z-index: 2; /* Sit on top of line */
+      background-color: var(--color-white);
+      border: 2px solid var(--color-gray-300);
+      color: var(--color-gray-500);
+      transition: all 0.3s ease;
+    }
+
+    /* The Connecting Line */
+    .stepper__line {
+      flex-grow: 1;
+      width: var(--line-width);
+      background-color: var(--color-gray-200);
+      margin-top: 4px;
+      margin-bottom: 4px;
+      min-height: 24px; /* Minimum height for line */
+    }
+
+    .stepper__step:last-child .stepper__line {
+      display: none;
+    }
+
+    /* Right Column: Content */
+    .stepper__content {
+      flex: 1;
+      padding-top: 4px; /* Align text with marker */
+    }
+
+    .stepper__title {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-gray-900);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stepper__description {
+      font-size: var(--text-sm);
+      color: var(--color-gray-500);
+      margin-bottom: var(--spacing-md);
+      line-height: 1.5;
+    }
+
+    .stepper__body {
+      margin-top: var(--spacing-md);
+    }
+
+    /* -----------------------------------------
+       State Variations
+       ----------------------------------------- */
+
+    /* Active State */
+    .stepper__step--active .stepper__marker {
+      border-color: var(--color-primary-600);
+      color: var(--color-primary-600);
+      background-color: var(--color-primary-50);
+      box-shadow: 0 0 0 4px var(--color-primary-100);
+    }
+
+    .stepper__step--active .stepper__title {
+      color: var(--color-primary-700);
+    }
+
+    .stepper__step--active .stepper__line {
+      /* Optional: Gradient line for active step progress? kept simple for now */
+      background-color: var(--color-gray-200); 
+    }
+
+    /* Completed State */
+    .stepper__step--completed .stepper__marker {
+      background-color: var(--color-primary-600);
+      border-color: var(--color-primary-600);
+      color: var(--color-white);
+    }
+
+    .stepper__step--completed .stepper__line {
+      background-color: var(--color-primary-600);
+    }
+
+    /* Error State */
+    .stepper__step--error .stepper__marker {
+      border-color: var(--color-error);
+      color: var(--color-error);
+      background-color: var(--color-error-bg);
+    }
+
+    .stepper__step--error .stepper__title {
+      color: var(--color-error);
+    }
+
+    /* -----------------------------------------
+       Visual Variants
+       ----------------------------------------- */
+
+    /* Timeline Variant (Smaller dots) */
+    .stepper--timeline .stepper__marker {
+      width: 16px;
+      height: 16px;
+      margin-top: 6px; /* Align with text */
+    }
+    
+    .stepper--timeline .stepper__indicator {
+      min-width: 16px;
+    }
+
+    .stepper--timeline .stepper__content {
+      padding-top: 0;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 640px) {
+      body { padding: var(--spacing-md); }
+      .stepper__indicator { margin-right: var(--spacing-md); }
+      .btn { width: 100%; margin-bottom: 8px; }
+      .btn:last-child { margin-bottom: 0; }
+      .stepper__actions { flex-direction: column; }
+    }
+
+    /* Presentation Wrapper */
+    .demo-wrapper {
+      margin-bottom: 64px;
+    }
+    .demo-header {
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--color-gray-200);
+      padding-bottom: 16px;
+    }
+    .demo-title { font-size: var(--text-xl); font-weight: var(--font-weight-bold); color: var(--color-gray-900); }
+    .demo-desc { color: var(--color-gray-500); font-size: var(--text-sm); margin-top: 4px; }
+
+  </style>
+</head>
+<body>
+
+  <!-- Component Showcase -->
+  
+  <!-- VARIANT 1: WIZARD STEPPER -->
+  <div class="demo-wrapper">
+    <div class="demo-header">
+      <h2 class="demo-title">Variant: Wizard Stepper</h2>
+      <p class="demo-desc">Interactive sequence for multi-step forms or onboarding flows.</p>
+    </div>
+
+    <div class="card">
+      <nav aria-label="Onboarding Progress" class="stepper">
+        <ol class="stepper__list">
+          
+          <!-- Step 1: Completed -->
+          <li class="stepper__step stepper__step--completed">
+            <div class="stepper__indicator">
+              <span class="stepper__marker">
+                <!-- Check Icon -->
+                <svg class="icon" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span class="sr-only">Step 1 Completed</span>
+              </span>
+              <span class="stepper__line"></span>
+            </div>
+            <div class="stepper__content">
+              <h3 class="stepper__title">
+                Account Created
+                <span class="badge badge--neutral">Jan 24, 10:30 AM</span>
+              </h3>
+              <p class="stepper__description">Your merchant account has been successfully registered.</p>
+            </div>
+          </li>
+
+          <!-- Step 2: Active -->
+          <li class="stepper__step stepper__step--active" aria-current="step">
+            <div class="stepper__indicator">
+              <span class="stepper__marker">2</span>
+              <span class="stepper__line"></span>
+            </div>
+            <div class="stepper__content">
+              <h3 class="stepper__title">Connect Salla Store</h3>
+              <p class="stepper__description">Authorize access to import your store data.</p>
+              
+              <!-- Active Step Content (Embedded Molecule) -->
+              <div class="stepper__body card" style="background-color: var(--color-gray-50); border:none; padding: var(--spacing-md);">
+                <div style="margin-bottom: var(--spacing-md);">
+                  <label style="display:block; font-size:var(--text-sm); font-weight:500; margin-bottom:8px;">Store URL</label>
+                  <input type="text" placeholder="https://salla.sa/your-store" style="width:100%; padding:10px; border:1px solid var(--color-gray-300); border-radius:var(--radius-md); font-size:var(--text-sm);">
+                </div>
+                <div class="stepper__actions" style="display:flex; gap:12px;">
+                  <button class="btn btn--primary">Connect Store</button>
+                  <button class="btn btn--secondary">Skip for Now</button>
+                </div>
+              </div>
+            </div>
+          </li>
+
+          <!-- Step 3: Inactive -->
+          <li class="stepper__step">
+            <div class="stepper__indicator">
+              <span class="stepper__marker">3</span>
+              <span class="stepper__line"></span>
+            </div>
+            <div class="stepper__content">
+              <h3 class="stepper__title">Import Data</h3>
+              <p class="stepper__description">Select historical data range for initial sync.</p>
+            </div>
+          </li>
+
+          <!-- Step 4: Inactive -->
+          <li class="stepper__step">
+            <div class="stepper__indicator">
+              <span class="stepper__marker">4</span>
+              <!-- Last line hidden via CSS -->
+            </div>
+            <div class="stepper__content">
+              <h3 class="stepper__title">Setup Complete</h3>
+              <p class="stepper__description">Review dashboard and analytics.</p>
+            </div>
+          </li>
+
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <!-- VARIANT 2: VERTICAL TIMELINE -->
+  <div class="demo-wrapper">
+    <div class="demo-header">
+      <h2 class="demo-title">Variant: Timeline</h2>
+      <p class="demo-desc">Informational display for tracking history or logs. Includes error state.</p>
+    </div>
+
+    <div class="card" style="max-width: 500px;">
+      <div class="stepper stepper--timeline">
+        <ol class="stepper__list">
+          
+          <!-- Timeline Item 1: Completed -->
+          <li class="stepper__step stepper__step--completed">
+            <div class="stepper__indicator">
+              <span class="stepper__marker"></span>
+              <span class="stepper__line"></span>
+            </div>
+            <div class="stepper__content">
+              <h3 class="stepper__title" style="font-size: var(--text-sm);">Sync Initiated</h3>
+              <p class="stepper__description" style="margin-bottom:0; font-size: var(--text-xs);">User started sync process via API.</p>
+              <span style="font-size: 11px; color: var(--color-gray-400);">2 hours ago</span>
+            </div>
+          </li>
+
+          <!-- Timeline Item 2: Completed -->
+          <li class="stepper__step stepper__step--completed">
+            <div class="stepper__indicator">
+              <span class="stepper__marker"></span>
+              <span class="stepper__line"></span>
+            </div>
+            <div class="stepper__content">
+              <h3 class="stepper__title" style="font-size: var(--text-sm);">Orders Imported</h3>
+              <p class="stepper__description" style="margin-bottom:0; font-size: var(--text-xs);">Successfully fetched 1,240 records.</p>
+              <span style="font-size: 11px; color: var(--color-gray-400);">1 hour ago</span>
+            </div>
+          </li>
+
+          <!-- Timeline Item 3: Error -->
+          <li class="stepper__step stepper__step--error">
+            <div class="stepper__indicator">
+              <span class="stepper__marker">
+                <!-- X Icon for error -->
+                <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </span>
+              <span class="stepper__line"></span>
+            </div>
+            <div class="stepper__content">
+              <h3 class="stepper__title" style="font-size: var(--text-sm);">Product Sync Failed</h3>
+              <p class="stepper__description" style="margin-bottom:8px; font-size: var(--text-xs);">Connection timeout receiving product data.</p>
+              <span class="badge badge--error">Error: 504 Gateway Timeout</span>
+              <div style="margin-top:8px;">
+                <button class="btn btn--secondary" style="padding: 4px 12px; font-size: 12px;">Retry Sync</button>
+              </div>
+            </div>
+          </li>
+
+          <!-- Timeline Item 4: Pending -->
+          <li class="stepper__step">
+            <div class="stepper__indicator">
+              <span class="stepper__marker"></span>
+            </div>
+            <div class="stepper__content">
+              <h3 class="stepper__title" style="font-size: var(--text-sm); color: var(--color-gray-400);">Finalizing</h3>
+              <p class="stepper__description" style="margin-bottom:0; font-size: var(--text-xs);">Pending completion of previous steps.</p>
+            </div>
+          </li>
+
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 48px; border-top: 1px solid var(--color-gray-200); padding-top: 24px;">
+    <h2>Component Variations</h2>
+    
+    <div style="margin-bottom: 32px;">
+      <h3>Variant Name: "Wizard Stepper"</h3>
+      <p style="color: var(--color-gray-600); margin-bottom: 12px;">Used for guiding users through a multi-step process like onboarding. Features numbered indicators and rich content areas for forms.</p>
+      <!-- Code snippet placeholder for documentation -->
+      <code style="background: var(--color-gray-800); color: var(--color-gray-200); padding: 12px; border-radius: 6px; display: block; overflow-x: auto; font-family: monospace; font-size: 12px;">
+        &lt;li class="stepper__step stepper__step--active"&gt;...&lt;/li&gt;
+      </code>
+    </div>
+
+    <div>
+      <h3>Variant Name: "Vertical Timeline"</h3>
+      <p style="color: var(--color-gray-600); margin-bottom: 12px;">Used for displaying history, logs, or tracking information. Uses the <code>.stepper--timeline</code> modifier class which reduces marker size and spacing for higher data density.</p>
+      <code style="background: var(--color-gray-800); color: var(--color-gray-200); padding: 12px; border-radius: 6px; display: block; overflow-x: auto; font-family: monospace; font-size: 12px;">
+        &lt;div class="stepper stepper--timeline"&gt;...&lt;/div&gt;
+      </code>
+    </div>
+  </div>
+
+</body>
+</html>

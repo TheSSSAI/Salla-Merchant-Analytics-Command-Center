@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "api/queues/*.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "api/webhooks/*.ts": {
+      "maxDuration": 10,
+      "memory": 512
+    }
+  }
+}

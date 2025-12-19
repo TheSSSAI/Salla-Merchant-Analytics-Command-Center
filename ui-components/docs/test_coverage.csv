@@ -1,0 +1,4 @@
+"component_name","business_criticality","technical_complexity","change_frequency","test_types_required","unit_test_coverage","integration_test_coverage","e2e_test_coverage","automation_percentage","manual_test_effort","automated_test_effort","total_test_cases","risk_mitigation_score","quality_confidence","maintenance_overhead","tool_compatibility","team_skill_alignment"
+"Data Ingestion Pipeline (CDC)","Critical","High","Medium","[""Integration"",""Load"",""Data Integrity""]","90","95","85","90","8","60","45","0.95","High","Low","Good","Excellent"
+"AI Assistant (RAG & SQL Gen)","High","Very High","High","[""Unit"",""Security"",""Accuracy""]","85","80","60","75","20","80","60","0.88","Medium","High","Medium","Good"
+"Next.js Frontend & Dashboard","High","Medium","High","[""Component"",""Visual Regression"",""Accessibility""]","80","70","75","70","40","100","120","0.9","High","Medium","Excellent","Excellent"

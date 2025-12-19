@@ -1,0 +1,36 @@
+sequenceDiagram
+    participant "SPA Frontend" as SPAFrontend
+    participant "API Gateway" as APIGateway
+    participant "Analytics Service" as AnalyticsService
+    participant "Auth Service" as AuthService
+    participant "OLTP Repository" as OLTPRepository
+    participant "Audit Logger" as AuditLogger
+
+    activate APIGateway
+    SPAFrontend->>APIGateway: 1. 1. GET /reports/sales-trends (with expired Access Token)
+    APIGateway->>AnalyticsService: 2. 2. Validate token & forward request
+    APIGateway->>SPAFrontend: 3. 3. Return 401 Unauthorized
+    SPAFrontend->>APIGateway: 4. 4. [Interceptor] POST /auth/refresh
+    activate AuthService
+    APIGateway->>AuthService: 5. 5. Forward refresh request
+    activate OLTPRepository
+    AuthService->>OLTPRepository: 6. 6. findValidRefreshToken(refreshToken)
+    OLTPRepository->>AuthService: 7. 7. Return valid token object with userId
+    AuthService->>OLTPRepository: 8. 8. rotateRefreshToken(oldToken, newRefreshToken)
+    OLTPRepository->>AuthService: 9. 9. Confirm rotation success
+    AuthService->>AuditLogger: 10. 10. logEvent('TokenRefreshSuccess')
+    AuthService->>APIGateway: 11. 11. Return 200 OK with new tokens
+    APIGateway->>SPAFrontend: 12. 12. Forward successful refresh response
+    SPAFrontend->>APIGateway: 13. 13. [Interceptor] Retry GET /reports/sales-trends (with new Access Token)
+    activate AnalyticsService
+    APIGateway->>AnalyticsService: 14. 14. Validate new token & forward request
+    AnalyticsService->>APIGateway: 15. 15. Return 200 OK with report data
+    APIGateway->>SPAFrontend: 16. 16. Forward final successful response
+
+    note over SPAFrontend: The client-side API interceptor (e.g., using Axios) is the core component that orchestrates this ...
+    note over AuthService: INVALID TOKEN: If step 6 or 7 fails (token not found, expired, or revoked), the Auth Service MUST...
+
+    deactivate AnalyticsService
+    deactivate OLTPRepository
+    deactivate AuthService
+    deactivate APIGateway

@@ -1,0 +1,4 @@
+"gate_id","gate_name","sprint","gate_type","criteria","responsible_team","gate_date","approval_required","approver","bypass_criteria","automation_level","tools_used","success_metrics"
+"QG-001","Auth & DB Schema","Sprint 1","Integration","Users can register, login, and connect Salla store","QA","2025-02-14","true","tech.lead@salla-saas.com","None","Partially Automated","Jest, Postman","100% success rate on happy path"
+"QG-002","Data Pipeline Latency","Sprint 2","Performance","Data appears in ClickHouse < 5 mins after Postgres commit","Data","2025-02-28","true","tech.lead@salla-saas.com","Latency < 10 mins acceptable for MVP","Fully Automated","k6, Datadog","p95 latency < 300s"
+"QG-003","AI Safety & Accuracy","Sprint 3","Security","No PII in prompts; SQL injection prevented","Security","2025-03-14","true","security.lead@salla-saas.com","None","Partially Automated","Manual Pen Test, Eval Script","Zero critical vulns"

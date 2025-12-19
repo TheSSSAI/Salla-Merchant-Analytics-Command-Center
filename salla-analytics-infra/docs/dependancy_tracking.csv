@@ -1,0 +1,4 @@
+"dependency_id","from_task","to_task","dependency_type","description","critical_path","lead_time_days","responsible_team","coordination_required","risk_level","mitigation_plan","status","resolution_date","impact_if_delayed","escalation_required"
+"DEP-001","TASK-001-02","TASK-002-01","Technical","DB Schema must exist before Auth implementation","true","1","Backend Team","","Low","Finalize schema design early Sprint 1","Active","2024-05-04","Auth blocked",""
+"DEP-002","TASK-002-01","TASK-003-01","Technical","Auth Service required for Salla OAuth implementation","true","2","Backend Team","true","Medium","Parallel dev of OAuth using mock auth","Active","2024-05-08","Salla Integration blocked",""
+"DEP-003","TASK-001-03","TASK-005-02","Technical","ClickHouse Schema required for CDC","true","1","Data Team","","High","Define CH schema in design phase","Active","2024-05-17","Pipeline blocked",""

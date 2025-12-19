@@ -1,0 +1,3 @@
+"scenario_name","team_size","estimated_duration_weeks","total_cost","risk_level","capacity_utilization","skill_constraints","critical_path_duration","parallel_work_percentage","resource_bottlenecks","mitigation_strategies","success_probability","quality_risk","timeline_buffer"
+"Baseline - Current Allocation","5","8","27320","Medium","28","Data Engineering bottleneck in Sprint 2/3","6.5","40","Data Engineer on schema/loader","Backend Dev assists with ETL logic","85","Low","1.5"
+"Aggressive - Parallel Data & Auth","5","6","27320","High","45","Coordination overhead between Auth/Data streams","5","70","Backend Lead review capacity","Reduce meeting overhead, delegated authority","65","Medium","0.5"

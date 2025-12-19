@@ -1,0 +1,659 @@
+# 1 Overview
+
+## 1.1 Diagram Id
+
+SEQ-IF-001
+
+## 1.2 Name
+
+Salla Webhook Processing for Real-time Updates
+
+## 1.3 Description
+
+The Salla platform sends a webhook to a dedicated endpoint in the system for a real-time event, such as 'order.created'. The system validates the webhook's cryptographic signature, processes the payload through an anti-corruption layer, and updates the OLTP database.
+
+## 1.4 Type
+
+🔹 IntegrationFlow
+
+## 1.5 Purpose
+
+To receive real-time data updates from the Salla platform, ensuring the data in the OLTP database is kept up-to-date with minimal delay, forming the basis of the real-time data pipeline.
+
+## 1.6 Complexity
+
+Medium
+
+## 1.7 Priority
+
+🔴 High
+
+## 1.8 Frequency
+
+OnDemand
+
+## 1.9 Participants
+
+- salla-platform
+- api-gateway-002
+- user-management-service-003
+- oltp-repository-008
+
+## 1.10 Key Interactions
+
+- Salla sends an HTTP POST request to the webhook endpoint with event data.
+- A dedicated serverless function is invoked by the API Gateway.
+- The function validates the cryptographic signature in the request header using a shared secret.
+- If valid, the payload is parsed and transformed via an anti-corruption layer into the system's internal domain model.
+- The corresponding records are created or updated in the PostgreSQL OLTP database.
+- The function returns a 200 OK response to Salla to acknowledge receipt.
+
+## 1.11 Triggers
+
+- An event occurs in a connected Salla store (e.g., a new order is placed, a cart is updated).
+
+## 1.12 Outcomes
+
+- The system's OLTP database reflects the change from the Salla store in near real-time.
+- The change is now available for the CDC pipeline to process (see SEQ-DF-001).
+
+## 1.13 Business Rules
+
+- Webhook signatures must be validated before any processing occurs (REQ-INT-006).
+- An anti-corruption layer must be used to isolate the system from Salla's data models.
+
+## 1.14 Error Scenarios
+
+- Webhook signature validation fails; the request is rejected with a 401/403 error and the event is dropped.
+- Payload processing fails due to an unexpected schema change; the error is logged, an alert is sent to operations, and the message is moved to a DLQ for analysis.
+
+## 1.15 Integration Points
+
+- Salla Platform (Webhooks).
+
+# 2.0 Details
+
+## 2.1 Diagram Id
+
+SEQ-IF-001
+
+## 2.2 Name
+
+Implementation-Ready: Salla Webhook Processing for Real-time Updates
+
+## 2.3 Description
+
+Provides a detailed technical specification for processing real-time event webhooks from the Salla platform. An external Salla service sends an HTTP POST to a dedicated API Gateway endpoint, which triggers a serverless function. This function's primary responsibilities are cryptographic signature validation, payload transformation via an anti-corruption layer (Adapter Pattern), and persisting the resulting domain model into the OLTP PostgreSQL database using a repository pattern. The design prioritizes security, reliability through asynchronous error handling, and performance to maintain near real-time data synchronization.
+
+## 2.4 Participants
+
+### 2.4.1 External System
+
+#### 2.4.1.1 Repository Id
+
+salla-platform
+
+#### 2.4.1.2 Display Name
+
+Salla Platform
+
+#### 2.4.1.3 Type
+
+🔹 External System
+
+#### 2.4.1.4 Technology
+
+SaaS E-commerce Platform
+
+#### 2.4.1.5 Order
+
+1
+
+#### 2.4.1.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | actor |
+| Color | #FF6F61 |
+| Stereotype | <<External>> |
+
+### 2.4.2.0 Gateway
+
+#### 2.4.2.1 Repository Id
+
+api-gateway-002
+
+#### 2.4.2.2 Display Name
+
+API Gateway
+
+#### 2.4.2.3 Type
+
+🔹 Gateway
+
+#### 2.4.2.4 Technology
+
+AWS API Gateway
+
+#### 2.4.2.5 Order
+
+2
+
+#### 2.4.2.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #FFC107 |
+| Stereotype | <<Gateway>> |
+
+### 2.4.3.0 Service
+
+#### 2.4.3.1 Repository Id
+
+webhook-handler-service-001
+
+#### 2.4.3.2 Display Name
+
+Webhook Handler Service
+
+#### 2.4.3.3 Type
+
+🔹 Service
+
+#### 2.4.3.4 Technology
+
+AWS Lambda (Node.js 20.x)
+
+#### 2.4.3.5 Order
+
+3
+
+#### 2.4.3.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #88B04B |
+| Stereotype | <<Service>> |
+
+### 2.4.4.0 Repository
+
+#### 2.4.4.1 Repository Id
+
+oltp-repository-008
+
+#### 2.4.4.2 Display Name
+
+OLTP Repository
+
+#### 2.4.4.3 Type
+
+🔹 Repository
+
+#### 2.4.4.4 Technology
+
+Prisma Client (PostgreSQL)
+
+#### 2.4.4.5 Order
+
+4
+
+#### 2.4.4.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #92A8D1 |
+| Stereotype | <<Repository>> |
+
+## 2.5.0.0 Interactions
+
+### 2.5.1.0 Request
+
+#### 2.5.1.1 Source Id
+
+salla-platform
+
+#### 2.5.1.2 Target Id
+
+api-gateway-002
+
+#### 2.5.1.3 Message
+
+Sends webhook for 'order.created' event.
+
+#### 2.5.1.4 Sequence Number
+
+1
+
+#### 2.5.1.5 Type
+
+🔹 Request
+
+#### 2.5.1.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.1.7 Return Message
+
+HTTP/1.1 200 OK
+
+#### 2.5.1.8 Has Return
+
+✅ Yes
+
+#### 2.5.1.9 Is Activation
+
+✅ Yes
+
+#### 2.5.1.10 Technical Details
+
+##### 2.5.1.10.1 Protocol
+
+HTTPS
+
+##### 2.5.1.10.2 Method
+
+POST /webhooks/salla
+
+##### 2.5.1.10.3 Parameters
+
+| Property | Value |
+|----------|-------|
+| Headers | Content-Type: application/json, X-Salla-Signature-... |
+| Body | Salla event JSON payload (e.g., Order object) |
+
+##### 2.5.1.10.4 Authentication
+
+Signature-based (HMAC-SHA256)
+
+##### 2.5.1.10.5 Error Handling
+
+Client-side retries on non-2xx responses as per Salla's policy.
+
+##### 2.5.1.10.6 Performance
+
+Salla expects a response within a short timeout (e.g., 5-10 seconds).
+
+### 2.5.2.0.0 Invocation
+
+#### 2.5.2.1.0 Source Id
+
+api-gateway-002
+
+#### 2.5.2.2.0 Target Id
+
+webhook-handler-service-001
+
+#### 2.5.2.3.0 Message
+
+Triggers function with request payload and headers.
+
+#### 2.5.2.4.0 Sequence Number
+
+2
+
+#### 2.5.2.5.0 Type
+
+🔹 Invocation
+
+#### 2.5.2.6.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.2.7.0 Return Message
+
+Returns invocation result (e.g., { statusCode: 200, ... })
+
+#### 2.5.2.8.0 Has Return
+
+✅ Yes
+
+#### 2.5.2.9.0 Is Activation
+
+✅ Yes
+
+#### 2.5.2.10.0 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | AWS Lambda Integration |
+| Method | Invoke |
+| Parameters | Lambda event object containing the full HTTP reque... |
+| Authentication | IAM Role-based execution permissions. |
+| Error Handling | API Gateway maps Lambda errors to HTTP status code... |
+| Performance | Cold start latency consideration; provisioned conc... |
+
+#### 2.5.2.11.0 Nested Interactions
+
+##### 2.5.2.11.1 Self-call
+
+###### 2.5.2.11.1.1 Source Id
+
+webhook-handler-service-001
+
+###### 2.5.2.11.1.2 Target Id
+
+webhook-handler-service-001
+
+###### 2.5.2.11.1.3 Message
+
+1. validateSignature(headers, body)
+
+###### 2.5.2.11.1.4 Sequence Number
+
+3
+
+###### 2.5.2.11.1.5 Type
+
+🔹 Self-call
+
+###### 2.5.2.11.1.6 Is Synchronous
+
+✅ Yes
+
+###### 2.5.2.11.1.7 Return Message
+
+boolean: isValid
+
+###### 2.5.2.11.1.8 Has Return
+
+✅ Yes
+
+###### 2.5.2.11.1.9 Is Activation
+
+❌ No
+
+###### 2.5.2.11.1.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Internal Method Call |
+| Method | validateSignature |
+| Parameters | headers, rawBody |
+| Authentication | N/A |
+| Error Handling | If signature is invalid, immediately returns a 401... |
+| Performance | Sub-millisecond operation. |
+
+##### 2.5.2.11.2.0 Self-call
+
+###### 2.5.2.11.2.1 Source Id
+
+webhook-handler-service-001
+
+###### 2.5.2.11.2.2 Target Id
+
+webhook-handler-service-001
+
+###### 2.5.2.11.2.3 Message
+
+2. transformPayload(payload)
+
+###### 2.5.2.11.2.4 Sequence Number
+
+4
+
+###### 2.5.2.11.2.5 Type
+
+🔹 Self-call
+
+###### 2.5.2.11.2.6 Is Synchronous
+
+✅ Yes
+
+###### 2.5.2.11.2.7 Return Message
+
+Transformed domain object (e.g., InternalOrderModel)
+
+###### 2.5.2.11.2.8 Has Return
+
+✅ Yes
+
+###### 2.5.2.11.2.9 Is Activation
+
+❌ No
+
+###### 2.5.2.11.2.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Internal Method Call |
+| Method | transformPayload (Anti-Corruption Layer) |
+| Parameters | Salla JSON payload |
+| Authentication | N/A |
+| Error Handling | On schema mismatch or validation failure, logs a c... |
+| Performance | Should be highly optimized, typically < 20ms. |
+
+##### 2.5.2.11.3.0 Database Operation
+
+###### 2.5.2.11.3.1 Source Id
+
+webhook-handler-service-001
+
+###### 2.5.2.11.3.2 Target Id
+
+oltp-repository-008
+
+###### 2.5.2.11.3.3 Message
+
+3. upsertOrder(internalOrderModel)
+
+###### 2.5.2.11.3.4 Sequence Number
+
+5
+
+###### 2.5.2.11.3.5 Type
+
+🔹 Database Operation
+
+###### 2.5.2.11.3.6 Is Synchronous
+
+✅ Yes
+
+###### 2.5.2.11.3.7 Return Message
+
+Returns success confirmation or throws DatabaseError.
+
+###### 2.5.2.11.3.8 Has Return
+
+✅ Yes
+
+###### 2.5.2.11.3.9 Is Activation
+
+✅ Yes
+
+###### 2.5.2.11.3.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | TCP/IP (PostgreSQL) |
+| Method | prisma.salesOrder.upsert |
+| Parameters | Prisma-compatible data object. |
+| Authentication | Database credentials managed by AWS Secrets Manage... |
+| Error Handling | Catches Prisma-specific exceptions (e.g., unique c... |
+| Performance | Indexed queries are critical. p95 < 50ms. |
+
+### 2.5.3.0.0.0 Response
+
+#### 2.5.3.1.0.0 Source Id
+
+webhook-handler-service-001
+
+#### 2.5.3.2.0.0 Target Id
+
+api-gateway-002
+
+#### 2.5.3.3.0.0 Message
+
+Returns successful processing acknowledgement.
+
+#### 2.5.3.4.0.0 Sequence Number
+
+6
+
+#### 2.5.3.5.0.0 Type
+
+🔹 Response
+
+#### 2.5.3.6.0.0 Is Synchronous
+
+❌ No
+
+#### 2.5.3.7.0.0 Return Message
+
+
+
+#### 2.5.3.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.3.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.3.10.0.0 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | AWS Lambda Integration |
+| Method | Return |
+| Parameters | { statusCode: 200, body: '{"status":"received"}' } |
+| Authentication | N/A |
+| Error Handling | If an unhandled exception occurs, Lambda runtime r... |
+| Performance | N/A |
+
+### 2.5.4.0.0.0 Response
+
+#### 2.5.4.1.0.0 Source Id
+
+api-gateway-002
+
+#### 2.5.4.2.0.0 Target Id
+
+salla-platform
+
+#### 2.5.4.3.0.0 Message
+
+Sends acknowledgement of receipt.
+
+#### 2.5.4.4.0.0 Sequence Number
+
+7
+
+#### 2.5.4.5.0.0 Type
+
+🔹 Response
+
+#### 2.5.4.6.0.0 Is Synchronous
+
+❌ No
+
+#### 2.5.4.7.0.0 Return Message
+
+
+
+#### 2.5.4.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.4.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.4.10.0.0 Technical Details
+
+##### 2.5.4.10.1.0 Protocol
+
+HTTPS
+
+##### 2.5.4.10.2.0 Method
+
+HTTP/1.1 200 OK
+
+##### 2.5.4.10.3.0 Parameters
+
+| Property | Value |
+|----------|-------|
+| Body | {"status":"received"} |
+
+##### 2.5.4.10.4.0 Authentication
+
+N/A
+
+##### 2.5.4.10.5.0 Error Handling
+
+N/A
+
+##### 2.5.4.10.6.0 Performance
+
+N/A
+
+## 2.6.0.0.0.0 Notes
+
+### 2.6.1.0.0.0 Content
+
+#### 2.6.1.1.0.0 Content
+
+Signature Validation (Step 3): The handler computes an HMAC-SHA256 signature of the raw request body using a secret key stored in AWS Secrets Manager. This computed signature is then compared in constant time against the value of the 'X-Salla-Signature-256' header. This is critical per REQ-INT-006.
+
+#### 2.6.1.2.0.0 Position
+
+top
+
+#### 2.6.1.3.0.0 Participant Id
+
+webhook-handler-service-001
+
+#### 2.6.1.4.0.0 Sequence Number
+
+3
+
+### 2.6.2.0.0.0 Content
+
+#### 2.6.2.1.0.0 Content
+
+Anti-Corruption Layer (Step 4): This step is crucial for decoupling the system's internal domain models from Salla's specific API schema. It uses an Adapter pattern to translate the incoming Salla DTO into a rich domain entity, protecting the core logic from external API changes.
+
+#### 2.6.2.2.0.0 Position
+
+top
+
+#### 2.6.2.3.0.0 Participant Id
+
+webhook-handler-service-001
+
+#### 2.6.2.4.0.0 Sequence Number
+
+4
+
+### 2.6.3.0.0.0 Content
+
+#### 2.6.3.1.0.0 Content
+
+CDC Pipeline Trigger: The successful `upsert` operation in the OLTP database (Step 5) generates a Write-Ahead Log (WAL) entry, which is the starting point for the Change Data Capture (CDC) pipeline (REQ-TEC-003) to propagate this change to the OLAP data warehouse.
+
+#### 2.6.3.2.0.0 Position
+
+bottom
+
+#### 2.6.3.3.0.0 Participant Id
+
+oltp-repository-008
+
+#### 2.6.3.4.0.0 Sequence Number
+
+5
+
+## 2.7.0.0.0.0 Implementation Guidance
+
+| Property | Value |
+|----------|-------|
+| Security Requirements | The Salla webhook secret must be stored securely i... |
+| Performance Targets | The end-to-end processing time for a webhook (from... |
+| Error Handling Strategy | A two-tiered error strategy is required:
+1. **Vali... |
+| Testing Considerations | Unit tests must cover the signature validation log... |
+| Monitoring Requirements | Key metrics to monitor in CloudWatch: Lambda invoc... |
+| Deployment Considerations | The API Gateway endpoint URL is generated on deplo... |
+

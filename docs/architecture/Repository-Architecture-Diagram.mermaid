@@ -1,0 +1,109 @@
+graph TD
+    subgraph Legend
+        direction LR
+        App[Application]:::app
+        Lib[Library]:::lib
+        Svc[Backend Service]:::svc
+        Infra[Infrastructure]:::infra
+    end
+
+    subgraph Layer_Presentation [Presentation Layer]
+        REPO_APP_CORE_001["salla-analytics-pwa-main<br>(Application)"]:::app
+        REPO_LIB_UI_001["ui-components<br>(UI Library)"]:::lib
+    end
+
+    subgraph Layer_Domain [Domain & Logic Layer]
+        REPO_SVC_AI_001["ai-assistant-service-lib<br>(Domain Library)"]:::lib
+    end
+
+    subgraph Layer_DataAccess [Data Access Layer]
+        REPO_LIB_DATA_001["database-schema<br>(OLTP Library)"]:::lib
+        REPO_DA_OLAP_001["olap-repository<br>(OLAP Library)"]:::lib
+    end
+
+    subgraph Layer_Pipeline [Data Pipeline Layer]
+        REPO_SVC_DATA_001["data-pipeline-service<br>(Backend Service)"]:::svc
+    end
+
+    subgraph Layer_Infrastructure [Infrastructure & Cross-Cutting]
+        REPO_INFRA_001["salla-analytics-infra<br>(Infrastructure)"]:::infra
+        REPO_LIB_SDK_001["integration-gateways<br>(SDK Library)"]:::lib
+        REPO_LIB_CORE_001["core-library<br>(Utility Library)"]:::lib
+    end
+
+    %% Dependencies
+    REPO_APP_CORE_001 --> REPO_LIB_UI_001
+    REPO_APP_CORE_001 --> REPO_SVC_AI_001
+    REPO_APP_CORE_001 --> REPO_DA_OLAP_001
+    REPO_APP_CORE_001 --> REPO_LIB_DATA_001
+    REPO_APP_CORE_001 --> REPO_LIB_SDK_001
+    REPO_APP_CORE_001 --> REPO_LIB_CORE_001
+
+    REPO_SVC_AI_001 --> REPO_DA_OLAP_001
+    REPO_SVC_AI_001 --> REPO_LIB_DATA_001
+    REPO_SVC_AI_001 --> REPO_LIB_SDK_001
+    REPO_SVC_AI_001 --> REPO_LIB_CORE_001
+
+    REPO_SVC_DATA_001 --> REPO_LIB_DATA_001
+    REPO_SVC_DATA_001 --> REPO_LIB_SDK_001
+    REPO_SVC_DATA_001 --> REPO_LIB_CORE_001
+
+    REPO_DA_OLAP_001 --> REPO_LIB_CORE_001
+    REPO_LIB_SDK_001 --> REPO_LIB_CORE_001
+
+    %% Styling
+    classDef app fill:#e6f2ff,stroke:#0052cc,stroke-width:2px;
+    classDef lib fill:#f3e6ff,stroke:#52288f,stroke-width:2px;
+    classDef svc fill:#e6fff2,stroke:#006644,stroke-width:2px;
+    classDef infra fill:#fffbe6,stroke:#ffab00,stroke-width:2px;
+
+
+
+
+
+
+
+
+
+
+C4Context
+    title Component Integration Patterns
+
+    Enterprise_Boundary(c1, "Salla Analytics System") {
+        Person(user, "Merchant User")
+
+        System_Ext(salla, "Salla E-commerce Platform", "Provides merchant data via API and Webhooks")
+        System_Ext(openai, "OpenAI API", "Provides LLM for AI Assistant")
+
+        System_Boundary(c2, "PWA & BFF") {
+            Component(pwa, "PWA Frontend", "React/Next.js SPA", "Renders all dashboards and UI controls")
+            Component(bff, "BFF API", "Vercel Functions", "Orchestrates backend calls, handles auth")
+        }
+
+        System_Boundary(c3, "Backend Services") {
+            Component(data_pipeline, "Data Pipeline Service", "Vercel Functions", "Ingests and processes data from Salla")
+            Component(ai_service, "AI Assistant Logic", "Library", "Implements RAG pattern and insight generation")
+        }
+
+        System_Boundary(c4, "Data Stores") {
+            ContainerDb(postgres, "PostgreSQL DB", "OLTP", "Stores transactional data like users, settings")
+            ContainerDb(clickhouse, "ClickHouse DB", "OLAP", "Stores denormalized analytical data for reporting")
+            ContainerDb(qStash, "Message Queue", "Upstash QStash", "Decouples webhook ingestion from processing")
+        }
+    }
+
+    Rel(user, pwa, "Uses", "HTTPS")
+    Rel(pwa, bff, "Makes API Calls", "HTTPS/JSON")
+
+    Rel(bff, ai_service, "Invokes NLQ Logic")
+    Rel(bff, postgres, "Reads/Writes User Data")
+    Rel(bff, clickhouse, "Queries Analytics Data")
+
+    Rel_D(ai_service, openai, "Queries LLM", "HTTPS")
+    Rel_D(ai_service, clickhouse, "Retrieves Context Data")
+
+    Rel(salla, data_pipeline, "Sends Webhooks", "HTTPS")
+    Rel(data_pipeline, salla, "Polls for historical data", "HTTPS")
+    Rel(data_pipeline, qStash, "Enqueues Events")
+    Rel(qStash, data_pipeline, "Triggers Processor")
+    Rel(data_pipeline, clickhouse, "Writes Analytical Data")

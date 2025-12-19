@@ -1,0 +1,34 @@
+sequenceDiagram
+    participant "Owner's Browser" as OwnersBrowser
+    participant "Frontend SPA" as FrontendSPA
+    participant "API Gateway" as APIGateway
+    participant "Compliance Service" as ComplianceService
+    participant "Audit Logger" as AuditLogger
+    participant "OLTP Repository" as OLTPRepository
+
+    activate FrontendSPA
+    OwnersBrowser->>FrontendSPA: 1. 1. Submits DSAR form with customer identifier (email) and request type (export/delete).
+    activate APIGateway
+    FrontendSPA->>APIGateway: 2. 2. POST /dsar
+    APIGateway-->>FrontendSPA: 3. 202 Accepted
+    activate ComplianceService
+    APIGateway->>ComplianceService: 3. 4. Invoke DSAR handler function.
+    ComplianceService-->>APIGateway: 12. Return result of DSAR initiation.
+    ComplianceService->>ComplianceService: 4. 5. Validate role: Check if user role from JWT is 'Owner'.
+    activate AuditLogger
+    ComplianceService->>AuditLogger: 5. 6. logEvent('DSAR Submitted')
+    AuditLogger-->>ComplianceService: 7. Acknowledges log.
+    activate OLTPRepository
+    ComplianceService->>OLTPRepository: 6. 8. createDsarRecord(...)
+    OLTPRepository-->>ComplianceService: 9. Returns created DSAR record with unique ID.
+    ComplianceService->>ComplianceService: 7. 10. Initiate asynchronous workflow based on request type.
+    ComplianceService->>FrontendSPA: 8. 11. Acknowledges DSAR submission.
+    FrontendSPA->>OwnersBrowser: 9. 13. Displays success message to the Owner.
+
+    note over AuditLogger: All DSAR operations, including status changes (e.g., 'in_progress', 'completed', 'failed') and fi...
+
+    deactivate OLTPRepository
+    deactivate AuditLogger
+    deactivate ComplianceService
+    deactivate APIGateway
+    deactivate FrontendSPA

@@ -1,0 +1,4 @@
+"dependency_id","from_task","to_task","dependency_type","description","critical_path","lead_time_days","responsible_team","coordination_required","risk_level","mitigation_plan","status","resolution_date","impact_if_delayed","escalation_required"
+"DEP-001","TASK-AUTH-002-02","TASK-SALLA-001-01","Technical","User must be logged in to connect Salla store","true","","Backend Team","","High","Mock auth for Salla dev if needed","Active","2025-02-06","Salla integration blocked",""
+"DEP-002","TASK-SALLA-001-04","TASK-SYNC-001-01","Technical","API Client with Auto-Refresh required for Sync Worker","true","1","Backend Team","true","High","Use long-lived token for dev testing","Active","2025-02-14","Data Sync blocked",""
+"DEP-003","TASK-DATA-001-02","TASK-DATA-003-01","Technical","ClickHouse Tables must exist before Loader can run","true","2","Data Team","true","Medium","Manual table creation if migration script fails","Active","2025-02-28","Real-time pipeline blocked",""

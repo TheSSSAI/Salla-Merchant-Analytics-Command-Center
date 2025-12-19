@@ -1,0 +1,29 @@
+sequenceDiagram
+    participant "Salla Platform" as SallaPlatform
+    participant "API Gateway" as APIGateway
+    participant "Webhook Handler Service" as WebhookHandlerService
+    participant "OLTP Repository" as OLTPRepository
+
+    activate APIGateway
+    SallaPlatform->>APIGateway: 1. Sends webhook for 'order.created' event.
+    APIGateway-->>SallaPlatform: HTTP/1.1 200 OK
+    activate WebhookHandlerService
+    APIGateway->>WebhookHandlerService: 2. Triggers function with request payload and headers.
+    WebhookHandlerService-->>APIGateway: Returns invocation result (e.g., { statusCode: 200, ... })
+    WebhookHandlerService->>WebhookHandlerService: 3. 1. validateSignature(headers, body)
+    WebhookHandlerService-->>WebhookHandlerService: boolean: isValid
+    WebhookHandlerService->>WebhookHandlerService: 4. 2. transformPayload(payload)
+    WebhookHandlerService-->>WebhookHandlerService: Transformed domain object (e.g., InternalOrderModel)
+    activate OLTPRepository
+    WebhookHandlerService->>OLTPRepository: 5. 3. upsertOrder(internalOrderModel)
+    OLTPRepository-->>WebhookHandlerService: Returns success confirmation or throws DatabaseError.
+    WebhookHandlerService->>APIGateway: 6. Returns successful processing acknowledgement.
+    APIGateway->>SallaPlatform: 7. Sends acknowledgement of receipt.
+
+    note over WebhookHandlerService: Signature Validation (Step 3): The handler computes an HMAC-SHA256 signature of the raw request b...
+    note over WebhookHandlerService: Anti-Corruption Layer (Step 4): This step is crucial for decoupling the system's internal domain ...
+    note over OLTPRepository: CDC Pipeline Trigger: The successful upsert operation in the OLTP database (Step 5) generates a W...
+
+    deactivate OLTPRepository
+    deactivate WebhookHandlerService
+    deactivate APIGateway

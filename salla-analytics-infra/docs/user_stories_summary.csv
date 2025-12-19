@@ -1,0 +1,2 @@
+"total_stories","total_story_points","must_have_stories","should_have_stories","could_have_stories","epics_identified","estimated_sprints","key_dependencies"
+"7","62","6","1","0","[""Core Infrastructure & Authentication"",""Salla Integration & Onboarding"",""Data Pipeline & Real-time Sync"",""Analytics & Visualization"",""AI Assistant (RAG)"",""Cart Recovery Automation""]","4","[""Salla OAuth (US-009)"",""Data Pipeline (US-059)""]"

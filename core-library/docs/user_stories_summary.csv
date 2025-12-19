@@ -1,0 +1,2 @@
+"total_stories","total_story_points","must_have_stories","should_have_stories","could_have_stories","epics_identified","estimated_sprints","key_dependencies"
+"8","52","4","3","1","[""Core Infrastructure & Authentication"",""Data Ingestion & Pipeline"",""Deep Analytics & Reporting"",""Cart Recovery Module"",""AI Assistant (RAG)""]","4","[""Data ingestion (US-011) must precede analytics (US-022)"",""Authentication (US-004) enables all other features""]"

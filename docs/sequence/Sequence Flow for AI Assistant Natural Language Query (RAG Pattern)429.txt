@@ -1,0 +1,878 @@
+# 1 Overview
+
+## 1.1 Diagram Id
+
+SEQ-SI-001
+
+## 1.2 Name
+
+AI Assistant Natural Language Query (RAG Pattern)
+
+## 1.3 Description
+
+A user types a natural language question into the UI. The query is sent to the AI Assistant Service, which uses the Retrieval-Augmented Generation (RAG) pattern. It first retrieves relevant data from the merchant's analytical and vector databases, constructs a detailed prompt including this context, sends it to the OpenAI API, and returns the formatted answer to the user.
+
+## 1.4 Type
+
+🔹 ServiceInteraction
+
+## 1.5 Purpose
+
+To provide accurate, data-driven answers to users' natural language questions about their business, leveraging the power of an LLM while grounding it in the merchant's specific, private data, as per FR-401.
+
+## 1.6 Complexity
+
+High
+
+## 1.7 Priority
+
+🔴 High
+
+## 1.8 Frequency
+
+OnDemand
+
+## 1.9 Participants
+
+- user-browser
+- spa-frontend-001
+- api-gateway-002
+- ai-assistant-service-005
+- olap-repository-008
+- vector-db-repository-011
+- openai-gateway-012
+
+## 1.10 Key Interactions
+
+- User submits a query like 'What were my top 5 products last month?'
+- The AI Assistant Service parses the query to identify intent ('top products') and entities ('last month').
+- The service queries the Vector DB with an embedding of the query to find relevant context (e.g., data schema definitions, similar past queries).
+- The service queries the ClickHouse OLAP DB to retrieve the actual, hard data (e.g., product sales for the specified period).
+- A detailed prompt is constructed containing the original query, system instructions, and the retrieved data context from both sources.
+- The OpenAI Gateway sends the complete prompt to the OpenAI API.
+- The LLM's response is received, parsed, and formatted into a user-friendly answer (text, chart, or number).
+- The final answer is sent back to the user's browser.
+
+## 1.11 Triggers
+
+- User submits a question to the AI Assistant UI component.
+
+## 1.12 Outcomes
+
+- The user receives a relevant and accurate answer to their question, potentially as a data visualization.
+- The query and response are logged for auditing and continuous model improvement.
+
+## 1.13 Business Rules
+
+- All data retrieval must be strictly scoped to the requesting merchant's data (FR-401).
+- The system must respond with a helpful message if a query cannot be understood.
+- PII must be stripped and not sent to the OpenAI API (REQ-INT-006).
+
+## 1.14 Error Scenarios
+
+- OpenAI API is unavailable or returns an error (handled by SEQ-EH-001).
+- The query is out of scope or cannot be parsed.
+- Data retrieval from OLAP or Vector DB fails.
+
+## 1.15 Integration Points
+
+- OpenAI API (via OpenAI Gateway).
+
+# 2.0 Details
+
+## 2.1 Diagram Id
+
+SEQ-SI-001
+
+## 2.2 Name
+
+AI Assistant Natural Language Query Processing (RAG)
+
+## 2.3 Description
+
+Implementation-ready sequence for processing a user's natural language query using a Retrieval-Augmented Generation (RAG) pattern. The sequence details the synchronous API call, internal data retrieval from analytical and vector databases, prompt engineering with PII scrubbing, and the final call to an external LLM via a resilient gateway.
+
+## 2.4 Participants
+
+### 2.4.1 Client
+
+#### 2.4.1.1 Repository Id
+
+user-browser
+
+#### 2.4.1.2 Display Name
+
+User Browser
+
+#### 2.4.1.3 Type
+
+🔹 Client
+
+#### 2.4.1.4 Technology
+
+Web Browser (Chrome, Firefox, etc.)
+
+#### 2.4.1.5 Order
+
+1
+
+#### 2.4.1.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | actor |
+| Color | #90A4AE |
+| Stereotype | User |
+
+### 2.4.2.0 FrontendApplication
+
+#### 2.4.2.1 Repository Id
+
+spa-frontend-001
+
+#### 2.4.2.2 Display Name
+
+Frontend SPA
+
+#### 2.4.2.3 Type
+
+🔹 FrontendApplication
+
+#### 2.4.2.4 Technology
+
+React 18, TypeScript 5.4
+
+#### 2.4.2.5 Order
+
+2
+
+#### 2.4.2.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #4DD0E1 |
+| Stereotype | Presentation |
+
+### 2.4.3.0 Gateway
+
+#### 2.4.3.1 Repository Id
+
+api-gateway-002
+
+#### 2.4.3.2 Display Name
+
+API Gateway
+
+#### 2.4.3.3 Type
+
+🔹 Gateway
+
+#### 2.4.3.4 Technology
+
+AWS API Gateway
+
+#### 2.4.3.5 Order
+
+3
+
+#### 2.4.3.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #FF8A65 |
+| Stereotype | Gateway |
+
+### 2.4.4.0 Serverless Function Group
+
+#### 2.4.4.1 Repository Id
+
+ai-assistant-service-005
+
+#### 2.4.4.2 Display Name
+
+AI Assistant Service
+
+#### 2.4.4.3 Type
+
+🔹 Serverless Function Group
+
+#### 2.4.4.4 Technology
+
+AWS Lambda, Node.js 20.x
+
+#### 2.4.4.5 Order
+
+4
+
+#### 2.4.4.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #BA68C8 |
+| Stereotype | Application Service |
+
+### 2.4.5.0 Repository
+
+#### 2.4.5.1 Repository Id
+
+vector-db-repository-011
+
+#### 2.4.5.2 Display Name
+
+Vector DB Repository
+
+#### 2.4.5.3 Type
+
+🔹 Repository
+
+#### 2.4.5.4 Technology
+
+Pinecone SDK, TypeScript
+
+#### 2.4.5.5 Order
+
+5
+
+#### 2.4.5.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | database |
+| Color | #7986CB |
+| Stereotype | Infrastructure |
+
+### 2.4.6.0 Repository
+
+#### 2.4.6.1 Repository Id
+
+olap-repository-008
+
+#### 2.4.6.2 Display Name
+
+OLAP Repository
+
+#### 2.4.6.3 Type
+
+🔹 Repository
+
+#### 2.4.6.4 Technology
+
+@clickhouse/client, TypeScript
+
+#### 2.4.6.5 Order
+
+6
+
+#### 2.4.6.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | database |
+| Color | #7986CB |
+| Stereotype | Infrastructure |
+
+### 2.4.7.0 Gateway
+
+#### 2.4.7.1 Repository Id
+
+openai-gateway-012
+
+#### 2.4.7.2 Display Name
+
+OpenAI Gateway
+
+#### 2.4.7.3 Type
+
+🔹 Gateway
+
+#### 2.4.7.4 Technology
+
+TypeScript, OpenAI SDK
+
+#### 2.4.7.5 Order
+
+7
+
+#### 2.4.7.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #64B5F6 |
+| Stereotype | Infrastructure |
+
+### 2.4.8.0 ExternalService
+
+#### 2.4.8.1 Repository Id
+
+ext-openai-api
+
+#### 2.4.8.2 Display Name
+
+External OpenAI API
+
+#### 2.4.8.3 Type
+
+🔹 ExternalService
+
+#### 2.4.8.4 Technology
+
+REST API
+
+#### 2.4.8.5 Order
+
+8
+
+#### 2.4.8.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #E57373 |
+| Stereotype | Third-Party |
+
+## 2.5.0.0 Interactions
+
+### 2.5.1.0 UserInteraction
+
+#### 2.5.1.1 Source Id
+
+user-browser
+
+#### 2.5.1.2 Target Id
+
+spa-frontend-001
+
+#### 2.5.1.3 Message
+
+1. Submits natural language query (e.g., 'What were my top 5 products last month?')
+
+#### 2.5.1.4 Sequence Number
+
+1
+
+#### 2.5.1.5 Type
+
+🔹 UserInteraction
+
+#### 2.5.1.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.1.7 Has Return
+
+❌ No
+
+#### 2.5.1.8 Is Activation
+
+❌ No
+
+#### 2.5.1.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | User Input |
+| Method | onSubmit |
+| Parameters | Form data containing the user query string. |
+| Authentication | N/A |
+| Error Handling | Client-side validation to prevent empty submission... |
+| Performance | N/A |
+
+### 2.5.2.0 APIRequest
+
+#### 2.5.2.1 Source Id
+
+spa-frontend-001
+
+#### 2.5.2.2 Target Id
+
+api-gateway-002
+
+#### 2.5.2.3 Message
+
+2. POST /api/v1/ai/query
+
+#### 2.5.2.4 Sequence Number
+
+2
+
+#### 2.5.2.5 Type
+
+🔹 APIRequest
+
+#### 2.5.2.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.2.7 Has Return
+
+✅ Yes
+
+#### 2.5.2.8 Is Activation
+
+✅ Yes
+
+#### 2.5.2.9 Return Message
+
+16. 200 OK | 4xx/5xx Error
+
+#### 2.5.2.10 Technical Details
+
+##### 2.5.2.10.1 Protocol
+
+HTTPS/REST
+
+##### 2.5.2.10.2 Method
+
+POST
+
+##### 2.5.2.10.3 Parameters
+
+| Property | Value |
+|----------|-------|
+| Headers | {'Authorization': 'Bearer <JWT>', 'Content-Type': 'application/json', 'X-Correlation-ID': '<UUID>'} |
+| Body | {'query': 'What were my top 5 products last month?'} |
+
+##### 2.5.2.10.4 Authentication
+
+JWT Bearer Token from user session.
+
+##### 2.5.2.10.5 Error Handling
+
+Handles 4xx/5xx responses from the gateway, displaying appropriate error messages to the user.
+
+##### 2.5.2.10.6 Performance
+
+###### 2.5.2.10.6.1 Timeout
+
+30s
+
+### 2.5.3.0.0.0 ServiceInvocation
+
+#### 2.5.3.1.0.0 Source Id
+
+api-gateway-002
+
+#### 2.5.3.2.0.0 Target Id
+
+ai-assistant-service-005
+
+#### 2.5.3.3.0.0 Message
+
+3. Invokes Lambda function with request payload
+
+#### 2.5.3.4.0.0 Sequence Number
+
+3
+
+#### 2.5.3.5.0.0 Type
+
+🔹 ServiceInvocation
+
+#### 2.5.3.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.3.7.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.3.8.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.3.9.0.0 Return Message
+
+15. Returns result or error object
+
+#### 2.5.3.10.0.0 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | AWS-SDK |
+| Method | Lambda:Invoke |
+| Parameters | Maps HTTP request body, headers, and authorizer co... |
+| Authentication | Validates JWT using a Lambda Authorizer. The autho... |
+| Error Handling | Propagates Lambda function errors as HTTP 5xx resp... |
+| Performance | Adds < 50ms latency. Monitored for cold starts. |
+
+### 2.5.4.0.0.0 InternalProcessing
+
+#### 2.5.4.1.0.0 Source Id
+
+ai-assistant-service-005
+
+#### 2.5.4.2.0.0 Target Id
+
+ai-assistant-service-005
+
+#### 2.5.4.3.0.0 Message
+
+4. Parses query for intent and entities
+
+#### 2.5.4.4.0.0 Sequence Number
+
+4
+
+#### 2.5.4.5.0.0 Type
+
+🔹 InternalProcessing
+
+#### 2.5.4.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.4.7.0.0 Has Return
+
+❌ No
+
+#### 2.5.4.8.0.0 Is Activation
+
+❌ No
+
+#### 2.5.4.9.0.0 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Language-Internal |
+| Method | parseQuery(query: string) |
+| Parameters | User query string. |
+| Authentication | N/A |
+| Error Handling | If intent is not understood, the process short-cir... |
+| Performance | p99 < 50ms |
+
+### 2.5.5.0.0.0 MethodCall
+
+#### 2.5.5.1.0.0 Source Id
+
+ai-assistant-service-005
+
+#### 2.5.5.2.0.0 Target Id
+
+vector-db-repository-011
+
+#### 2.5.5.3.0.0 Message
+
+5. findRelevantContext(queryEmbedding, merchantId)
+
+#### 2.5.5.4.0.0 Sequence Number
+
+5
+
+#### 2.5.5.5.0.0 Type
+
+🔹 MethodCall
+
+#### 2.5.5.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.5.7.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.5.8.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.5.9.0.0 Return Message
+
+7. Returns relevant context snippets
+
+#### 2.5.5.10.0.0 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Language-Internal |
+| Method | findRelevantContext |
+| Parameters | A vector embedding of the user's query and the `me... |
+| Authentication | N/A (Uses credentials configured for the repositor... |
+| Error Handling | Throws `DatabaseUnavailableError` or `QueryExecuti... |
+| Performance | p95 < 200ms |
+
+#### 2.5.5.11.0.0 Nested Interactions
+
+- {'sourceId': 'vector-db-repository-011', 'targetId': 'ext-pinecone-api', 'message': '6. query(namespace, vector, topK=5)', 'sequenceNumber': 6, 'type': 'SDKCall', 'isSynchronous': True, 'hasReturn': True, 'isActivation': False, 'technicalDetails': {'protocol': 'Pinecone SDK', 'method': 'query', 'parameters': 'Query against a merchant-specific namespace.', 'authentication': 'API Key from environment variables/secrets manager.', 'errorHandling': 'SDK handles retries for transient errors. Throws on persistent failure.'}}
+
+### 2.5.6.0.0.0 MethodCall
+
+#### 2.5.6.1.0.0 Source Id
+
+ai-assistant-service-005
+
+#### 2.5.6.2.0.0 Target Id
+
+olap-repository-008
+
+#### 2.5.6.3.0.0 Message
+
+8. fetchAnalyticalData(generatedQuery, merchantId)
+
+#### 2.5.6.4.0.0 Sequence Number
+
+8
+
+#### 2.5.6.5.0.0 Type
+
+🔹 MethodCall
+
+#### 2.5.6.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.6.7.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.6.8.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.6.9.0.0 Return Message
+
+10. Returns sales data results
+
+#### 2.5.6.10.0.0 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Language-Internal |
+| Method | fetchAnalyticalData |
+| Parameters | A dynamically generated ClickHouse SQL query based... |
+| Authentication | N/A (Uses credentials configured for the repositor... |
+| Error Handling | Throws `DatabaseUnavailableError` or `QueryExecuti... |
+| Performance | p95 < 1000ms |
+
+#### 2.5.6.11.0.0 Nested Interactions
+
+- {'sourceId': 'olap-repository-008', 'targetId': 'ext-clickhouse-db', 'message': '9. SELECT ... WHERE merchant_id = ...', 'sequenceNumber': 9, 'type': 'DatabaseQuery', 'isSynchronous': True, 'hasReturn': True, 'isActivation': False, 'technicalDetails': {'protocol': '@clickhouse/client', 'method': 'query', 'parameters': 'SQL query with parameterized `merchant_id` to prevent injection and ensure data isolation.', 'authentication': 'Database credentials from environment variables/secrets manager.', 'errorHandling': 'Throws on connection or query execution failure.'}}
+
+### 2.5.7.0.0.0 InternalProcessing
+
+#### 2.5.7.1.0.0 Source Id
+
+ai-assistant-service-005
+
+#### 2.5.7.2.0.0 Target Id
+
+ai-assistant-service-005
+
+#### 2.5.7.3.0.0 Message
+
+11. Constructs prompt; scrubs PII
+
+#### 2.5.7.4.0.0 Sequence Number
+
+11
+
+#### 2.5.7.5.0.0 Type
+
+🔹 InternalProcessing
+
+#### 2.5.7.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.7.7.0.0 Has Return
+
+❌ No
+
+#### 2.5.7.8.0.0 Is Activation
+
+❌ No
+
+#### 2.5.7.9.0.0 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Language-Internal |
+| Method | constructPrompt(query, vectorContext, dataContext) |
+| Parameters | Combines system instructions, user query, and all ... |
+| Authentication | N/A |
+| Error Handling | N/A |
+| Performance | p99 < 20ms |
+
+### 2.5.8.0.0.0 MethodCall
+
+#### 2.5.8.1.0.0 Source Id
+
+ai-assistant-service-005
+
+#### 2.5.8.2.0.0 Target Id
+
+openai-gateway-012
+
+#### 2.5.8.3.0.0 Message
+
+12. getCompletion(prompt)
+
+#### 2.5.8.4.0.0 Sequence Number
+
+12
+
+#### 2.5.8.5.0.0 Type
+
+🔹 MethodCall
+
+#### 2.5.8.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.8.7.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.8.8.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.8.9.0.0 Return Message
+
+14. Returns LLM response or throws error
+
+#### 2.5.8.10.0.0 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Language-Internal |
+| Method | getCompletion |
+| Parameters | The final, combined prompt string. |
+| Authentication | N/A (Handled by the gateway). |
+| Error Handling | Handles `CircuitBreakerOpenError` and other except... |
+| Performance | p95 < 3000ms (dependent on external API) |
+
+### 2.5.9.0.0.0 APIRequest
+
+#### 2.5.9.1.0.0 Source Id
+
+openai-gateway-012
+
+#### 2.5.9.2.0.0 Target Id
+
+ext-openai-api
+
+#### 2.5.9.3.0.0 Message
+
+13. POST /v1/chat/completions
+
+#### 2.5.9.4.0.0 Sequence Number
+
+13
+
+#### 2.5.9.5.0.0 Type
+
+🔹 APIRequest
+
+#### 2.5.9.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.9.7.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.9.8.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.9.9.0.0 Technical Details
+
+##### 2.5.9.9.1.0 Protocol
+
+HTTPS/REST
+
+##### 2.5.9.9.2.0 Method
+
+POST
+
+##### 2.5.9.9.3.0 Parameters
+
+| Property | Value |
+|----------|-------|
+| Headers | {'Authorization': 'Bearer <OPENAI_API_KEY>'} |
+| Body | {'model': '...', 'messages': [{'role': 'user', 'content': '<prompt>'}]} |
+
+##### 2.5.9.9.4.0 Authentication
+
+OpenAI API Key from AWS Secrets Manager.
+
+##### 2.5.9.9.5.0 Error Handling
+
+Wrapped by a Circuit Breaker. Implements retry with exponential backoff for 429/5xx errors. Throws `ThirdPartyApiError` on persistent failure.
+
+##### 2.5.9.9.6.0 Performance
+
+###### 2.5.9.9.6.1 Timeout
+
+25s
+
+## 2.6.0.0.0.0 Notes
+
+### 2.6.1.0.0.0 Content
+
+#### 2.6.1.1.0.0 Content
+
+Data Scoping: All database interactions (Vector DB and OLAP) MUST be strictly scoped by `merchantId` at the repository level to ensure tenant data isolation as per REQ-FUN-401.
+
+#### 2.6.1.2.0.0 Position
+
+bottom-left
+
+#### 2.6.1.3.0.0 Participant Id
+
+ai-assistant-service-005
+
+#### 2.6.1.4.0.0 Sequence Number
+
+5
+
+### 2.6.2.0.0.0 Content
+
+#### 2.6.2.1.0.0 Content
+
+PII Scrubbing: Before constructing the final prompt, any potential Personally Identifiable Information (e.g., customer names) retrieved from the OLAP database must be masked or removed to comply with REQ-INT-006.
+
+#### 2.6.2.2.0.0 Position
+
+bottom-right
+
+#### 2.6.2.3.0.0 Participant Id
+
+ai-assistant-service-005
+
+#### 2.6.2.4.0.0 Sequence Number
+
+11
+
+### 2.6.3.0.0.0 Content
+
+#### 2.6.3.1.0.0 Content
+
+Circuit Breaker Pattern: This interaction is protected by a circuit breaker. If the OpenAI API fails repeatedly, the circuit will 'open' for a cooldown period, and subsequent requests will fail fast with a fallback response, preventing system resource exhaustion.
+
+#### 2.6.3.2.0.0 Position
+
+top-right
+
+#### 2.6.3.3.0.0 Participant Id
+
+openai-gateway-012
+
+#### 2.6.3.4.0.0 Sequence Number
+
+13
+
+## 2.7.0.0.0.0 Implementation Guidance
+
+| Property | Value |
+|----------|-------|
+| Security Requirements | The API Gateway must be configured with a JWT Lamb... |
+| Performance Targets | The end-to-end p95 latency for a typical query sho... |
+| Error Handling Strategy | If the OpenAI API call fails (after retries and ci... |
+| Testing Considerations | Unit tests for `ai-assistant-service-005` should m... |
+| Monitoring Requirements | End-to-end distributed tracing (e.g., AWS X-Ray) i... |
+| Deployment Considerations | The `ai-assistant-service-005` Lambda function req... |
+

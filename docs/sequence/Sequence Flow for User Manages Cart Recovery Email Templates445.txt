@@ -1,0 +1,767 @@
+# 1 Overview
+
+## 1.1 Diagram Id
+
+SEQ-FF-002
+
+## 1.2 Name
+
+User Manages Cart Recovery Email Templates
+
+## 1.3 Description
+
+A user with the appropriate role (Marketer, Admin, or Owner) navigates to the Cart Recovery settings. They use a rich text editor to create a new email template, edit an existing one, or delete a template. The template content, including dynamic variables, is saved to the database.
+
+## 1.4 Type
+
+🔹 FeatureFlow
+
+## 1.5 Purpose
+
+To allow merchants to customize their communication for abandoned cart recovery campaigns, fulfilling requirement FR-503.
+
+## 1.6 Complexity
+
+Medium
+
+## 1.7 Priority
+
+🟡 Medium
+
+## 1.8 Frequency
+
+OnDemand
+
+## 1.9 Participants
+
+- user-browser
+- spa-frontend-001
+- api-gateway-002
+- cart-recovery-service-006
+- oltp-repository-008
+
+## 1.10 Key Interactions
+
+- User navigates to the email template management UI.
+- User interacts with the rich text editor to compose the email body.
+- User inserts dynamic variables like {{customer_name}} and {{checkout_link}} from a predefined list.
+- User clicks 'Save Template'.
+- The SPA sends a request to the Cart Recovery Service with the template name and HTML content.
+- The service validates the payload and saves the template to the OLTP database, associated with the merchant.
+
+## 1.11 Triggers
+
+- User action to create, update, or delete an email template.
+
+## 1.12 Outcomes
+
+- A customized email template is available for use in cart recovery campaigns.
+- The list of available templates is updated in the UI.
+
+## 1.13 Business Rules
+
+- Templates must support a predefined set of dynamic variables.
+- The system must automatically append a mandatory unsubscribe link to all outgoing emails, regardless of template content (FR-503).
+
+## 1.14 Error Scenarios
+
+- The user tries to save a template with an empty body.
+- The database save operation fails.
+
+## 1.15 Integration Points
+
+*No items available*
+
+# 2.0 Details
+
+## 2.1 Diagram Id
+
+SEQ-US-060
+
+## 2.2 Name
+
+User Accesses Contextual Help Popover
+
+## 2.3 Description
+
+Technical sequence diagram detailing the client-side implementation of displaying contextual help. It illustrates how a user interaction triggers a state change within the React Single Page Application, leading to a content lookup from a local data store and the rendering of an accessible popover component. This sequence fulfills the requirements of user story US-060.
+
+## 2.4 Participants
+
+### 2.4.1 Actor
+
+#### 2.4.1.1 Repository Id
+
+user-browser
+
+#### 2.4.1.2 Display Name
+
+User Browser
+
+#### 2.4.1.3 Type
+
+🔹 Actor
+
+#### 2.4.1.4 Technology
+
+Web Browser (Chrome, Firefox, Safari, Edge)
+
+#### 2.4.1.5 Order
+
+1
+
+#### 2.4.1.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | actor |
+| Color | #999999 |
+| Stereotype |  |
+
+### 2.4.2.0 FrontendApplication
+
+#### 2.4.2.1 Repository Id
+
+spa-frontend-001
+
+#### 2.4.2.2 Display Name
+
+Frontend SPA
+
+#### 2.4.2.3 Type
+
+🔹 FrontendApplication
+
+#### 2.4.2.4 Technology
+
+React 18, shadcn/ui, Zustand
+
+#### 2.4.2.5 Order
+
+2
+
+#### 2.4.2.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | participant |
+| Color | #1E90FF |
+| Stereotype | React Component: <HelpPopover> |
+
+## 2.5.0.0 Interactions
+
+### 2.5.1.0 User Interaction
+
+#### 2.5.1.1 Source Id
+
+user-browser
+
+#### 2.5.1.2 Target Id
+
+spa-frontend-001
+
+#### 2.5.1.3 Message
+
+1. Clicks help icon (?) or focuses and presses 'Enter'
+
+#### 2.5.1.4 Sequence Number
+
+1
+
+#### 2.5.1.5 Type
+
+🔹 User Interaction
+
+#### 2.5.1.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.1.7 Return Message
+
+
+
+#### 2.5.1.8 Has Return
+
+❌ No
+
+#### 2.5.1.9 Is Activation
+
+✅ Yes
+
+#### 2.5.1.10 Technical Details
+
+##### 2.5.1.10.1 Protocol
+
+DOM Event
+
+##### 2.5.1.10.2 Method
+
+onClick | onKeyDown
+
+##### 2.5.1.10.3 Parameters
+
+- {'name': 'event', 'type': 'MouseEvent | KeyboardEvent'}
+
+##### 2.5.1.10.4 Authentication
+
+N/A (occurs within an authenticated session)
+
+##### 2.5.1.10.5 Error Handling
+
+N/A
+
+##### 2.5.1.10.6 Performance
+
+###### 2.5.1.10.6.1 Latency
+
+< 50ms
+
+#### 2.5.1.11.0.0 Nested Interactions
+
+*No items available*
+
+### 2.5.2.0.0.0 Internal State Change
+
+#### 2.5.2.1.0.0 Source Id
+
+spa-frontend-001
+
+#### 2.5.2.2.0.0 Target Id
+
+spa-frontend-001
+
+#### 2.5.2.3.0.0 Message
+
+2. handleOpen(): Updates component state to show popover
+
+#### 2.5.2.4.0.0 Sequence Number
+
+2
+
+#### 2.5.2.5.0.0 Type
+
+🔹 Internal State Change
+
+#### 2.5.2.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.2.7.0.0 Return Message
+
+State updated: { isOpen: true }
+
+#### 2.5.2.8.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.2.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.2.10.0.0 Technical Details
+
+##### 2.5.2.10.1.0 Protocol
+
+React State Hook
+
+##### 2.5.2.10.2.0 Method
+
+setIsOpen(true)
+
+##### 2.5.2.10.3.0 Parameters
+
+*No items available*
+
+##### 2.5.2.10.4.0 Authentication
+
+N/A
+
+##### 2.5.2.10.5.0 Error Handling
+
+N/A
+
+##### 2.5.2.10.6.0 Performance
+
+###### 2.5.2.10.6.1 Latency
+
+< 5ms
+
+#### 2.5.2.11.0.0 Nested Interactions
+
+- {'sourceId': 'spa-frontend-001', 'targetId': 'spa-frontend-001', 'message': '2.1. Looks up help content by ID from local store', 'sequenceNumber': 2.1, 'type': 'Data Retrieval', 'isSynchronous': True, 'returnMessage': '{ title, description, learnMoreUrl }', 'hasReturn': True, 'isActivation': False, 'technicalDetails': {'protocol': 'In-Memory Lookup', 'method': "contentStore.getById('aov-metric')", 'parameters': [{'name': 'contentId', 'type': 'string'}], 'authentication': 'N/A', 'errorHandling': 'If content not found, the component gracefully returns null, and the help icon is not rendered (as per AC-006).', 'performance': {'latency': '< 1ms'}}}
+
+### 2.5.3.0.0.0 UI Render
+
+#### 2.5.3.1.0.0 Source Id
+
+spa-frontend-001
+
+#### 2.5.3.2.0.0 Target Id
+
+user-browser
+
+#### 2.5.3.3.0.0 Message
+
+3. Renders `<Popover.Content>` with help text and displays it
+
+#### 2.5.3.4.0.0 Sequence Number
+
+3
+
+#### 2.5.3.5.0.0 Type
+
+🔹 UI Render
+
+#### 2.5.3.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.3.7.0.0 Return Message
+
+
+
+#### 2.5.3.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.3.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.3.10.0.0 Technical Details
+
+##### 2.5.3.10.1.0 Protocol
+
+HTML/CSS Render
+
+##### 2.5.3.10.2.0 Method
+
+DOM update
+
+##### 2.5.3.10.3.0 Parameters
+
+*No items available*
+
+##### 2.5.3.10.4.0 Authentication
+
+N/A
+
+##### 2.5.3.10.5.0 Error Handling
+
+Positioning logic ensures the popover is fully visible within the viewport, avoiding clipping (AC-005).
+
+##### 2.5.3.10.6.0 Performance
+
+###### 2.5.3.10.6.1 Latency
+
+< 100ms (from click to visible popover)
+
+### 2.5.4.0.0.0 User Interaction
+
+#### 2.5.4.1.0.0 Source Id
+
+user-browser
+
+#### 2.5.4.2.0.0 Target Id
+
+spa-frontend-001
+
+#### 2.5.4.3.0.0 Message
+
+4. Clicks 'Learn More' link
+
+#### 2.5.4.4.0.0 Sequence Number
+
+4
+
+#### 2.5.4.5.0.0 Type
+
+🔹 User Interaction
+
+#### 2.5.4.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.4.7.0.0 Return Message
+
+
+
+#### 2.5.4.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.4.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.4.10.0.0 Technical Details
+
+##### 2.5.4.10.1.0 Protocol
+
+DOM Event
+
+##### 2.5.4.10.2.0 Method
+
+onClick
+
+##### 2.5.4.10.3.0 Parameters
+
+*No items available*
+
+##### 2.5.4.10.4.0 Authentication
+
+N/A
+
+##### 2.5.4.10.5.0 Error Handling
+
+N/A
+
+##### 2.5.4.10.6.0 Performance
+
+###### 2.5.4.10.6.1 Latency
+
+< 50ms
+
+#### 2.5.4.11.0.0 Nested Interactions
+
+*No items available*
+
+### 2.5.5.0.0.0 Browser Navigation
+
+#### 2.5.5.1.0.0 Source Id
+
+spa-frontend-001
+
+#### 2.5.5.2.0.0 Target Id
+
+user-browser
+
+#### 2.5.5.3.0.0 Message
+
+5. Opens knowledge base URL in a new tab
+
+#### 2.5.5.4.0.0 Sequence Number
+
+5
+
+#### 2.5.5.5.0.0 Type
+
+🔹 Browser Navigation
+
+#### 2.5.5.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.5.7.0.0 Return Message
+
+
+
+#### 2.5.5.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.5.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.5.10.0.0 Technical Details
+
+##### 2.5.5.10.1.0 Protocol
+
+Browser API
+
+##### 2.5.5.10.2.0 Method
+
+window.open(url, '_blank')
+
+##### 2.5.5.10.3.0 Parameters
+
+###### 2.5.5.10.3.1 string
+
+####### 2.5.5.10.3.1.1 Name
+
+url
+
+####### 2.5.5.10.3.1.2 Type
+
+🔹 string
+
+###### 2.5.5.10.3.2.0 string
+
+####### 2.5.5.10.3.2.1 Name
+
+target
+
+####### 2.5.5.10.3.2.2 Type
+
+🔹 string
+
+##### 2.5.5.10.4.0.0 Authentication
+
+N/A
+
+##### 2.5.5.10.5.0.0 Error Handling
+
+N/A
+
+##### 2.5.5.10.6.0.0 Performance
+
+###### 2.5.5.10.6.1.0 Latency
+
+N/A
+
+### 2.5.6.0.0.0.0 User Interaction
+
+#### 2.5.6.1.0.0.0 Source Id
+
+user-browser
+
+#### 2.5.6.2.0.0.0 Target Id
+
+spa-frontend-001
+
+#### 2.5.6.3.0.0.0 Message
+
+6. Clicks outside popover or presses 'Escape' key
+
+#### 2.5.6.4.0.0.0 Sequence Number
+
+6
+
+#### 2.5.6.5.0.0.0 Type
+
+🔹 User Interaction
+
+#### 2.5.6.6.0.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.6.7.0.0.0 Return Message
+
+
+
+#### 2.5.6.8.0.0.0 Has Return
+
+❌ No
+
+#### 2.5.6.9.0.0.0 Is Activation
+
+❌ No
+
+#### 2.5.6.10.0.0.0 Technical Details
+
+##### 2.5.6.10.1.0.0 Protocol
+
+DOM Event
+
+##### 2.5.6.10.2.0.0 Method
+
+onPointerDownOutside | onEscapeKeyDown
+
+##### 2.5.6.10.3.0.0 Parameters
+
+*No items available*
+
+##### 2.5.6.10.4.0.0 Authentication
+
+N/A
+
+##### 2.5.6.10.5.0.0 Error Handling
+
+N/A
+
+##### 2.5.6.10.6.0.0 Performance
+
+###### 2.5.6.10.6.1.0 Latency
+
+< 50ms
+
+#### 2.5.6.11.0.0.0 Nested Interactions
+
+*No items available*
+
+### 2.5.7.0.0.0.0 Internal State Change
+
+#### 2.5.7.1.0.0.0 Source Id
+
+spa-frontend-001
+
+#### 2.5.7.2.0.0.0 Target Id
+
+spa-frontend-001
+
+#### 2.5.7.3.0.0.0 Message
+
+7. handleClose(): Updates component state to hide popover
+
+#### 2.5.7.4.0.0.0 Sequence Number
+
+7
+
+#### 2.5.7.5.0.0.0 Type
+
+🔹 Internal State Change
+
+#### 2.5.7.6.0.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.7.7.0.0.0 Return Message
+
+State updated: { isOpen: false }
+
+#### 2.5.7.8.0.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.7.9.0.0.0 Is Activation
+
+❌ No
+
+#### 2.5.7.10.0.0.0 Technical Details
+
+##### 2.5.7.10.1.0.0 Protocol
+
+React State Hook
+
+##### 2.5.7.10.2.0.0 Method
+
+setIsOpen(false)
+
+##### 2.5.7.10.3.0.0 Parameters
+
+*No items available*
+
+##### 2.5.7.10.4.0.0 Authentication
+
+N/A
+
+##### 2.5.7.10.5.0.0 Error Handling
+
+N/A
+
+##### 2.5.7.10.6.0.0 Performance
+
+###### 2.5.7.10.6.1.0 Latency
+
+< 5ms
+
+#### 2.5.7.11.0.0.0 Nested Interactions
+
+*No items available*
+
+### 2.5.8.0.0.0.0 UI Render
+
+#### 2.5.8.1.0.0.0 Source Id
+
+spa-frontend-001
+
+#### 2.5.8.2.0.0.0 Target Id
+
+user-browser
+
+#### 2.5.8.3.0.0.0 Message
+
+8. Removes popover from the DOM
+
+#### 2.5.8.4.0.0.0 Sequence Number
+
+8
+
+#### 2.5.8.5.0.0.0 Type
+
+🔹 UI Render
+
+#### 2.5.8.6.0.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.8.7.0.0.0 Return Message
+
+
+
+#### 2.5.8.8.0.0.0 Has Return
+
+❌ No
+
+#### 2.5.8.9.0.0.0 Is Activation
+
+❌ No
+
+#### 2.5.8.10.0.0.0 Technical Details
+
+##### 2.5.8.10.1.0.0 Protocol
+
+HTML/CSS Render
+
+##### 2.5.8.10.2.0.0 Method
+
+DOM update
+
+##### 2.5.8.10.3.0.0 Parameters
+
+*No items available*
+
+##### 2.5.8.10.4.0.0 Authentication
+
+N/A
+
+##### 2.5.8.10.5.0.0 Error Handling
+
+N/A
+
+##### 2.5.8.10.6.0.0 Performance
+
+###### 2.5.8.10.6.1.0 Latency
+
+< 50ms
+
+## 2.6.0.0.0.0.0 Notes
+
+### 2.6.1.0.0.0.0 Content
+
+#### 2.6.1.1.0.0.0 Content
+
+Accessibility (AC-007): The help icon is implemented as a `<button>` element to be keyboard focusable. It includes an `aria-label` like 'Help for Average Order Value' for screen readers. The popover content is managed to be announced upon opening.
+
+#### 2.6.1.2.0.0.0 Position
+
+bottom
+
+#### 2.6.1.3.0.0.0 Participant Id
+
+spa-frontend-001
+
+#### 2.6.1.4.0.0.0 Sequence Number
+
+1
+
+### 2.6.2.0.0.0.0 Content
+
+#### 2.6.2.1.0.0.0 Content
+
+Content Management: Help content (title, description, URL) is managed in a centralized, version-controlled JSON file. This file is bundled with the SPA deployment to ensure fast, synchronous lookups and prevent content-related technical debt.
+
+#### 2.6.2.2.0.0.0 Position
+
+bottom
+
+#### 2.6.2.3.0.0.0 Participant Id
+
+spa-frontend-001
+
+#### 2.6.2.4.0.0.0 Sequence Number
+
+2.1
+
+## 2.7.0.0.0.0.0 Implementation Guidance
+
+| Property | Value |
+|----------|-------|
+| Security Requirements | Help content must be sourced from a version-contro... |
+| Performance Targets | The popover must render in under 100ms from the us... |
+| Error Handling Strategy | The primary error condition is missing help conten... |
+| Testing Considerations | Unit tests (Jest/RTL) must cover the component's s... |
+| Monitoring Requirements | While individual popover clicks are not a primary ... |
+| Deployment Considerations | The help content JSON file must be versioned and d... |
+

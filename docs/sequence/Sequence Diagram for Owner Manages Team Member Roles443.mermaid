@@ -1,0 +1,33 @@
+sequenceDiagram
+    actor "User Browser" as UserBrowser
+    participant "Frontend SPA" as FrontendSPA
+    participant "API Gateway" as APIGateway
+    actor "User Management Service" as UserManagementService
+    participant "OLTP Repository" as OLTPRepository
+    participant "Audit Logger Service" as AuditLoggerService
+
+    activate FrontendSPA
+    UserBrowser->>FrontendSPA: 1. 1. Initiates role change for a team member (e.g., selects new role from dropdown and clicks 'Save')
+    activate APIGateway
+    FrontendSPA->>APIGateway: 2. 2. Sends API request to update team member's role
+    APIGateway-->>FrontendSPA: HTTP 200 OK with updated team member object
+    activate UserManagementService
+    APIGateway->>UserManagementService: 3. 3. Authorizes request and forwards to service
+    UserManagementService-->>APIGateway: Service response (success or error object)
+    activate OLTPRepository
+    UserManagementService->>OLTPRepository: 4. 4. Validates business rules and requests data update
+    OLTPRepository-->>UserManagementService: Updated UserMerchantAccount entity
+    OLTPRepository->>UserManagementService: 5. 5. Returns success confirmation
+    activate AuditLoggerService
+    UserManagementService->>AuditLoggerService: 6. 6. Asynchronously publishes audit event
+    UserManagementService->>APIGateway: 7. 7. Returns success response
+    APIGateway->>FrontendSPA: 8. 8. Forwards HTTP 200 OK response
+    FrontendSPA->>UserBrowser: 9. 9. Updates UI and displays success notification
+
+    note over UserManagementService: Business Rule: The User Management Service MUST verify that the authenticated principal's ID does...
+
+    deactivate AuditLoggerService
+    deactivate OLTPRepository
+    deactivate UserManagementService
+    deactivate APIGateway
+    deactivate FrontendSPA

@@ -1,0 +1,4 @@
+* @Salla-Analytics/backend-team
+src/ai-assistant/ @Salla-Analytics/ai-team
+infrastructure/ @Salla-Analytics/devops
+packages/db/ @Salla-Analytics/data-eng

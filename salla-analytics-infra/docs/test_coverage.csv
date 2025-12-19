@@ -1,0 +1,4 @@
+"component_name","business_criticality","technical_complexity","change_frequency","test_types_required","unit_test_coverage","integration_test_coverage","e2e_test_coverage","automation_percentage","manual_test_effort","automated_test_effort","total_test_cases","risk_mitigation_score","quality_confidence","maintenance_overhead","tool_compatibility","team_skill_alignment"
+"Core Authentication & RBAC","Critical","Medium","Low","[""Unit"",""Integration"",""Security""]","95","100","80","90","4","24","45","0.98","Very High","Low","Jest/Playwright","High"
+"Data Pipeline (Webhook -> OLAP)","Critical","High","Medium","[""Integration"",""Performance"",""Data Integrity""]","85","90","70","85","8","40","60","0.95","High","Medium","Jest/DB Clients","Medium"
+"AI Assistant (RAG)","High","High","High","[""Unit"",""Integration"",""Accuracy (Golden Set)""]","80","75","50","70","16","32","40","0.85","Medium","High","Custom Scripts","Low"

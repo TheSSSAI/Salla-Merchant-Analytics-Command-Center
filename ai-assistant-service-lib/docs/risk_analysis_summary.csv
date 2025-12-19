@@ -1,0 +1,2 @@
+"total_risks_identified","critical_risks","high_priority_risks","average_risk_score","key_risk_themes","immediate_actions_required"
+"6","1","3","16","[""Serverless Architecture Constraints"",""Data Consistency & Latency"",""Third-Party Dependency Limitations""]","[""Architect recursive QStash pattern for Data Sync to prevent critical timeouts"",""Implement Database Connection Pooling immediately to stabilize development"",""Design SQL parser/validator for AI service to prevent tenant data leakage""]"

@@ -1,0 +1,26 @@
+sequenceDiagram
+    actor "User (Browser)" as UserBrowser
+    participant "Frontend SPA" as FrontendSPA
+    participant "API Gateway" as APIGateway
+    participant "Analytics Service" as AnalyticsService
+    participant "OLAP Repository" as OLAPRepository
+
+    UserBrowser->>FrontendSPA: 1. 1. Navigates to '/reports/sales-trends'.
+    activate FrontendSPA
+    FrontendSPA->>FrontendSPA: 2. 2. Mounts 'SalesTrendReportPage' component. Sets state: { isLoading: true, data: null, error: null }.
+    FrontendSPA->>APIGateway: 3. 3. GET /api/v1/reports/sales-trends
+    APIGateway-->>FrontendSPA: 10. 200 OK with JSON payload | 400 Bad Request | 5xx Server Error
+    activate AnalyticsService
+    APIGateway->>AnalyticsService: 4. 4. Authorizes request and invokes Lambda function.
+    AnalyticsService-->>APIGateway: 9. Returns API Gateway response object.
+    FrontendSPA->>FrontendSPA: 11. 11. Sets state: { isLoading: false, data: [...], error: null }.
+    FrontendSPA->>UserBrowser: 12. 12. Renders Recharts line chart and data table with results.
+    UserBrowser->>FrontendSPA: 13. 13. Changes filter (e.g., selects 'last 90 days').
+    FrontendSPA->>FrontendSPA: 14. 14. Updates filter state, sets isLoading: true. Triggers API request with new parameters.
+
+    note over FrontendSPA: The React state management (e.g., Zustand) holds the filter values, loading status, data, and err...
+    note over AnalyticsService: The SQL query constructed by the Analytics Service is complex. It must handle optional comparison...
+    note over APIGateway: An ETag-based caching strategy can be implemented at the API Gateway layer to return 304 Not Modi...
+
+    deactivate AnalyticsService
+    deactivate FrontendSPA

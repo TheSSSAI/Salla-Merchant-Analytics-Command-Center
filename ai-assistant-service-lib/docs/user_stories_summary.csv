@@ -1,0 +1,2 @@
+"total_stories","total_story_points","must_have_stories","should_have_stories","could_have_stories","epics_identified","estimated_sprints","key_dependencies"
+"9","65","4","4","1","[""Core Infrastructure & Authentication"",""Salla Integration & Data Ingestion"",""Advanced Analytics & Reporting"",""AI Assistant & RAG"",""Abandoned Cart Recovery Automation""]","4","[""Salla OAuth (US-009) blocks all Data & Analytics stories"",""Data Sync (US-012) blocks Analytics Dashboard (US-022)"",""Analytics Dashboard (US-022) blocks AI Assistant (US-035)""]"

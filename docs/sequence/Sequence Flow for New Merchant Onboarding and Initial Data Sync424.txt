@@ -1,0 +1,1658 @@
+# 1 Overview
+
+## 1.1 Diagram Id
+
+SEQ-UJ-001
+
+## 1.2 Name
+
+New Merchant Onboarding and Initial Data Sync
+
+## 1.3 Description
+
+A new merchant registers an account, is prompted to connect their Salla store via OAuth 2.0, selects an initial data import depth (12 or 24 months), and upon successful connection, triggers the initial bulk import of historical data. The user is shown the progress of the sync and is notified upon completion.
+
+## 1.4 Type
+
+🔹 UserJourney
+
+## 1.5 Purpose
+
+To provide a seamless and secure onboarding experience for new merchants, creating their tenant, connecting their store, and populating the system with their historical data for analysis, as per FR-104.
+
+## 1.6 Complexity
+
+High
+
+## 1.7 Priority
+
+🚨 Critical
+
+## 1.8 Frequency
+
+OnDemand
+
+## 1.9 Participants
+
+- user-browser
+- spa-frontend-001
+- api-gateway-002
+- user-management-service-003
+- oltp-repository-008
+- salla-platform
+- data-pipeline-processor-014
+
+## 1.10 Key Interactions
+
+- User submits registration form with email and a strong password.
+- User Management Service creates the user and merchant tenant record.
+- User is redirected to Salla for OAuth 2.0 authorization.
+- System receives OAuth callback, validates state, and securely stores the access/refresh tokens.
+- User is prompted to select 12 or 24 months for historical data import.
+- System queues an initial bulk data import job (see SEQ-DF-002).
+- Frontend polls an endpoint for sync status (e.g., percentage complete) and displays progress to the user.
+
+## 1.11 Triggers
+
+- A new merchant visits the application's registration page.
+
+## 1.12 Outcomes
+
+- A new merchant account and tenant are created.
+- The merchant's Salla store is securely connected via OAuth 2.0.
+- Historical sales, product, and customer data is imported into the system's databases.
+- The merchant can start using the application dashboards once the sync is complete.
+
+## 1.13 Business Rules
+
+- User must provide a unique, valid email address (BR-001).
+- Password must meet complexity requirements (BR-002).
+- Initial data sync depth is selected by the user (FR-104).
+
+## 1.14 Error Scenarios
+
+- Registration fails due to duplicate email.
+- Salla OAuth authorization is denied by the user, and an error is shown.
+- Initial data sync job fails due to Salla API errors or rate limiting, and the user is notified.
+
+## 1.15 Integration Points
+
+- Salla Platform (for OAuth 2.0 and historical data API).
+
+# 2.0 Details
+
+## 2.1 Diagram Id
+
+SEQ-UJ-001
+
+## 2.2 Name
+
+Implementation-Ready: New Merchant Onboarding and Initial Data Sync
+
+## 2.3 Description
+
+A comprehensive technical sequence for a new merchant's journey. It covers registration, secure Salla store connection via OAuth 2.0, user-driven selection of historical data import depth, and the initiation of an asynchronous bulk data import. The sequence details the client-side polling mechanism for displaying sync progress and the final notification upon completion, adhering to FR-104.
+
+## 2.4 Participants
+
+### 2.4.1 UserAgent
+
+#### 2.4.1.1 Repository Id
+
+user-browser
+
+#### 2.4.1.2 Display Name
+
+User's Browser
+
+#### 2.4.1.3 Type
+
+🔹 UserAgent
+
+#### 2.4.1.4 Technology
+
+Chrome, Firefox, Safari, Edge
+
+#### 2.4.1.5 Order
+
+1
+
+#### 2.4.1.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | actor |
+| Color | #90A4AE |
+| Stereotype | Human |
+
+### 2.4.2.0 FrontendApplication
+
+#### 2.4.2.1 Repository Id
+
+spa-frontend-001
+
+#### 2.4.2.2 Display Name
+
+Frontend SPA
+
+#### 2.4.2.3 Type
+
+🔹 FrontendApplication
+
+#### 2.4.2.4 Technology
+
+React 18, TypeScript 5.4, Material-UI
+
+#### 2.4.2.5 Order
+
+2
+
+#### 2.4.2.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | rectangle |
+| Color | #1E88E5 |
+| Stereotype | Client |
+
+### 2.4.3.0 Gateway
+
+#### 2.4.3.1 Repository Id
+
+api-gateway-002
+
+#### 2.4.3.2 Display Name
+
+API Gateway
+
+#### 2.4.3.3 Type
+
+🔹 Gateway
+
+#### 2.4.3.4 Technology
+
+AWS API Gateway
+
+#### 2.4.3.5 Order
+
+3
+
+#### 2.4.3.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | rectangle |
+| Color | #5E35B1 |
+| Stereotype | Gateway |
+
+### 2.4.4.0 Serverless Function Group
+
+#### 2.4.4.1 Repository Id
+
+user-management-service-003
+
+#### 2.4.4.2 Display Name
+
+User Management Service
+
+#### 2.4.4.3 Type
+
+🔹 Serverless Function Group
+
+#### 2.4.4.4 Technology
+
+AWS Lambda, Node.js 20.x
+
+#### 2.4.4.5 Order
+
+4
+
+#### 2.4.4.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | rectangle |
+| Color | #00897B |
+| Stereotype | Service |
+
+### 2.4.5.0 Repository
+
+#### 2.4.5.1 Repository Id
+
+oltp-repository-008
+
+#### 2.4.5.2 Display Name
+
+OLTP Repository (PostgreSQL)
+
+#### 2.4.5.3 Type
+
+🔹 Repository
+
+#### 2.4.5.4 Technology
+
+Prisma, PostgreSQL 16
+
+#### 2.4.5.5 Order
+
+5
+
+#### 2.4.5.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | database |
+| Color | #3949AB |
+| Stereotype | Database |
+
+### 2.4.6.0 ExternalSystem
+
+#### 2.4.6.1 Repository Id
+
+salla-platform
+
+#### 2.4.6.2 Display Name
+
+Salla Platform
+
+#### 2.4.6.3 Type
+
+🔹 ExternalSystem
+
+#### 2.4.6.4 Technology
+
+OAuth 2.0 Provider, REST API
+
+#### 2.4.6.5 Order
+
+6
+
+#### 2.4.6.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | rectangle |
+| Color | #F4511E |
+| Stereotype | External |
+
+### 2.4.7.0 Background Process
+
+#### 2.4.7.1 Repository Id
+
+data-pipeline-processor-014
+
+#### 2.4.7.2 Display Name
+
+Data Pipeline Processor
+
+#### 2.4.7.3 Type
+
+🔹 Background Process
+
+#### 2.4.7.4 Technology
+
+AWS Lambda (triggered by SQS)
+
+#### 2.4.7.5 Order
+
+7
+
+#### 2.4.7.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | rectangle |
+| Color | #8E24AA |
+| Stereotype | Worker |
+
+## 2.5.0.0 Interactions
+
+### 2.5.1.0 UserInteraction
+
+#### 2.5.1.1 Source Id
+
+user-browser
+
+#### 2.5.1.2 Target Id
+
+spa-frontend-001
+
+#### 2.5.1.3 Message
+
+1. Fills out and submits registration form (email, password)
+
+#### 2.5.1.4 Sequence Number
+
+1
+
+#### 2.5.1.5 Type
+
+🔹 UserInteraction
+
+#### 2.5.1.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.1.7 Has Return
+
+✅ Yes
+
+#### 2.5.1.8 Return Message
+
+Client-side validation feedback (BR-001, BR-002)
+
+#### 2.5.1.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | DOM Event |
+| Method | onSubmit |
+| Parameters | Form data including email and password |
+| Authentication | N/A |
+| Error Handling | Display inline error messages for invalid email fo... |
+| Performance | Validation should be instantaneous (<50ms). |
+
+### 2.5.2.0 APICall
+
+#### 2.5.2.1 Source Id
+
+spa-frontend-001
+
+#### 2.5.2.2 Target Id
+
+api-gateway-002
+
+#### 2.5.2.3 Message
+
+2. POST /api/v1/auth/register
+
+#### 2.5.2.4 Sequence Number
+
+2
+
+#### 2.5.2.5 Type
+
+🔹 APICall
+
+#### 2.5.2.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.2.7 Has Return
+
+✅ Yes
+
+#### 2.5.2.8 Return Message
+
+201 Created with JWTs or 409 Conflict
+
+#### 2.5.2.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | HTTPS/REST |
+| Method | POST |
+| Parameters | Body: { email, password } |
+| Authentication | N/A |
+| Error Handling | Handle 409 Conflict (email exists) by showing a us... |
+| Performance | p95 < 200ms |
+
+### 2.5.3.0 ServiceInvocation
+
+#### 2.5.3.1 Source Id
+
+api-gateway-002
+
+#### 2.5.3.2 Target Id
+
+user-management-service-003
+
+#### 2.5.3.3 Message
+
+3. Invokes RegisterUser function
+
+#### 2.5.3.4 Sequence Number
+
+3
+
+#### 2.5.3.5 Type
+
+🔹 ServiceInvocation
+
+#### 2.5.3.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.3.7 Has Return
+
+✅ Yes
+
+#### 2.5.3.8 Return Message
+
+Success or error result
+
+#### 2.5.3.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Lambda Invoke |
+| Method | N/A |
+| Parameters | Event payload with registration data |
+| Authentication | IAM Role |
+| Error Handling | Propagates exceptions to API Gateway. |
+| Performance | N/A |
+
+### 2.5.4.0 DatabaseQuery
+
+#### 2.5.4.1 Source Id
+
+user-management-service-003
+
+#### 2.5.4.2 Target Id
+
+oltp-repository-008
+
+#### 2.5.4.3 Message
+
+4. findUnique({ where: { email } })
+
+#### 2.5.4.4 Sequence Number
+
+4
+
+#### 2.5.4.5 Type
+
+🔹 DatabaseQuery
+
+#### 2.5.4.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.4.7 Has Return
+
+✅ Yes
+
+#### 2.5.4.8 Return Message
+
+User record or null
+
+#### 2.5.4.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Prisma Client |
+| Method | findUnique |
+| Parameters | Email address |
+| Authentication | Database credentials |
+| Error Handling | Database connection errors are caught and handled. |
+| Performance | Query must use an index on the email column for fa... |
+
+### 2.5.5.0 DatabaseTransaction
+
+#### 2.5.5.1 Source Id
+
+user-management-service-003
+
+#### 2.5.5.2 Target Id
+
+oltp-repository-008
+
+#### 2.5.5.3 Message
+
+5. create(User) & create(Merchant)
+
+#### 2.5.5.4 Sequence Number
+
+5
+
+#### 2.5.5.5 Type
+
+🔹 DatabaseTransaction
+
+#### 2.5.5.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.5.7 Has Return
+
+✅ Yes
+
+#### 2.5.5.8 Return Message
+
+Newly created records
+
+#### 2.5.5.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Prisma Client |
+| Method | prisma.$transaction |
+| Parameters | User data with hashed password, new Merchant data |
+| Authentication | Database credentials |
+| Error Handling | Transaction ensures atomicity; if one create fails... |
+| Performance | N/A |
+
+### 2.5.6.0 ServiceResponse
+
+#### 2.5.6.1 Source Id
+
+user-management-service-003
+
+#### 2.5.6.2 Target Id
+
+api-gateway-002
+
+#### 2.5.6.3 Message
+
+6. Returns JWTs (access & refresh)
+
+#### 2.5.6.4 Sequence Number
+
+6
+
+#### 2.5.6.5 Type
+
+🔹 ServiceResponse
+
+#### 2.5.6.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.6.7 Has Return
+
+❌ No
+
+#### 2.5.6.8 Return Message
+
+
+
+#### 2.5.6.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Lambda Response |
+| Method | N/A |
+| Parameters | { accessToken, refreshToken } |
+| Authentication | N/A |
+| Error Handling | N/A |
+| Performance | N/A |
+
+### 2.5.7.0 UIUpdate
+
+#### 2.5.7.1 Source Id
+
+spa-frontend-001
+
+#### 2.5.7.2 Target Id
+
+user-browser
+
+#### 2.5.7.3 Message
+
+7. Stores tokens securely, renders onboarding prompt
+
+#### 2.5.7.4 Sequence Number
+
+7
+
+#### 2.5.7.5 Type
+
+🔹 UIUpdate
+
+#### 2.5.7.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.7.7 Has Return
+
+❌ No
+
+#### 2.5.7.8 Return Message
+
+
+
+#### 2.5.7.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | JavaScript/DOM |
+| Method | localStorage/cookie management, React state update |
+| Parameters | JWTs |
+| Authentication | N/A |
+| Error Handling | N/A |
+| Performance | UI should update immediately after API response. |
+
+### 2.5.8.0 UserInteraction
+
+#### 2.5.8.1 Source Id
+
+user-browser
+
+#### 2.5.8.2 Target Id
+
+spa-frontend-001
+
+#### 2.5.8.3 Message
+
+8. Clicks 'Connect Salla Store'
+
+#### 2.5.8.4 Sequence Number
+
+8
+
+#### 2.5.8.5 Type
+
+🔹 UserInteraction
+
+#### 2.5.8.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.8.7 Has Return
+
+❌ No
+
+#### 2.5.8.8 Return Message
+
+
+
+#### 2.5.8.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | DOM Event |
+| Method | onClick |
+| Parameters | N/A |
+| Authentication | N/A |
+| Error Handling | N/A |
+| Performance | N/A |
+
+### 2.5.9.0 APICall
+
+#### 2.5.9.1 Source Id
+
+spa-frontend-001
+
+#### 2.5.9.2 Target Id
+
+api-gateway-002
+
+#### 2.5.9.3 Message
+
+9. GET /api/v1/salla/auth/url
+
+#### 2.5.9.4 Sequence Number
+
+9
+
+#### 2.5.9.5 Type
+
+🔹 APICall
+
+#### 2.5.9.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.9.7 Has Return
+
+✅ Yes
+
+#### 2.5.9.8 Return Message
+
+Salla OAuth authorization URL
+
+#### 2.5.9.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | HTTPS/REST |
+| Method | GET |
+| Parameters | N/A |
+| Authentication | JWT Bearer Token |
+| Error Handling | Handle 401/403 for unauthorized access. |
+| Performance | p95 < 100ms |
+
+### 2.5.10.0 ServiceInvocation
+
+#### 2.5.10.1 Source Id
+
+api-gateway-002
+
+#### 2.5.10.2 Target Id
+
+user-management-service-003
+
+#### 2.5.10.3 Message
+
+10. Generates state and constructs Salla OAuth URL
+
+#### 2.5.10.4 Sequence Number
+
+10
+
+#### 2.5.10.5 Type
+
+🔹 ServiceInvocation
+
+#### 2.5.10.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.10.7 Has Return
+
+✅ Yes
+
+#### 2.5.10.8 Return Message
+
+Constructed URL
+
+#### 2.5.10.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Lambda Invoke |
+| Method | N/A |
+| Parameters | Authenticated user context |
+| Authentication | IAM Role |
+| Error Handling | N/A |
+| Performance | N/A |
+
+### 2.5.11.0 Navigation
+
+#### 2.5.11.1 Source Id
+
+spa-frontend-001
+
+#### 2.5.11.2 Target Id
+
+user-browser
+
+#### 2.5.11.3 Message
+
+11. Redirects browser to Salla authorization page
+
+#### 2.5.11.4 Sequence Number
+
+11
+
+#### 2.5.11.5 Type
+
+🔹 Navigation
+
+#### 2.5.11.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.11.7 Has Return
+
+❌ No
+
+#### 2.5.11.8 Return Message
+
+
+
+#### 2.5.11.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | HTTP Redirect |
+| Method | window.location.href = |
+| Parameters | Salla OAuth URL |
+| Authentication | N/A |
+| Error Handling | N/A |
+| Performance | N/A |
+
+### 2.5.12.0 ExternalInteraction
+
+#### 2.5.12.1 Source Id
+
+user-browser
+
+#### 2.5.12.2 Target Id
+
+salla-platform
+
+#### 2.5.12.3 Message
+
+12. User logs in and authorizes the application
+
+#### 2.5.12.4 Sequence Number
+
+12
+
+#### 2.5.12.5 Type
+
+🔹 ExternalInteraction
+
+#### 2.5.12.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.12.7 Has Return
+
+✅ Yes
+
+#### 2.5.12.8 Return Message
+
+Redirect to callback URL with `code` and `state`
+
+#### 2.5.12.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | HTTPS |
+| Method | N/A |
+| Parameters | User credentials |
+| Authentication | Salla's authentication |
+| Error Handling | Salla handles its own login/auth errors. |
+| Performance | N/A |
+
+### 2.5.13.0 Navigation
+
+#### 2.5.13.1 Source Id
+
+salla-platform
+
+#### 2.5.13.2 Target Id
+
+user-browser
+
+#### 2.5.13.3 Message
+
+13. Redirects to /oauth/callback?code=...&state=...
+
+#### 2.5.13.4 Sequence Number
+
+13
+
+#### 2.5.13.5 Type
+
+🔹 Navigation
+
+#### 2.5.13.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.13.7 Has Return
+
+❌ No
+
+#### 2.5.13.8 Return Message
+
+
+
+#### 2.5.13.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | HTTP Redirect |
+| Method | N/A |
+| Parameters | Authorization code, state parameter |
+| Authentication | N/A |
+| Error Handling | If user denies, Salla may redirect with an error p... |
+| Performance | N/A |
+
+### 2.5.14.0 APICall
+
+#### 2.5.14.1 Source Id
+
+spa-frontend-001
+
+#### 2.5.14.2 Target Id
+
+api-gateway-002
+
+#### 2.5.14.3 Message
+
+14. POST /api/v1/salla/auth/callback
+
+#### 2.5.14.4 Sequence Number
+
+14
+
+#### 2.5.14.5 Type
+
+🔹 APICall
+
+#### 2.5.14.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.14.7 Has Return
+
+✅ Yes
+
+#### 2.5.14.8 Return Message
+
+200 OK or 400 Bad Request
+
+#### 2.5.14.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | HTTPS/REST |
+| Method | POST |
+| Parameters | Body: { code, state } |
+| Authentication | JWT Bearer Token |
+| Error Handling | Handle invalid state (potential CSRF) or failed to... |
+| Performance | p95 < 2000ms (includes external call) |
+
+### 2.5.15.0 ServiceInvocation
+
+#### 2.5.15.1 Source Id
+
+api-gateway-002
+
+#### 2.5.15.2 Target Id
+
+user-management-service-003
+
+#### 2.5.15.3 Message
+
+15. Validates state, exchanges code for tokens
+
+#### 2.5.15.4 Sequence Number
+
+15
+
+#### 2.5.15.5 Type
+
+🔹 ServiceInvocation
+
+#### 2.5.15.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.15.7 Has Return
+
+✅ Yes
+
+#### 2.5.15.8 Return Message
+
+Token exchange result
+
+#### 2.5.15.9 Nested Interactions
+
+- {'sourceId': 'user-management-service-003', 'targetId': 'salla-platform', 'message': '15a. POST /oauth2/token (Server-to-Server)', 'sequenceNumber': 15.1, 'type': 'ExternalAPICall', 'isSynchronous': True, 'hasReturn': True, 'returnMessage': 'Salla access_token, refresh_token', 'technicalDetails': {'protocol': 'HTTPS/REST', 'method': 'POST', 'parameters': 'grant_type, code, client_id, client_secret', 'authentication': 'Client Credentials', 'errorHandling': 'Retry on transient errors. Log and fail on persistent errors.', 'performance': 'N/A'}}
+
+#### 2.5.15.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Lambda Invoke |
+| Method | N/A |
+| Parameters | Event payload with code and state |
+| Authentication | IAM Role |
+| Error Handling | Throws error if state is invalid or token exchange... |
+| Performance | N/A |
+
+### 2.5.16.0 DatabaseWrite
+
+#### 2.5.16.1 Source Id
+
+user-management-service-003
+
+#### 2.5.16.2 Target Id
+
+oltp-repository-008
+
+#### 2.5.16.3 Message
+
+16. Encrypts and saves Salla tokens for the merchant
+
+#### 2.5.16.4 Sequence Number
+
+16
+
+#### 2.5.16.5 Type
+
+🔹 DatabaseWrite
+
+#### 2.5.16.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.16.7 Has Return
+
+✅ Yes
+
+#### 2.5.16.8 Return Message
+
+Confirmation
+
+#### 2.5.16.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Prisma Client |
+| Method | update |
+| Parameters | Encrypted tokens, associated merchant ID |
+| Authentication | Database credentials |
+| Error Handling | Handle database write failures. |
+| Performance | N/A |
+
+### 2.5.17.0 UIUpdate
+
+#### 2.5.17.1 Source Id
+
+spa-frontend-001
+
+#### 2.5.17.2 Target Id
+
+user-browser
+
+#### 2.5.17.3 Message
+
+17. Renders 'Select Data Import Depth' UI (FR-104)
+
+#### 2.5.17.4 Sequence Number
+
+17
+
+#### 2.5.17.5 Type
+
+🔹 UIUpdate
+
+#### 2.5.17.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.17.7 Has Return
+
+❌ No
+
+#### 2.5.17.8 Return Message
+
+
+
+#### 2.5.17.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | JavaScript/DOM |
+| Method | React state update |
+| Parameters | N/A |
+| Authentication | N/A |
+| Error Handling | N/A |
+| Performance | Immediate render |
+
+### 2.5.18.0 UserInteraction
+
+#### 2.5.18.1 Source Id
+
+user-browser
+
+#### 2.5.18.2 Target Id
+
+spa-frontend-001
+
+#### 2.5.18.3 Message
+
+18. Selects depth and clicks 'Start Sync'
+
+#### 2.5.18.4 Sequence Number
+
+18
+
+#### 2.5.18.5 Type
+
+🔹 UserInteraction
+
+#### 2.5.18.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.18.7 Has Return
+
+❌ No
+
+#### 2.5.18.8 Return Message
+
+
+
+#### 2.5.18.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | DOM Event |
+| Method | onClick |
+| Parameters | Selected import depth (e.g., 24 months) |
+| Authentication | N/A |
+| Error Handling | N/A |
+| Performance | N/A |
+
+### 2.5.19.0 APICall
+
+#### 2.5.19.1 Source Id
+
+spa-frontend-001
+
+#### 2.5.19.2 Target Id
+
+api-gateway-002
+
+#### 2.5.19.3 Message
+
+19. POST /api/v1/sync/initial
+
+#### 2.5.19.4 Sequence Number
+
+19
+
+#### 2.5.19.5 Type
+
+🔹 APICall
+
+#### 2.5.19.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.19.7 Has Return
+
+✅ Yes
+
+#### 2.5.19.8 Return Message
+
+202 Accepted
+
+#### 2.5.19.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | HTTPS/REST |
+| Method | POST |
+| Parameters | Body: { depthInMonths: 24 } |
+| Authentication | JWT Bearer Token |
+| Error Handling | Handle failure to queue the job. |
+| Performance | p95 < 150ms |
+
+### 2.5.20.0 MessageQueueing
+
+#### 2.5.20.1 Source Id
+
+api-gateway-002
+
+#### 2.5.20.2 Target Id
+
+user-management-service-003
+
+#### 2.5.20.3 Message
+
+20. Queues an InitialSyncRequested job
+
+#### 2.5.20.4 Sequence Number
+
+20
+
+#### 2.5.20.5 Type
+
+🔹 MessageQueueing
+
+#### 2.5.20.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.20.7 Has Return
+
+✅ Yes
+
+#### 2.5.20.8 Return Message
+
+Job queued successfully
+
+#### 2.5.20.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | AWS SQS SDK |
+| Method | sendMessage |
+| Parameters | Message body: { merchantId, depthInMonths } |
+| Authentication | IAM Role |
+| Error Handling | Retry queueing on transient error. |
+| Performance | N/A |
+
+### 2.5.21.0 ExternalAPICall
+
+#### 2.5.21.1 Source Id
+
+data-pipeline-processor-014
+
+#### 2.5.21.2 Target Id
+
+salla-platform
+
+#### 2.5.21.3 Message
+
+21. [Async] Fetches historical data via paginated API calls
+
+#### 2.5.21.4 Sequence Number
+
+21
+
+#### 2.5.21.5 Type
+
+🔹 ExternalAPICall
+
+#### 2.5.21.6 Is Synchronous
+
+❌ No
+
+#### 2.5.21.7 Has Return
+
+❌ No
+
+#### 2.5.21.8 Return Message
+
+
+
+#### 2.5.21.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | HTTPS/REST |
+| Method | GET /orders, GET /customers, etc. |
+| Parameters | Pagination cursors, date ranges |
+| Authentication | OAuth 2.0 Bearer Token |
+| Error Handling | Implement rate limit handling, exponential backoff... |
+| Performance | Job may take hours. Must update progress frequentl... |
+
+### 2.5.22.0 DatabaseWrite
+
+#### 2.5.22.1 Source Id
+
+data-pipeline-processor-014
+
+#### 2.5.22.2 Target Id
+
+oltp-repository-008
+
+#### 2.5.22.3 Message
+
+22. [Async] Transforms and bulk-inserts data
+
+#### 2.5.22.4 Sequence Number
+
+22
+
+#### 2.5.22.5 Type
+
+🔹 DatabaseWrite
+
+#### 2.5.22.6 Is Synchronous
+
+❌ No
+
+#### 2.5.22.7 Has Return
+
+❌ No
+
+#### 2.5.22.8 Return Message
+
+
+
+#### 2.5.22.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Prisma Client |
+| Method | createMany |
+| Parameters | Batches of transformed records |
+| Authentication | Database credentials |
+| Error Handling | Log and skip invalid records to prevent job failur... |
+| Performance | Use large batch sizes for optimal performance. |
+
+### 2.5.23.0 DatabaseWrite
+
+#### 2.5.23.1 Source Id
+
+data-pipeline-processor-014
+
+#### 2.5.23.2 Target Id
+
+oltp-repository-008
+
+#### 2.5.23.3 Message
+
+23. [Async] Periodically updates sync job status
+
+#### 2.5.23.4 Sequence Number
+
+23
+
+#### 2.5.23.5 Type
+
+🔹 DatabaseWrite
+
+#### 2.5.23.6 Is Synchronous
+
+❌ No
+
+#### 2.5.23.7 Has Return
+
+❌ No
+
+#### 2.5.23.8 Return Message
+
+
+
+#### 2.5.23.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Prisma Client |
+| Method | update |
+| Parameters | jobId, progressPercentage, status |
+| Authentication | Database credentials |
+| Error Handling | N/A |
+| Performance | N/A |
+
+### 2.5.24.0 APICall
+
+#### 2.5.24.1 Source Id
+
+spa-frontend-001
+
+#### 2.5.24.2 Target Id
+
+api-gateway-002
+
+#### 2.5.24.3 Message
+
+24. [Loop Start] GET /api/v1/sync/status
+
+#### 2.5.24.4 Sequence Number
+
+24
+
+#### 2.5.24.5 Type
+
+🔹 APICall
+
+#### 2.5.24.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.24.7 Has Return
+
+✅ Yes
+
+#### 2.5.24.8 Return Message
+
+Sync status object
+
+#### 2.5.24.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | HTTPS/REST |
+| Method | GET |
+| Parameters | N/A |
+| Authentication | JWT Bearer Token |
+| Error Handling | Handle API errors during polling. |
+| Performance | p95 < 100ms |
+
+### 2.5.25.0 ServiceInvocation
+
+#### 2.5.25.1 Source Id
+
+api-gateway-002
+
+#### 2.5.25.2 Target Id
+
+user-management-service-003
+
+#### 2.5.25.3 Message
+
+25. Fetches current sync status for merchant
+
+#### 2.5.25.4 Sequence Number
+
+25
+
+#### 2.5.25.5 Type
+
+🔹 ServiceInvocation
+
+#### 2.5.25.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.25.7 Has Return
+
+✅ Yes
+
+#### 2.5.25.8 Return Message
+
+Status object
+
+#### 2.5.25.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Lambda Invoke |
+| Method | N/A |
+| Parameters | Authenticated user context |
+| Authentication | IAM Role |
+| Error Handling | N/A |
+| Performance | N/A |
+
+### 2.5.26.0 DatabaseQuery
+
+#### 2.5.26.1 Source Id
+
+user-management-service-003
+
+#### 2.5.26.2 Target Id
+
+oltp-repository-008
+
+#### 2.5.26.3 Message
+
+26. findUnique({ where: { merchantId } }) on sync_jobs table
+
+#### 2.5.26.4 Sequence Number
+
+26
+
+#### 2.5.26.5 Type
+
+🔹 DatabaseQuery
+
+#### 2.5.26.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.26.7 Has Return
+
+✅ Yes
+
+#### 2.5.26.8 Return Message
+
+Sync job record
+
+#### 2.5.26.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Prisma Client |
+| Method | findUnique |
+| Parameters | Merchant ID |
+| Authentication | Database credentials |
+| Error Handling | Return a default 'not_started' status if no job is... |
+| Performance | Fast query on primary or indexed key. |
+
+### 2.5.27.0 UIUpdate
+
+#### 2.5.27.1 Source Id
+
+spa-frontend-001
+
+#### 2.5.27.2 Target Id
+
+user-browser
+
+#### 2.5.27.3 Message
+
+27. [Loop] Updates progress bar UI
+
+#### 2.5.27.4 Sequence Number
+
+27
+
+#### 2.5.27.5 Type
+
+🔹 UIUpdate
+
+#### 2.5.27.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.27.7 Has Return
+
+❌ No
+
+#### 2.5.27.8 Return Message
+
+
+
+#### 2.5.27.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | JavaScript/DOM |
+| Method | React state update |
+| Parameters | Progress percentage, status text |
+| Authentication | N/A |
+| Error Handling | If sync status is 'failed', display an error messa... |
+| Performance | Smooth animation for progress bar. |
+
+### 2.5.28.0 UIUpdate
+
+#### 2.5.28.1 Source Id
+
+spa-frontend-001
+
+#### 2.5.28.2 Target Id
+
+user-browser
+
+#### 2.5.28.3 Message
+
+28. [Loop End] Displays 'Sync Complete' notification
+
+#### 2.5.28.4 Sequence Number
+
+28
+
+#### 2.5.28.5 Type
+
+🔹 UIUpdate
+
+#### 2.5.28.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.28.7 Has Return
+
+❌ No
+
+#### 2.5.28.8 Return Message
+
+
+
+#### 2.5.28.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | JavaScript/DOM |
+| Method | React state update, Toast notification |
+| Parameters | N/A |
+| Authentication | N/A |
+| Error Handling | N/A |
+| Performance | Stop polling loop when status is 'completed' or 'f... |
+
+## 2.6.0.0 Notes
+
+### 2.6.1.0 Content
+
+#### 2.6.1.1 Content
+
+Client-side validation (BR-001, BR-002) is performed before submitting the registration form to provide immediate user feedback.
+
+#### 2.6.1.2 Position
+
+top-left
+
+#### 2.6.1.3 Participant Id
+
+spa-frontend-001
+
+#### 2.6.1.4 Sequence Number
+
+1
+
+### 2.6.2.0 Content
+
+#### 2.6.2.1 Content
+
+The OAuth 2.0 'state' parameter is generated server-side, stored (e.g., in session or Redis), and validated upon callback to prevent CSRF attacks.
+
+#### 2.6.2.2 Position
+
+middle
+
+#### 2.6.2.3 Participant Id
+
+user-management-service-003
+
+#### 2.6.2.4 Sequence Number
+
+10
+
+### 2.6.3.0 Content
+
+#### 2.6.3.1 Content
+
+Initial data sync is an asynchronous, long-running process. The API returns a 202 Accepted immediately, and the client polls a status endpoint to update the UI.
+
+#### 2.6.3.2 Position
+
+bottom-left
+
+#### 2.6.3.3 Participant Id
+
+spa-frontend-001
+
+#### 2.6.3.4 Sequence Number
+
+19
+
+### 2.6.4.0 Content
+
+#### 2.6.4.1 Content
+
+The polling loop continues at a set interval (e.g., 10 seconds) until the sync status returned from the server is 'completed' or 'failed'.
+
+#### 2.6.4.2 Position
+
+bottom
+
+#### 2.6.4.3 Participant Id
+
+spa-frontend-001
+
+#### 2.6.4.4 Sequence Number
+
+24
+
+## 2.7.0.0 Implementation Guidance
+
+| Property | Value |
+|----------|-------|
+| Security Requirements | Store JWT refresh tokens in secure, HttpOnly cooki... |
+| Performance Targets | The client SPA should follow PWA patterns for fast... |
+| Error Handling Strategy | If registration fails due to a duplicate email, th... |
+| Testing Considerations | End-to-end tests using Playwright are critical to ... |
+| Monitoring Requirements | Log critical events: new user registration, Salla ... |
+| Deployment Considerations | The system relies on securely stored environment v... |
+

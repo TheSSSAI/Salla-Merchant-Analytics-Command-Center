@@ -1,0 +1,3 @@
+"gate_id","gate_name","sprint","gate_type","criteria","responsible_team","gate_date","approval_required","approver","bypass_criteria","automation_level","tools_used","success_metrics"
+"QG-001","Sprint 1 Security Gate","Sprint 1","Security","Tenant isolation verification passed; Tokens encrypted at rest","QA Team","2025-05-16","true","security.architect@company.com","None","Fully Automated","Custom Security Suite","Zero privilege escalation vulnerabilities"
+"QG-002","Sprint 2 Performance Gate","Sprint 2","Performance","Analytics API p95 < 200ms; Sync worker handles 429s","Backend Team","2025-05-30","true","tech.lead@company.com","Performance regression < 10%","Automated","k6, Axiom","Load test benchmarks met"

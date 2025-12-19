@@ -1,0 +1,449 @@
+# 1 Story Metadata
+
+| Property | Value |
+|----------|-------|
+| Story Id | US-035 |
+| Elaboration Date | 2025-01-15 |
+| Development Readiness | Complete |
+
+# 2 Story Narrative
+
+| Property | Value |
+|----------|-------|
+| Title | User asks the AI assistant a question in natural l... |
+| As A User Story | As a merchant, I want to ask questions about my bu... |
+| User Persona | Store Owner / Admin, Data Analyst, Marketer |
+| Business Value | Provides immediate, on-demand access to business i... |
+| Functional Area | AI Assistant |
+| Story Theme | Natural Language Data Interaction |
+
+# 3 Acceptance Criteria
+
+## 3.1 Criteria Id
+
+### 3.1.1 Criteria Id
+
+AC-001
+
+### 3.1.2 Scenario
+
+Query for a simple time-based metric
+
+### 3.1.3 Scenario Type
+
+Happy_Path
+
+### 3.1.4 Given
+
+I am an authenticated user on a page displaying the AI Assistant
+
+### 3.1.5 When
+
+I type the question 'What were my total sales last week?' and submit it
+
+### 3.1.6 Then
+
+The system displays the correct, aggregated total sales figure for the previous calendar week, clearly formatted as currency.
+
+### 3.1.7 Validation Notes
+
+Verify the displayed value against a manual query of the OLAP database for the specified merchant and time period.
+
+## 3.2.0 Criteria Id
+
+### 3.2.1 Criteria Id
+
+AC-002
+
+### 3.2.2 Scenario
+
+Query for a ranked list with segmentation
+
+### 3.2.3 Scenario Type
+
+Happy_Path
+
+### 3.2.4 Given
+
+I am an authenticated user on a page displaying the AI Assistant
+
+### 3.2.5 When
+
+I type the question 'Show me my top 5 selling products in May' and submit it
+
+### 3.2.6 Then
+
+The system displays a response containing a list or a simple bar chart of the top 5 products ranked by revenue for the month of May.
+
+### 3.2.7 Validation Notes
+
+Verify the list of products and their ranking against a manual query of the OLAP database.
+
+## 3.3.0 Criteria Id
+
+### 3.3.1 Criteria Id
+
+AC-003
+
+### 3.3.2 Scenario
+
+UI displays loading state during processing
+
+### 3.3.3 Scenario Type
+
+Happy_Path
+
+### 3.3.4 Given
+
+The AI Assistant interface is visible
+
+### 3.3.5 When
+
+I submit a question
+
+### 3.3.6 Then
+
+My question appears in the chat history, and a loading or 'thinking' indicator is displayed while the system generates a response.
+
+### 3.3.7 Validation Notes
+
+Observe the UI state change immediately after submitting a query and before the response is rendered.
+
+## 3.4.0 Criteria Id
+
+### 3.4.1 Criteria Id
+
+AC-004
+
+### 3.4.2 Scenario
+
+Handling of an unintelligible or nonsensical query
+
+### 3.4.3 Scenario Type
+
+Error_Condition
+
+### 3.4.4 Given
+
+I am an authenticated user on a page displaying the AI Assistant
+
+### 3.4.5 When
+
+I ask a question that is grammatically incorrect or unrelated to business metrics, such as 'How many clouds in the sky?'
+
+### 3.4.6 Then
+
+The system displays a friendly, helpful message indicating it could not understand the request and suggests rephrasing it to be about sales, products, or customers.
+
+### 3.4.7 Validation Notes
+
+Test with several nonsensical queries to ensure a consistent and helpful error message is returned.
+
+## 3.5.0 Criteria Id
+
+### 3.5.1 Criteria Id
+
+AC-005
+
+### 3.5.2 Scenario
+
+Handling of an out-of-scope but valid query
+
+### 3.5.3 Scenario Type
+
+Error_Condition
+
+### 3.5.4 Given
+
+I am an authenticated user on a page displaying the AI Assistant
+
+### 3.5.5 When
+
+I ask a question about data the system does not possess, such as 'What is my store's inventory level for product SKU-123?'
+
+### 3.5.6 Then
+
+The system displays a message explaining the scope of its knowledge (e.g., 'I can answer questions about sales, product performance, and customer analytics, but I don't have access to live inventory data.').
+
+### 3.5.7 Validation Notes
+
+Verify that the system correctly identifies queries that are outside its data domain as defined in REQ-INT-002.
+
+## 3.6.0 Criteria Id
+
+### 3.6.1 Criteria Id
+
+AC-006
+
+### 3.6.2 Scenario
+
+Query returns no results
+
+### 3.6.3 Scenario Type
+
+Edge_Case
+
+### 3.6.4 Given
+
+My store had zero sales last month
+
+### 3.6.5 When
+
+I ask 'What were my sales last month?'
+
+### 3.6.6 Then
+
+The system returns a clear and accurate response, such as 'You had $0.00 in sales last month.'
+
+### 3.6.7 Validation Notes
+
+Use test data for a merchant with no activity in a given period and verify the response is accurate and not an error.
+
+## 3.7.0 Criteria Id
+
+### 3.7.1 Criteria Id
+
+AC-007
+
+### 3.7.2 Scenario
+
+Data access is strictly isolated per merchant
+
+### 3.7.3 Scenario Type
+
+Happy_Path
+
+### 3.7.4 Given
+
+I am logged in as Merchant A
+
+### 3.7.5 When
+
+I ask 'What were my total sales yesterday?'
+
+### 3.7.6 Then
+
+The system provides an answer using ONLY data from Merchant A's store.
+
+### 3.7.7 Validation Notes
+
+This must be verified via integration tests and code review to ensure all database queries generated by the AI are strictly scoped by `merchant_id`.
+
+# 4.0.0 User Interface Requirements
+
+## 4.1.0 Ui Elements
+
+- A text input field for users to type their questions.
+- A 'Submit' button (icon or text-based).
+- A scrollable chat history area to display past questions and answers.
+- A loading/processing indicator (e.g., typing dots animation).
+
+## 4.2.0 User Interactions
+
+- User can submit a query by pressing 'Enter' in the input field or clicking the 'Submit' button.
+- The input field should clear after a query is submitted.
+- The chat history should automatically scroll to the latest message.
+
+## 4.3.0 Display Requirements
+
+- Responses must be clearly distinguished from user queries.
+- Numerical and monetary values must be formatted for readability (e.g., currency symbols, commas).
+- If a response includes a visualization, it must be simple, clearly labeled, and responsive.
+
+## 4.4.0 Accessibility Needs
+
+- The input field must have an associated `<label>`.
+- All interactive elements must be keyboard accessible and have clear focus states.
+- Chat history and responses must be screen-reader friendly (e.g., using ARIA attributes).
+
+# 5.0.0 Business Rules
+
+## 5.1.0 Rule Id
+
+### 5.1.1 Rule Id
+
+BR-AI-001
+
+### 5.1.2 Rule Description
+
+All AI-driven data queries must be strictly scoped to the data of the merchant account making the request.
+
+### 5.1.3 Enforcement Point
+
+Backend API middleware and data access layer.
+
+### 5.1.4 Violation Handling
+
+The request must be rejected with a server error, and a high-priority security alert must be logged.
+
+## 5.2.0 Rule Id
+
+### 5.2.1 Rule Id
+
+BR-AI-002
+
+### 5.2.2 Rule Description
+
+User queries and system responses must be logged for auditing and continuous improvement of the AI model, in compliance with the Privacy Policy.
+
+### 5.2.3 Enforcement Point
+
+Backend service handling the AI assistant logic.
+
+### 5.2.4 Violation Handling
+
+The request may still be processed, but an operational alert should be triggered to investigate the logging failure.
+
+# 6.0.0 Dependencies
+
+## 6.1.0 Prerequisite Stories
+
+### 6.1.1 Story Id
+
+#### 6.1.1.1 Story Id
+
+US-009
+
+#### 6.1.1.2 Dependency Reason
+
+A Salla store must be connected to provide a data source.
+
+### 6.1.2.0 Story Id
+
+#### 6.1.2.1 Story Id
+
+US-013
+
+#### 6.1.2.2 Dependency Reason
+
+The initial data synchronization must be complete to populate the analytical database that the AI will query.
+
+## 6.2.0.0 Technical Dependencies
+
+- A fully operational OLAP data warehouse (ClickHouse) as per REQ-TEC-001.
+- A functioning data pipeline (REQ-TEC-003) to ensure data freshness.
+- Integration with the OpenAI API service (REQ-INT-006).
+- Setup of `pgvector` extension in the OLTP database for the RAG pattern (REQ-TEC-002).
+
+## 6.3.0.0 Data Dependencies
+
+- Availability of historical and near real-time sales, product, and customer data in the ClickHouse database.
+
+## 6.4.0.0 External Dependencies
+
+- Availability and performance of the third-party OpenAI API.
+
+# 7.0.0.0 Non Functional Requirements
+
+## 7.1.0.0 Performance
+
+- The p95 response time for generating and displaying an answer to a typical query should be under 5 seconds.
+
+## 7.2.0.0 Security
+
+- All communication with the OpenAI API must be over HTTPS.
+- The system must prevent prompt injection attacks that could compromise tenant data isolation or execute malicious queries.
+- No sensitive PII should be sent to the external LLM service; the RAG pattern should be used to provide context without exposing raw customer data where possible.
+
+## 7.3.0.0 Usability
+
+- The AI assistant should feel conversational and intuitive, requiring no special training to use.
+
+## 7.4.0.0 Accessibility
+
+- The feature must comply with WCAG 2.1 Level AA standards.
+
+## 7.5.0.0 Compatibility
+
+- The feature must function correctly on all supported modern, evergreen web browsers (Chrome, Firefox, Safari, Edge).
+
+# 8.0.0.0 Implementation Considerations
+
+## 8.1.0.0 Complexity Assessment
+
+High
+
+## 8.2.0.0 Complexity Factors
+
+- Implementing the Retrieval-Augmented Generation (RAG) pattern is complex.
+- Requires significant prompt engineering to ensure accurate and reliable generation of database queries from natural language.
+- Security hardening against prompt injection is a critical and non-trivial task.
+- Managing costs and latency of the external LLM API.
+- Handling multi-language queries (English and Arabic) adds complexity to the natural language understanding layer.
+
+## 8.3.0.0 Technical Risks
+
+- The external LLM API may produce inaccurate or malformed queries, requiring a robust validation and error-handling layer.
+- Potential for high operational costs if LLM token usage is not carefully managed.
+- The RAG context retrieval may not always find the correct information, leading to incorrect answers.
+
+## 8.4.0.0 Integration Points
+
+- Frontend UI component for the chat interface.
+- Backend API endpoint to receive NLQs.
+- Internal service to orchestrate the RAG flow.
+- PostgreSQL with `pgvector` for context retrieval.
+- ClickHouse OLAP database for data querying.
+- OpenAI API for language model processing.
+
+# 9.0.0.0 Testing Requirements
+
+## 9.1.0.0 Testing Types
+
+- Unit
+- Integration
+- E2E
+- Performance
+- Security
+
+## 9.2.0.0 Test Scenarios
+
+- A 'golden set' of at least 50 diverse questions with known, verifiable answers must be created and run as an automated regression test.
+- Scenarios testing various timeframes (e.g., 'yesterday', 'last month', 'Q2', 'in 2023').
+- Scenarios testing different metrics (sales, orders, AOV, new customers).
+- Scenarios testing segmentation (by product, by country).
+- Security testing focused on prompt injection to attempt to bypass tenant isolation.
+
+## 9.3.0.0 Test Data Needs
+
+- A rich, anonymized dataset for multiple merchant tenants to validate data isolation.
+- Test data must include scenarios with no activity to test zero-result cases.
+
+## 9.4.0.0 Testing Tools
+
+- Jest for unit/integration tests.
+- Playwright for E2E tests.
+- Custom scripts for running the 'golden set' regression suite.
+
+# 10.0.0.0 Definition Of Done
+
+- All acceptance criteria validated and passing
+- Code reviewed and approved by team
+- Unit and integration tests implemented with >80% coverage for the new services
+- The 'golden set' regression test suite is implemented and passes 100%
+- E2E tests for the happy path and key error conditions are passing
+- A security review of the implementation (especially prompt handling and query execution) is completed and any findings are addressed
+- Performance testing confirms p95 response time is under the 5-second target
+- Logging for all queries and responses is implemented and verified
+- Story deployed and verified in the staging environment
+
+# 11.0.0.0 Planning Information
+
+## 11.1.0.0 Story Points
+
+13
+
+## 11.2.0.0 Priority
+
+🔴 High
+
+## 11.3.0.0 Sprint Considerations
+
+- Recommend an initial time-boxed spike (2-3 days) to de-risk the RAG implementation and prompt engineering strategy before committing to the full story.
+- This story is blocked until the OLAP database and data pipeline are operational.
+- The story could be broken down into smaller technical tasks (e.g., RAG context setup, LLM integration, UI component) if needed.
+
+## 11.4.0.0 Release Impact
+
+This is a major, headline feature for the product launch. Its completion is critical for the AI-powered value proposition.
+

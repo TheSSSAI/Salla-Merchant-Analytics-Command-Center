@@ -1,0 +1,27 @@
+sequenceDiagram
+    participant "Scheduled Jobs Processor" as ScheduledJobsProcessor
+    participant "OLTP Repository" as OLTPRepository
+    participant "AI Assistant Service" as AIAssistantService
+    participant "OLAP Repository" as OLAPRepository
+
+    activate ScheduledJobsProcessor
+    ScheduledJobsProcessor->>ScheduledJobsProcessor: 1. Job execution begins
+    ScheduledJobsProcessor->>OLTPRepository: 2. getActiveMerchants()
+    OLTPRepository-->>ScheduledJobsProcessor: Merchant[]
+    ScheduledJobsProcessor->>ScheduledJobsProcessor: 3. processMerchant(merchant)
+    activate AIAssistantService
+    ScheduledJobsProcessor->>AIAssistantService: 4. generateProactiveInsightsForMerchant(merchantId)
+    AIAssistantService-->>ScheduledJobsProcessor: InsightGenerationResult
+    AIAssistantService->>OLAPRepository: 5. queryPerformanceMetrics(merchantId, dateRanges)
+    OLAPRepository-->>AIAssistantService: PerformanceData
+    AIAssistantService->>AIAssistantService: 6. analyzeDataForPatterns(performanceData)
+    AIAssistantService-->>AIAssistantService: Insight[] | null
+    AIAssistantService->>OLTPRepository: 7. saveInsights(merchantId, insights)
+    OLTPRepository-->>AIAssistantService: success
+    ScheduledJobsProcessor->>ScheduledJobsProcessor: 8. Log overall job summary
+
+    note over ScheduledJobsProcessor: Loop: For each merchant in Merchant[]
+    note over AIAssistantService: Opt: If analyzeDataForPatterns returns one or more insights
+
+    deactivate AIAssistantService
+    deactivate ScheduledJobsProcessor

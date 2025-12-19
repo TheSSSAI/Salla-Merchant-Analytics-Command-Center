@@ -1,0 +1,720 @@
+# 1 Overview
+
+## 1.1 Diagram Id
+
+SEQ-IF-002
+
+## 1.2 Name
+
+Nightly Data Reconciliation with Salla API
+
+## 1.3 Description
+
+A scheduled background job runs daily to ensure data consistency. It queries the Salla API for resources (e.g., orders) created or updated in the last 24 hours and compares them against the system's OLTP database, creating or updating records as needed to correct for any missed webhooks.
+
+## 1.4 Type
+
+🔹 IntegrationFlow
+
+## 1.5 Purpose
+
+To maintain high data integrity and correct for any data drift or missed real-time updates from Salla webhooks.
+
+## 1.6 Complexity
+
+Medium
+
+## 1.7 Priority
+
+🟡 Medium
+
+## 1.8 Frequency
+
+Daily
+
+## 1.9 Participants
+
+- scheduled-jobs-processor-015
+- salla-platform
+- oltp-repository-008
+
+## 1.10 Key Interactions
+
+- The scheduled job is triggered by a daily cron schedule.
+- The job makes paginated API calls to Salla for key resources with an 'updated_at' filter for the last 24 hours.
+- For each record returned by Salla, the job checks if it exists and is up-to-date in the local OLTP database.
+- If a record is missing or outdated, it is created or updated accordingly.
+- The job logs a summary of discrepancies found and corrected.
+
+## 1.11 Triggers
+
+- Daily scheduled trigger.
+
+## 1.12 Outcomes
+
+- The system's data is consistent with the Salla source of truth.
+- Potential data loss from missed webhooks is mitigated.
+
+## 1.13 Business Rules
+
+- The job must respect Salla API rate limits (RISK-001).
+
+## 1.14 Error Scenarios
+
+- The Salla API is unavailable during the job's execution.
+- The job fails due to rate limiting and must be retried.
+
+## 1.15 Integration Points
+
+- Salla Platform (REST API).
+
+# 2.0 Details
+
+## 2.1 Diagram Id
+
+SEQ-IF-002
+
+## 2.2 Name
+
+Nightly Data Reconciliation Batch Integration with Salla API
+
+## 2.3 Description
+
+A detailed sequence for a scheduled daily batch job that performs data synchronization. The job queries the external Salla REST API for all orders updated in the last 24 hours, compares them against the local OLTP database, and performs create or update operations to mitigate data drift from potentially missed webhooks. This process is designed for high data integrity and resilience against transient integration failures.
+
+## 2.4 Participants
+
+### 2.4.1 External System
+
+#### 2.4.1.1 Repository Id
+
+aws-eventbridge-scheduler
+
+#### 2.4.1.2 Display Name
+
+Scheduler
+
+#### 2.4.1.3 Type
+
+🔹 External System
+
+#### 2.4.1.4 Technology
+
+AWS EventBridge Scheduler
+
+#### 2.4.1.5 Order
+
+1
+
+#### 2.4.1.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | actor |
+| Color | #999999 |
+| Stereotype | Scheduler |
+
+### 2.4.2.0 Background Process
+
+#### 2.4.2.1 Repository Id
+
+scheduled-jobs-processor-015
+
+#### 2.4.2.2 Display Name
+
+Reconciliation Job
+
+#### 2.4.2.3 Type
+
+🔹 Background Process
+
+#### 2.4.2.4 Technology
+
+AWS Lambda (Node.js 20.x)
+
+#### 2.4.2.5 Order
+
+2
+
+#### 2.4.2.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | participant |
+| Color | #D5A6BD |
+| Stereotype | Lambda |
+
+### 2.4.3.0 External System
+
+#### 2.4.3.1 Repository Id
+
+salla-platform
+
+#### 2.4.3.2 Display Name
+
+Salla Platform
+
+#### 2.4.3.3 Type
+
+🔹 External System
+
+#### 2.4.3.4 Technology
+
+REST API
+
+#### 2.4.3.5 Order
+
+3
+
+#### 2.4.3.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | boundary |
+| Color | #F8B44F |
+| Stereotype | External API |
+
+### 2.4.4.0 Repository
+
+#### 2.4.4.1 Repository Id
+
+oltp-repository-008
+
+#### 2.4.4.2 Display Name
+
+OLTP Repository
+
+#### 2.4.4.3 Type
+
+🔹 Repository
+
+#### 2.4.4.4 Technology
+
+Prisma ORM over PostgreSQL 16
+
+#### 2.4.4.5 Order
+
+4
+
+#### 2.4.4.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | database |
+| Color | #3471A1 |
+| Stereotype | Prisma |
+
+## 2.5.0.0 Interactions
+
+### 2.5.1.0 Scheduled Trigger
+
+#### 2.5.1.1 Source Id
+
+aws-eventbridge-scheduler
+
+#### 2.5.1.2 Target Id
+
+scheduled-jobs-processor-015
+
+#### 2.5.1.3 Message
+
+1. InvokeFunction(payload: { merchantId: string })
+
+#### 2.5.1.4 Sequence Number
+
+1
+
+#### 2.5.1.5 Type
+
+🔹 Scheduled Trigger
+
+#### 2.5.1.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.1.7 Return Message
+
+Function Invocation Ack
+
+#### 2.5.1.8 Has Return
+
+✅ Yes
+
+#### 2.5.1.9 Is Activation
+
+✅ Yes
+
+#### 2.5.1.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | AWS SDK |
+| Method | lambda:Invoke |
+| Parameters | Payload includes `merchantId` to provide context f... |
+| Authentication | IAM Role with lambda:InvokeFunction permission. |
+| Error Handling | EventBridge handles retries on invocation failure ... |
+| Performance | N/A |
+
+### 2.5.2.0 Internal Processing
+
+#### 2.5.2.1 Source Id
+
+scheduled-jobs-processor-015
+
+#### 2.5.2.2 Target Id
+
+scheduled-jobs-processor-015
+
+#### 2.5.2.3 Message
+
+2. Initialize Job: Calculate time window (now - 24h), fetch Salla OAuth token for merchantId
+
+#### 2.5.2.4 Sequence Number
+
+2
+
+#### 2.5.2.5 Type
+
+🔹 Internal Processing
+
+#### 2.5.2.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.2.7 Return Message
+
+
+
+#### 2.5.2.8 Has Return
+
+❌ No
+
+#### 2.5.2.9 Is Activation
+
+❌ No
+
+#### 2.5.2.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Internal |
+| Method | N/A |
+| Parameters | N/A |
+| Authentication | N/A |
+| Error Handling | Fails job if OAuth token cannot be retrieved, logs... |
+| Performance | Token retrieval from secure storage (e.g., AWS Sec... |
+
+### 2.5.3.0 API Call
+
+#### 2.5.3.1 Source Id
+
+scheduled-jobs-processor-015
+
+#### 2.5.3.2 Target Id
+
+salla-platform
+
+#### 2.5.3.3 Message
+
+3. [LOOP: For each page] GET /v2/orders?updated_at_min={startTime}&page={pageNumber}
+
+#### 2.5.3.4 Sequence Number
+
+3
+
+#### 2.5.3.5 Type
+
+🔹 API Call
+
+#### 2.5.3.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.3.7 Return Message
+
+200 OK with { data: Order[], pagination: {...} }
+
+#### 2.5.3.8 Has Return
+
+✅ Yes
+
+#### 2.5.3.9 Is Activation
+
+❌ No
+
+#### 2.5.3.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | HTTPS/REST |
+| Method | GET |
+| Parameters | Headers: { 'Authorization': 'Bearer <Salla OAuth T... |
+| Authentication | Salla OAuth 2.0 Bearer Token. |
+| Error Handling | Wrapped in a retry mechanism (3 attempts, exponent... |
+| Performance | Subject to Salla API SLA. Must adhere to Salla's r... |
+
+### 2.5.4.0 Data Transformation
+
+#### 2.5.4.1 Source Id
+
+scheduled-jobs-processor-015
+
+#### 2.5.4.2 Target Id
+
+scheduled-jobs-processor-015
+
+#### 2.5.4.3 Message
+
+4. [LOOP: For each order in page] Transform Salla API model to internal domain model
+
+#### 2.5.4.4 Sequence Number
+
+4
+
+#### 2.5.4.5 Type
+
+🔹 Data Transformation
+
+#### 2.5.4.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.4.7 Return Message
+
+
+
+#### 2.5.4.8 Has Return
+
+❌ No
+
+#### 2.5.4.9 Is Activation
+
+❌ No
+
+#### 2.5.4.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Internal |
+| Method | N/A |
+| Parameters | The function acts as an Anti-Corruption Layer, iso... |
+| Authentication | N/A |
+| Error Handling | Logs a warning and skips record if transformation ... |
+| Performance | Transformation logic should be highly efficient, <... |
+
+#### 2.5.4.11 Nested Interactions
+
+##### 2.5.4.11.1 Database Read
+
+###### 2.5.4.11.1.1 Source Id
+
+scheduled-jobs-processor-015
+
+###### 2.5.4.11.1.2 Target Id
+
+oltp-repository-008
+
+###### 2.5.4.11.1.3 Message
+
+4.1. findOrderBySallaId(sallaOrderId)
+
+###### 2.5.4.11.1.4 Sequence Number
+
+5
+
+###### 2.5.4.11.1.5 Type
+
+🔹 Database Read
+
+###### 2.5.4.11.1.6 Is Synchronous
+
+✅ Yes
+
+###### 2.5.4.11.1.7 Return Message
+
+LocalOrder | null
+
+###### 2.5.4.11.1.8 Has Return
+
+✅ Yes
+
+###### 2.5.4.11.1.9 Is Activation
+
+❌ No
+
+###### 2.5.4.11.1.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Prisma Client |
+| Method | prisma.order.findUnique |
+| Parameters | { where: { sallaOrderId: ... } } |
+| Authentication | Database connection credentials. |
+| Error Handling | Retry on transient connection errors. Job fails on... |
+| Performance | Query must be indexed on `sallaOrderId` for fast l... |
+
+##### 2.5.4.11.2.0 Conditional Logic
+
+###### 2.5.4.11.2.1 Source Id
+
+scheduled-jobs-processor-015
+
+###### 2.5.4.11.2.2 Target Id
+
+scheduled-jobs-processor-015
+
+###### 2.5.4.11.2.3 Message
+
+4.2. [ALT: Compare Timestamps]
+
+###### 2.5.4.11.2.4 Sequence Number
+
+6
+
+###### 2.5.4.11.2.5 Type
+
+🔹 Conditional Logic
+
+###### 2.5.4.11.2.6 Is Synchronous
+
+✅ Yes
+
+###### 2.5.4.11.2.7 Return Message
+
+
+
+###### 2.5.4.11.2.8 Has Return
+
+❌ No
+
+###### 2.5.4.11.2.9 Is Activation
+
+❌ No
+
+###### 2.5.4.11.2.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Internal |
+| Method | N/A |
+| Parameters | Compares SallaOrder.updated_at with LocalOrder.upd... |
+| Authentication | N/A |
+| Error Handling | N/A |
+| Performance | N/A |
+
+###### 2.5.4.11.2.11 Nested Interactions
+
+####### 2.5.4.11.2.11.1 Database Write
+
+######## 2.5.4.11.2.11.1.1 Source Id
+
+scheduled-jobs-processor-015
+
+######## 2.5.4.11.2.11.1.2 Target Id
+
+oltp-repository-008
+
+######## 2.5.4.11.2.11.1.3 Message
+
+4.2.1. [IF: LocalOrder is null] createOrder(transformedOrder)
+
+######## 2.5.4.11.2.11.1.4 Sequence Number
+
+7
+
+######## 2.5.4.11.2.11.1.5 Type
+
+🔹 Database Write
+
+######## 2.5.4.11.2.11.1.6 Is Synchronous
+
+✅ Yes
+
+######## 2.5.4.11.2.11.1.7 Return Message
+
+NewOrder
+
+######## 2.5.4.11.2.11.1.8 Has Return
+
+✅ Yes
+
+######## 2.5.4.11.2.11.1.9 Is Activation
+
+❌ No
+
+######## 2.5.4.11.2.11.1.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Prisma Client |
+| Method | prisma.order.create |
+| Parameters | { data: { ... } } |
+| Authentication | Database connection credentials. |
+| Error Handling | Logs critical error on failure. Job continues to n... |
+| Performance | Individual write operations should be < 10ms. |
+
+####### 2.5.4.11.2.11.2.0 Database Write
+
+######## 2.5.4.11.2.11.2.1 Source Id
+
+scheduled-jobs-processor-015
+
+######## 2.5.4.11.2.11.2.2 Target Id
+
+oltp-repository-008
+
+######## 2.5.4.11.2.11.2.3 Message
+
+4.2.2. [IF: SallaOrder is newer] updateOrder(localOrderId, transformedOrder)
+
+######## 2.5.4.11.2.11.2.4 Sequence Number
+
+8
+
+######## 2.5.4.11.2.11.2.5 Type
+
+🔹 Database Write
+
+######## 2.5.4.11.2.11.2.6 Is Synchronous
+
+✅ Yes
+
+######## 2.5.4.11.2.11.2.7 Return Message
+
+UpdatedOrder
+
+######## 2.5.4.11.2.11.2.8 Has Return
+
+✅ Yes
+
+######## 2.5.4.11.2.11.2.9 Is Activation
+
+❌ No
+
+######## 2.5.4.11.2.11.2.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Prisma Client |
+| Method | prisma.order.update |
+| Parameters | { where: { id: ... }, data: { ... } } |
+| Authentication | Database connection credentials. |
+| Error Handling | Logs critical error on failure. Job continues to n... |
+| Performance | Individual write operations should be < 10ms. |
+
+### 2.5.5.0.0.0.0.0 Logging
+
+#### 2.5.5.1.0.0.0.0 Source Id
+
+scheduled-jobs-processor-015
+
+#### 2.5.5.2.0.0.0.0 Target Id
+
+scheduled-jobs-processor-015
+
+#### 2.5.5.3.0.0.0.0 Message
+
+5. Log Job Summary: Report total records fetched, created, updated, skipped, and failed.
+
+#### 2.5.5.4.0.0.0.0 Sequence Number
+
+9
+
+#### 2.5.5.5.0.0.0.0 Type
+
+🔹 Logging
+
+#### 2.5.5.6.0.0.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.5.7.0.0.0.0 Return Message
+
+
+
+#### 2.5.5.8.0.0.0.0 Has Return
+
+❌ No
+
+#### 2.5.5.9.0.0.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.5.10.0.0.0.0 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Structured Logging (JSON) |
+| Method | logger.info |
+| Parameters | Metrics object with reconciliation statistics. |
+| Authentication | N/A |
+| Error Handling | N/A |
+| Performance | N/A |
+
+## 2.6.0.0.0.0.0.0 Notes
+
+### 2.6.1.0.0.0.0.0 Content
+
+#### 2.6.1.1.0.0.0.0 Content
+
+The job must be designed to be idempotent. If it fails midway and is re-run, it should not create duplicate records or perform unnecessary updates.
+
+#### 2.6.1.2.0.0.0.0 Position
+
+top
+
+#### 2.6.1.3.0.0.0.0 Participant Id
+
+scheduled-jobs-processor-015
+
+#### 2.6.1.4.0.0.0.0 Sequence Number
+
+1
+
+### 2.6.2.0.0.0.0.0 Content
+
+#### 2.6.2.1.0.0.0.0 Content
+
+Pagination logic continues until the Salla API returns an empty data array or indicates there are no more pages.
+
+#### 2.6.2.2.0.0.0.0 Position
+
+right
+
+#### 2.6.2.3.0.0.0.0 Participant Id
+
+salla-platform
+
+#### 2.6.2.4.0.0.0.0 Sequence Number
+
+3
+
+### 2.6.3.0.0.0.0.0 Content
+
+#### 2.6.3.1.0.0.0.0 Content
+
+A successful reconciliation run will trigger the CDC pipeline (REQ-TEC-003) to propagate these changes to the OLAP data warehouse.
+
+#### 2.6.3.2.0.0.0.0 Position
+
+bottom
+
+#### 2.6.3.3.0.0.0.0 Participant Id
+
+oltp-repository-008
+
+#### 2.6.3.4.0.0.0.0 Sequence Number
+
+8
+
+## 2.7.0.0.0.0.0.0 Implementation Guidance
+
+| Property | Value |
+|----------|-------|
+| Security Requirements | Salla OAuth tokens must be stored encrypted at res... |
+| Performance Targets | The entire reconciliation job for a merchant with ... |
+| Error Handling Strategy | Salla API Unavailability: The Circuit Breaker patt... |
+| Testing Considerations | Integration tests require mocking the Salla API to... |
+| Monitoring Requirements | Key metrics to monitor via CloudWatch: Job success... |
+| Deployment Considerations | The job is deployed as a serverless function. The ... |
+

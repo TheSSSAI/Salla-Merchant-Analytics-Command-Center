@@ -1,0 +1,3 @@
+"gate_id","gate_name","sprint","gate_type","criteria","responsible_team","gate_date","approval_required","approver","bypass_criteria","automation_level","tools_used","success_metrics"
+"QG-SPRINT-1","Security & Auth Gate","Sprint 1","Security","Penetration test on Auth endpoints; Token encryption verified; CSRF checks passing","Security Engineer","2025-02-13","true","backend.lead@saas.com","None","Partially Automated","OWASP ZAP, Jest","0 High Severity Vulns"
+"QG-SPRINT-2","Data Ingestion Gate","Sprint 2","Performance","Sync worker handles 429 errors; 10k records synced < 10 mins","QA","2025-02-27","true","tech.lead@saas.com","Performance deviation < 10%","Fully Automated","k6, Mock Service","100% Data Integrity"

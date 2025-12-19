@@ -1,0 +1,21 @@
+sequenceDiagram
+    participant "Data Pipeline Processor" as DataPipelineProcessor
+    participant "OpenAI Gateway" as OpenAIGateway
+    participant "Vector DB Repository" as VectorDBRepository
+
+    activate DataPipelineProcessor
+    DataPipelineProcessor->>DataPipelineProcessor: 1. 1. Receives and validates DatabaseChangeCaptured event
+    DataPipelineProcessor->>DataPipelineProcessor: 2. 2. Extracts text and sanitizes PII from event payload
+    activate OpenAIGateway
+    DataPipelineProcessor->>OpenAIGateway: 3. 3. createEmbedding(sanitizedText: string): Promise<number[]>
+    OpenAIGateway-->>DataPipelineProcessor: 3.1. returns embeddingVector: number[]
+    activate VectorDBRepository
+    DataPipelineProcessor->>VectorDBRepository: 4. 4. upsertVector(vectorData: VectorUpsertDTO): Promise<void>
+    VectorDBRepository-->>DataPipelineProcessor: 4.1. returns success confirmation
+
+    note over DataPipelineProcessor: Process is initiated by a message from a CDC event queue (e.g., AWS SQS) containing the DatabaseC...
+    note over VectorDBRepository: The 'upsert' operation is critical. It ensures that if an entity's text is updated, its vector re...
+
+    deactivate VectorDBRepository
+    deactivate OpenAIGateway
+    deactivate DataPipelineProcessor

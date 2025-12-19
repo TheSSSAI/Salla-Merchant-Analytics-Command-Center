@@ -1,0 +1,2 @@
+"total_risks_identified","critical_risks","high_priority_risks","average_risk_score","key_risk_themes","immediate_actions_required"
+"6","0","4","15.5","[""AI Safety & Integrity"",""External API Dependencies (Salla)"",""Serverless Scalability & Database Limits""]","[""Define read-only database permissions for AI RAG pipeline"",""Configure connection pooling for PostgreSQL immediately"",""Implement exponential backoff logic for Salla API integration""]"

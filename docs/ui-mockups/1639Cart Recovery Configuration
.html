@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cart Recovery Configuration - Salla Merchant Platform</title>
+  <style>
+    /* 
+      DESIGN SYSTEM TOKENS 
+      Based on provided Design System.md
+    */
+    :root {
+      /* Color Palette */
+      --color-primary-50: #eef2ff;
+      --color-primary-100: #e0e7ff;
+      --color-primary-500: #6366f1;
+      --color-primary-600: #4f46e5;
+      --color-primary-700: #4338ca;
+      
+      --color-gray-50: #f8fafc;
+      --color-gray-100: #f1f5f9;
+      --color-gray-200: #e2e8f0;
+      --color-gray-300: #cbd5e1;
+      --color-gray-400: #94a3b8;
+      --color-gray-500: #64748b;
+      --color-gray-600: #475569;
+      --color-gray-700: #334155;
+      --color-gray-800: #1e293b;
+      --color-gray-900: #0f172a;
+      
+      --color-white: #ffffff;
+      --color-success: #10b981;
+      --color-success-bg: #ecfdf5;
+      
+      /* Typography */
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+      
+      /* Spacing */
+      --spacing-2: 8px;
+      --spacing-3: 12px;
+      --spacing-4: 16px;
+      --spacing-6: 24px;
+      --spacing-8: 32px;
+      
+      /* Borders & Shadows */
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 8px;
+      --border-default: 1px solid var(--color-gray-200);
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      
+      /* Layout */
+      --sidebar-width: 256px;
+      --sequence-sidebar-width: 320px;
+      --header-height: 64px;
+    }
+
+    /* RESET & BASE STYLES */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--color-gray-50);
+      color: var(--color-gray-900);
+      line-height: 1.5;
+      font-size: 14px;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* UTILITIES */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-2 { gap: var(--spacing-2); }
+    .gap-4 { gap: var(--spacing-4); }
+    
+    .text-sm { font-size: 0.875rem; }
+    .font-medium { font-weight: 500; }
+    .font-semibold { font-weight: 600; }
+    .text-gray-500 { color: var(--color-gray-500); }
+    .text-gray-700 { color: var(--color-gray-700); }
+
+    /* LAYOUT STRUCTURE */
+    .app-shell {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr;
+      grid-template-rows: var(--header-height) 1fr;
+      height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      grid-column: 2;
+      background: var(--color-white);
+      border-bottom: var(--border-default);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--spacing-6);
+      z-index: 10;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      color: var(--color-gray-500);
+      font-size: 14px;
+    }
+    
+    .breadcrumb span { margin: 0 var(--spacing-2); color: var(--color-gray-300); }
+    .breadcrumb .active { color: var(--color-gray-900); font-weight: 500; }
+
+    /* Main Sidebar (App Nav) */
+    .sidebar {
+      grid-row: 1 / -1;
+      background: var(--color-white);
+      border-right: var(--border-default);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-logo {
+      height: var(--header-height);
+      display: flex;
+      align-items: center;
+      padding-left: var(--spacing-6);
+      font-weight: 700;
+      font-size: 18px;
+      color: var(--color-primary-600);
+      border-bottom: var(--border-default);
+    }
+
+    .nav-list {
+      padding: var(--spacing-4);
+      list-style: none;
+    }
+
+    .nav-item {
+      margin-bottom: var(--spacing-2);
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      padding: var(--spacing-3);
+      border-radius: var(--radius-md);
+      color: var(--color-gray-600);
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+
+    .nav-link:hover {
+      background: var(--color-gray-50);
+      color: var(--color-gray-900);
+    }
+
+    .nav-link.active {
+      background: var(--color-primary-50);
+      color: var(--color-primary-700);
+      font-weight: 500;
+    }
+
+    /* MAIN CONTENT AREA */
+    .main-area {
+      grid-column: 2;
+      grid-row: 2;
+      display: grid;
+      grid-template-columns: var(--sequence-sidebar-width) 1fr;
+      overflow: hidden;
+    }
+
+    /* SEQUENCE STEPPER (Left Panel) */
+    .sequence-panel {
+      background: var(--color-white);
+      border-right: var(--border-default);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .sequence-header {
+      padding: var(--spacing-6);
+      border-bottom: var(--border-default);
+    }
+
+    .sequence-list-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--spacing-6);
+    }
+
+    .sequence-steps {
+      position: relative;
+      list-style: none;
+    }
+
+    /* Vertical line connecting steps */
+    .sequence-steps::before {
+      content: '';
+      position: absolute;
+      top: 20px;
+      bottom: 20px;
+      left: 15px;
+      width: 2px;
+      background: var(--color-gray-200);
+      z-index: 0;
+    }
+
+    .step-item {
+      position: relative;
+      margin-bottom: var(--spacing-6);
+      z-index: 1;
+    }
+
+    .step-button {
+      display: flex;
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: 1px solid transparent;
+      padding: 0;
+      cursor: pointer;
+      border-radius: var(--radius-lg);
+      transition: all 0.2s ease;
+    }
+
+    .step-button:focus-visible {
+      outline: 2px solid var(--color-primary-600);
+      outline-offset: 2px;
+    }
+
+    /* Step marker circle */
+    .step-marker {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--color-white);
+      border: 2px solid var(--color-gray-300);
+      color: var(--color-gray-500);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      margin-right: var(--spacing-4);
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+
+    /* Active Step Styling */
+    .step-item.active .step-marker {
+      background: var(--color-primary-600);
+      border-color: var(--color-primary-600);
+      color: var(--color-white);
+    }
+
+    .step-item.active .step-content {
+      background: var(--color-primary-50);
+      border-color: var(--color-primary-200);
+    }
+
+    .step-content {
+      flex: 1;
+      background: var(--color-white);
+      border: 1px solid var(--color-gray-200);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-4);
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s;
+    }
+
+    .step-content:hover {
+      border-color: var(--color-primary-200);
+      box-shadow: var(--shadow-md);
+    }
+
+    .step-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-2);
+      margin-top: var(--spacing-2);
+      font-size: 12px;
+      color: var(--color-gray-500);
+    }
+
+    .add-step-btn {
+      margin-left: 48px;
+      width: calc(100% - 48px);
+      padding: var(--spacing-3);
+      border: 1px dashed var(--color-gray-300);
+      background: transparent;
+      color: var(--color-gray-600);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-2);
+      transition: all 0.2s;
+    }
+
+    .add-step-btn:hover {
+      border-color: var(--color-primary-500);
+      color: var(--color-primary-600);
+      background: var(--color-primary-50);
+    }
+
+    /* EDITOR AREA (Right Panel) */
+    .editor-panel {
+      background: var(--color-gray-50);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: var(--spacing-8);
+    }
+
+    .editor-container {
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .card {
+      background: var(--color-white);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--color-gray-200);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: var(--spacing-6);
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: var(--spacing-4) var(--spacing-6);
+      border-bottom: 1px solid var(--color-gray-200);
+      background: var(--color-gray-50);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-body {
+      padding: var(--spacing-6);
+    }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: var(--spacing-4);
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-gray-700);
+      margin-bottom: var(--spacing-2);
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--color-gray-200);
+      border-radius: var(--radius-md);
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--color-gray-900);
+      background: var(--color-white);
+      transition: all 0.2s;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--color-primary-600);
+      box-shadow: 0 0 0 3px var(--color-primary-100);
+    }
+
+    .input-row {
+      display: flex;
+      gap: var(--spacing-4);
+    }
+
+    /* Rich Text Editor Mockup */
+    .rte-toolbar {
+      display: flex;
+      gap: var(--spacing-2);
+      padding: var(--spacing-2);
+      border-bottom: 1px solid var(--color-gray-200);
+      background: var(--color-gray-50);
+      flex-wrap: wrap;
+    }
+
+    .rte-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--radius-sm);
+      padding: 4px 8px;
+      cursor: pointer;
+      color: var(--color-gray-600);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .rte-btn:hover {
+      background: var(--color-gray-200);
+      color: var(--color-gray-900);
+    }
+
+    .rte-btn.active {
+      background: var(--color-gray-200);
+      color: var(--color-primary-600);
+    }
+
+    .rte-content {
+      min-height: 300px;
+      padding: var(--spacing-4);
+      outline: none;
+      font-family: inherit;
+      color: var(--color-gray-800);
+    }
+
+    .rte-content:focus {
+      background: var(--color-gray-50);
+    }
+
+    /* Variable Pill */
+    .variable-pill {
+      display: inline-block;
+      background: var(--color-primary-100);
+      color: var(--color-primary-700);
+      padding: 2px 6px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      cursor: default;
+      user-select: none;
+    }
+
+    /* Toggle Switch */
+    .switch-label {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-3);
+      cursor: pointer;
+    }
+
+    .switch-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      border: 0;
+    }
+
+    .switch-track {
+      width: 44px;
+      height: 24px;
+      background-color: var(--color-gray-200);
+      border-radius: 12px;
+      position: relative;
+      transition: background-color 0.2s ease-in-out;
+    }
+
+    .switch-thumb {
+      width: 20px;
+      height: 20px;
+      background-color: white;
+      border-radius: 50%;
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.2s ease-in-out;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+    }
+
+    .switch-input:checked + .switch-track {
+      background-color: var(--color-success);
+    }
+
+    .switch-input:checked + .switch-track .switch-thumb {
+      transform: translateX(20px);
+    }
+
+    .switch-input:focus-visible + .switch-track {
+      box-shadow: 0 0 0 3px var(--color-primary-100);
+    }
+
+    /* Primary Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 20px;
+      border-radius: var(--radius-md);
+      font-weight: 500;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: 1px solid transparent;
+      gap: var(--spacing-2);
+    }
+
+    .btn-primary {
+      background: var(--color-primary-600);
+      color: var(--color-white);
+    }
+
+    .btn-primary:hover {
+      background: var(--color-primary-700);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-secondary {
+      background: var(--color-white);
+      border: 1px solid var(--color-gray-200);
+      color: var(--color-gray-700);
+    }
+
+    .btn-secondary:hover {
+      background: var(--color-gray-50);
+      border-color: var(--color-gray-300);
+    }
+
+    .btn-danger-ghost {
+      background: transparent;
+      color: var(--color-gray-500);
+    }
+    
+    .btn-danger-ghost:hover {
+      color: #ef4444;
+      background: #fef2f2;
+    }
+
+    /* Icons */
+    .icon {
+      width: 16px;
+      height: 16px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* RESPONSIVE ADAPTATIONS */
+    @media (max-width: 1024px) {
+      .app-shell {
+        grid-template-columns: 64px 1fr; /* Collapsed sidebar */
+      }
+      .sidebar-logo span, .nav-link span {
+        display: none;
+      }
+      .sidebar-logo, .nav-link {
+        justify-content: center;
+        padding-left: 0;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .app-shell {
+        display: block;
+        height: auto;
+        overflow: visible;
+      }
+      
+      .sidebar {
+        display: none; /* Hide sidebar for mobile mockup simplicity, typically a drawer */
+      }
+
+      .header {
+        position: sticky;
+        top: 0;
+      }
+
+      .main-area {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        height: auto;
+      }
+
+      .sequence-panel {
+        height: auto;
+        max-height: 250px;
+        border-right: none;
+        border-bottom: var(--border-default);
+      }
+
+      .editor-panel {
+        overflow: visible;
+        height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    
+    <!-- SIDEBAR NAVIGATION -->
+    <nav class="sidebar">
+      <div class="sidebar-logo">
+        <svg class="icon" style="width: 24px; height: 24px; margin-right: 8px; color: var(--color-primary-600);" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+        <span>Salla Analytics</span>
+      </div>
+      <ul class="nav-list">
+        <li class="nav-item">
+          <a href="#" class="nav-link">
+            <svg class="icon" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            <span style="margin-left: 12px;">Dashboard</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link">
+            <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+            <span style="margin-left: 12px;">Analytics</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link active">
+            <svg class="icon" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+            <span style="margin-left: 12px;">Cart Recovery</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="#" class="nav-link">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span style="margin-left: 12px;">Team</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- HEADER -->
+    <header class="header">
+      <div class="breadcrumb">
+        Cart Recovery <span>/</span> Campaigns <span>/</span> <span class="active">Config</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <!-- Campaign Status Toggle -->
+        <label class="switch-label">
+          <span class="text-sm font-medium text-gray-700">Campaign Active</span>
+          <input type="checkbox" class="switch-input" checked aria-label="Toggle campaign status">
+          <div class="switch-track">
+            <div class="switch-thumb"></div>
+          </div>
+        </label>
+        <div style="width: 1px; height: 24px; background: var(--color-gray-200); margin: 0 8px;"></div>
+        <button class="btn btn-secondary">Cancel</button>
+        <button class="btn btn-primary">
+          <svg class="icon" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          Save Changes
+        </button>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-area">
+      
+      <!-- LEFT PANEL: SEQUENCE STEPPER -->
+      <aside class="sequence-panel">
+        <div class="sequence-header">
+          <h2 class="font-semibold text-gray-900" style="font-size: 18px;">Sequence Steps</h2>
+          <p class="text-sm text-gray-500 mt-1">Define the timing and order of your recovery emails.</p>
+        </div>
+        
+        <div class="sequence-list-container">
+          <ul class="sequence-steps" role="tablist" aria-label="Email Sequence Steps">
+            
+            <!-- Step 1 (Active) -->
+            <li class="step-item active" role="presentation">
+              <button class="step-button" role="tab" aria-selected="true" aria-controls="step-1-panel" id="step-1-tab">
+                <div class="step-marker">1</div>
+                <div class="step-content">
+                  <div class="flex justify-between items-start">
+                    <h3 class="font-medium text-gray-900 text-sm">Quick Reminder</h3>
+                    <span class="text-xs font-medium text-gray-500 bg-white border border-gray-200 px-2 py-0.5 rounded">Email</span>
+                  </div>
+                  <div class="step-meta">
+                    <svg class="icon" style="width: 12px; height: 12px;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    Wait 1 Hour
+                  </div>
+                </div>
+              </button>
+            </li>
+
+            <!-- Step 2 -->
+            <li class="step-item" role="presentation">
+              <button class="step-button" role="tab" aria-selected="false" aria-controls="step-2-panel" id="step-2-tab">
+                <div class="step-marker">2</div>
+                <div class="step-content">
+                  <div class="flex justify-between items-start">
+                    <h3 class="font-medium text-gray-900 text-sm">Incentive Offer</h3>
+                    <span class="text-xs font-medium text-gray-500 bg-white border border-gray-200 px-2 py-0.5 rounded">Email</span>
+                  </div>
+                  <div class="step-meta">
+                    <svg class="icon" style="width: 12px; height: 12px;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    Wait 24 Hours
+                  </div>
+                </div>
+              </button>
+            </li>
+
+            <!-- Step 3 -->
+            <li class="step-item" role="presentation">
+              <button class="step-button" role="tab" aria-selected="false" aria-controls="step-3-panel" id="step-3-tab">
+                <div class="step-marker">3</div>
+                <div class="step-content">
+                  <div class="flex justify-between items-start">
+                    <h3 class="font-medium text-gray-900 text-sm">Last Chance</h3>
+                    <span class="text-xs font-medium text-gray-500 bg-white border border-gray-200 px-2 py-0.5 rounded">Email</span>
+                  </div>
+                  <div class="step-meta">
+                    <svg class="icon" style="width: 12px; height: 12px;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    Wait 3 Days
+                  </div>
+                </div>
+              </button>
+            </li>
+
+          </ul>
+
+          <button class="add-step-btn">
+            <svg class="icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add Step
+          </button>
+        </div>
+      </aside>
+
+      <!-- RIGHT PANEL: EDITOR WORKSPACE -->
+      <section class="editor-panel" role="tabpanel" id="step-1-panel" aria-labelledby="step-1-tab">
+        <div class="editor-container">
+          
+          <!-- Configuration Card -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="font-semibold text-gray-900">Step Settings</h3>
+              <button class="btn btn-danger-ghost text-sm p-2" aria-label="Delete Step">
+                <svg class="icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </div>
+            <div class="card-body">
+              <div class="input-row">
+                <div class="form-group" style="flex: 2;">
+                  <label class="form-label" for="step-name">Step Name</label>
+                  <input type="text" id="step-name" class="form-input" value="Quick Reminder" placeholder="e.g. Initial Follow-up">
+                </div>
+                
+                <div class="form-group" style="flex: 1;">
+                  <label class="form-label" for="delay-value">Delay</label>
+                  <input type="number" id="delay-value" class="form-input" value="1" min="1">
+                </div>
+                
+                <div class="form-group" style="flex: 1;">
+                  <label class="form-label" for="delay-unit">Unit</label>
+                  <select id="delay-unit" class="form-select">
+                    <option value="hours" selected>Hours</option>
+                    <option value="days">Days</option>
+                  </select>
+                </div>
+              </div>
+              <p class="text-sm text-gray-500">
+                <svg class="icon" style="width: 14px; height: 14px; vertical-align: text-bottom; margin-right: 4px;" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                This email will be sent <strong>1 hour</strong> after the cart is abandoned.
+              </p>
+            </div>
+          </div>
+
+          <!-- Content Editor Card -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="font-semibold text-gray-900">Email Content</h3>
+              <div class="flex gap-2">
+                <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 13px;">Preview</button>
+              </div>
+            </div>
+            
+            <div class="card-body" style="padding-top: var(--spacing-4);">
+              <div class="form-group">
+                <label class="form-label" for="email-subject">Subject Line</label>
+                <input type="text" id="email-subject" class="form-input" value="Did you forget something?">
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Email Body</label>
+                <!-- Custom Rich Text Editor Mockup -->
+                <div class="border rounded-md border-gray-200 overflow-hidden focus-within:ring-2 focus-within:ring-primary-100 focus-within:border-primary-600">
+                  <div class="rte-toolbar" role="toolbar" aria-label="Text Formatting">
+                    <button class="rte-btn font-bold" aria-label="Bold">B</button>
+                    <button class="rte-btn italic" aria-label="Italic">I</button>
+                    <button class="rte-btn underline" aria-label="Underline">U</button>
+                    <div style="width: 1px; height: 20px; background: var(--color-gray-200); margin: 0 4px;"></div>
+                    <button class="rte-btn" aria-label="Bullet List">
+                      <svg class="icon" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                    </button>
+                    <button class="rte-btn" aria-label="Ordered List">
+                      <svg class="icon" viewBox="0 0 24 24"><line x1="10" y1="6" x2="21" y2="6"></line><line x1="10" y1="12" x2="21" y2="12"></line><line x1="10" y1="18" x2="21" y2="18"></line><path d="M4 6h1v4"></path><path d="M4 10h2"></path><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"></path></svg>
+                    </button>
+                    <div style="width: 1px; height: 20px; background: var(--color-gray-200); margin: 0 4px;"></div>
+                    <select class="rte-btn" aria-label="Insert Variable" style="padding-right: 24px;">
+                      <option disabled selected>Insert Variable...</option>
+                      <option value="customer_name">Customer Name</option>
+                      <option value="cart_url">Cart URL</option>
+                      <option value="cart_items">Cart Items List</option>
+                    </select>
+                  </div>
+                  
+                  <div class="rte-content" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Email body content">
+                    <p>Hi <span class="variable-pill" contenteditable="false">{{customer_name}}</span>,</p>
+                    <p><br></p>
+                    <p>We noticed you left some items in your cart. Don't worry, we've saved them for you!</p>
+                    <p><br></p>
+                    <p>Click the link below to complete your purchase:</p>
+                    <p><a href="#" style="color: var(--color-primary-600); text-decoration: underline;">Return to Cart</a></p>
+                    <p><br></p>
+                    <p>Thanks,<br>The Store Team</p>
+                  </div>
+                </div>
+                <p class="text-sm text-gray-500 mt-2">Use variables to personalize your message. They will be replaced with real data at sending time.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+  </div>
+</body>
+</html>

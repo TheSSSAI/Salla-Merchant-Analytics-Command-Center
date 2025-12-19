@@ -1,0 +1,1101 @@
+# 1 Overview
+
+## 1.1 Diagram Id
+
+SEQ-AF-001
+
+## 1.2 Name
+
+User Login and JWT Session Management
+
+## 1.3 Description
+
+A registered user logs in with their credentials. The system validates them, issues a short-lived JWT access token and a long-lived refresh token, and returns them to the client. The access token is stored in memory, while the refresh token is stored in a secure, HttpOnly cookie.
+
+## 1.4 Type
+
+🔹 AuthenticationFlow
+
+## 1.5 Purpose
+
+To securely authenticate users and manage their sessions using industry-standard JWT practices (short-lived access tokens, long-lived refresh tokens), providing a secure and seamless user experience.
+
+## 1.6 Complexity
+
+Medium
+
+## 1.7 Priority
+
+🚨 Critical
+
+## 1.8 Frequency
+
+OnDemand
+
+## 1.9 Participants
+
+- user-browser
+- spa-frontend-001
+- api-gateway-002
+- user-management-service-003
+- oltp-repository-008
+- audit-logger-010
+
+## 1.10 Key Interactions
+
+- User submits email and password.
+- Auth service validates credentials by comparing the hashed password against the database.
+- Auth service generates and signs an access token (15 min expiry) and a refresh token (30 day expiry).
+- Refresh token is sent back in a secure, HttpOnly, SameSite=Strict cookie.
+- Access token is sent in the response body for the SPA to store in memory.
+- A successful login event is published to the audit log queue.
+
+## 1.11 Triggers
+
+- User navigates to the login page and submits their credentials.
+
+## 1.12 Outcomes
+
+- User is successfully authenticated and redirected to their dashboard.
+- A secure session is established.
+- A successful login event is recorded in the audit log.
+- Subsequent API calls will use the access token for authorization (see SEQ-AF-003 for refresh).
+
+## 1.13 Business Rules
+
+- Access tokens are short-lived (15 minutes) as per REQ-NFR-003.
+- Refresh tokens are long-lived (30 days) and stored in a secure HttpOnly cookie.
+- All successful and failed login attempts are logged for security monitoring.
+
+## 1.14 Error Scenarios
+
+- User provides incorrect credentials, a generic error message is returned.
+- A failed login attempt is logged in the audit log.
+
+## 1.15 Integration Points
+
+*No items available*
+
+# 2.0 Details
+
+## 2.1 Diagram Id
+
+SEQ-UX-001
+
+## 2.2 Name
+
+User Accesses Contextual Help Popover
+
+## 2.3 Description
+
+Technical sequence detailing how a user interacts with a help icon to receive contextual information. The sequence covers the client-side logic for fetching static help content from a CDN-hosted JSON file, rendering it within a popover component, handling user dismissal, and navigating to a detailed knowledge base article. It emphasizes performance, accessibility, and a scalable content management approach.
+
+## 2.4 Participants
+
+### 2.4.1 Actor
+
+#### 2.4.1.1 Repository Id
+
+user-browser
+
+#### 2.4.1.2 Display Name
+
+User Browser
+
+#### 2.4.1.3 Type
+
+🔹 Actor
+
+#### 2.4.1.4 Technology
+
+Chrome, Firefox, Safari, Edge
+
+#### 2.4.1.5 Order
+
+1
+
+#### 2.4.1.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | actor |
+| Color | #999999 |
+| Stereotype | User |
+
+### 2.4.2.0 FrontendApplication
+
+#### 2.4.2.1 Repository Id
+
+spa-frontend-001
+
+#### 2.4.2.2 Display Name
+
+Frontend SPA
+
+#### 2.4.2.3 Type
+
+🔹 FrontendApplication
+
+#### 2.4.2.4 Technology
+
+React 18, shadcn/ui, Zustand
+
+#### 2.4.2.5 Order
+
+2
+
+#### 2.4.2.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | rectangle |
+| Color | #1E90FF |
+| Stereotype | React Component |
+
+### 2.4.3.0 Infrastructure
+
+#### 2.4.3.1 Repository Id
+
+content-delivery-network
+
+#### 2.4.3.2 Display Name
+
+Content Delivery Network
+
+#### 2.4.3.3 Type
+
+🔹 Infrastructure
+
+#### 2.4.3.4 Technology
+
+Vercel Edge Network
+
+#### 2.4.3.5 Order
+
+3
+
+#### 2.4.3.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | database |
+| Color | #3C8039 |
+| Stereotype | Static Content |
+
+### 2.4.4.0 ExternalService
+
+#### 2.4.4.1 Repository Id
+
+knowledge-base-service
+
+#### 2.4.4.2 Display Name
+
+Knowledge Base
+
+#### 2.4.4.3 Type
+
+🔹 ExternalService
+
+#### 2.4.4.4 Technology
+
+Web Server (e.g., GitBook, Confluence)
+
+#### 2.4.4.5 Order
+
+4
+
+#### 2.4.4.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | rectangle |
+| Color | #8B008B |
+| Stereotype | External System |
+
+## 2.5.0.0 Interactions
+
+### 2.5.1.0 User Interaction
+
+#### 2.5.1.1 Source Id
+
+user-browser
+
+#### 2.5.1.2 Target Id
+
+spa-frontend-001
+
+#### 2.5.1.3 Message
+
+1. User clicks the help icon associated with the 'AOV' metric.
+
+#### 2.5.1.4 Sequence Number
+
+1
+
+#### 2.5.1.5 Type
+
+🔹 User Interaction
+
+#### 2.5.1.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.1.7 Return Message
+
+
+
+#### 2.5.1.8 Has Return
+
+❌ No
+
+#### 2.5.1.9 Is Activation
+
+✅ Yes
+
+#### 2.5.1.10 Technical Details
+
+##### 2.5.1.10.1 Protocol
+
+DOM Event
+
+##### 2.5.1.10.2 Method
+
+onClick
+
+##### 2.5.1.10.3 Parameters
+
+- {'name': 'event', 'type': 'MouseEvent'}
+
+##### 2.5.1.10.4 Authentication
+
+N/A
+
+##### 2.5.1.10.5 Error Handling
+
+N/A
+
+##### 2.5.1.10.6 Performance
+
+###### 2.5.1.10.6.1 Latency
+
+< 10ms
+
+### 2.5.2.0.0.0 Internal State Change
+
+#### 2.5.2.1.0.0 Source Id
+
+spa-frontend-001
+
+#### 2.5.2.2.0.0 Target Id
+
+spa-frontend-001
+
+#### 2.5.2.3.0.0 Message
+
+2. The <HelpIcon> component's onClick handler is invoked. It updates a central state store (e.g., Zustand) with the active help key ('kpi.aov').
+
+#### 2.5.2.4.0.0 Sequence Number
+
+2
+
+#### 2.5.2.5.0.0 Type
+
+🔹 Internal State Change
+
+#### 2.5.2.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.2.7.0.0 Return Message
+
+
+
+#### 2.5.2.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.2.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.2.10.0.0 Technical Details
+
+##### 2.5.2.10.1.0 Protocol
+
+Function Call
+
+##### 2.5.2.10.2.0 Method
+
+state.setActiveHelpKey('kpi.aov')
+
+##### 2.5.2.10.3.0 Parameters
+
+- {'name': 'helpKey', 'type': 'string', 'description': 'Unique identifier for the help content.'}
+
+##### 2.5.2.10.4.0 Authentication
+
+N/A
+
+##### 2.5.2.10.5.0 Error Handling
+
+If a popover for another key is open, this action closes it by overwriting the state, satisfying AC-004.
+
+##### 2.5.2.10.6.0 Performance
+
+###### 2.5.2.10.6.1 Latency
+
+< 5ms
+
+### 2.5.3.0.0.0 API Call
+
+#### 2.5.3.1.0.0 Source Id
+
+spa-frontend-001
+
+#### 2.5.3.2.0.0 Target Id
+
+content-delivery-network
+
+#### 2.5.3.3.0.0 Message
+
+3. If help content is not already loaded, initiates an asynchronous fetch for the static content file.
+
+#### 2.5.3.4.0.0 Sequence Number
+
+3
+
+#### 2.5.3.5.0.0 Type
+
+🔹 API Call
+
+#### 2.5.3.6.0.0 Is Synchronous
+
+❌ No
+
+#### 2.5.3.7.0.0 Return Message
+
+
+
+#### 2.5.3.8.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.3.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.3.10.0.0 Technical Details
+
+##### 2.5.3.10.1.0 Protocol
+
+HTTPS
+
+##### 2.5.3.10.2.0 Method
+
+GET /content/help-content.json
+
+##### 2.5.3.10.3.0 Parameters
+
+*No items available*
+
+##### 2.5.3.10.4.0 Authentication
+
+N/A (Public Asset)
+
+##### 2.5.3.10.5.0 Error Handling
+
+A 404 or network error will be caught, logged to the console, and the UI will fail gracefully (popover does not open).
+
+##### 2.5.3.10.6.0 Performance
+
+###### 2.5.3.10.6.1 Latency
+
+< 150ms (cached)
+
+### 2.5.4.0.0.0 API Response
+
+#### 2.5.4.1.0.0 Source Id
+
+content-delivery-network
+
+#### 2.5.4.2.0.0 Target Id
+
+spa-frontend-001
+
+#### 2.5.4.3.0.0 Message
+
+4. Returns the static help content file.
+
+#### 2.5.4.4.0.0 Sequence Number
+
+4
+
+#### 2.5.4.5.0.0 Type
+
+🔹 API Response
+
+#### 2.5.4.6.0.0 Is Synchronous
+
+❌ No
+
+#### 2.5.4.7.0.0 Return Message
+
+200 OK with JSON payload: `{[key: string]: {title: string, description: string, url: string}}`
+
+#### 2.5.4.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.4.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.4.10.0.0 Technical Details
+
+##### 2.5.4.10.1.0 Protocol
+
+HTTPS
+
+##### 2.5.4.10.2.0 Method
+
+
+
+##### 2.5.4.10.3.0 Parameters
+
+- {'name': 'body', 'type': 'JSON', 'description': 'A map of help keys to content objects.'}
+
+##### 2.5.4.10.4.0 Authentication
+
+N/A
+
+##### 2.5.4.10.5.0 Error Handling
+
+N/A
+
+##### 2.5.4.10.6.0 Performance
+
+###### 2.5.4.10.6.1 Latency
+
+Dependent on network
+
+### 2.5.5.0.0.0 Component Render
+
+#### 2.5.5.1.0.0 Source Id
+
+spa-frontend-001
+
+#### 2.5.5.2.0.0 Target Id
+
+spa-frontend-001
+
+#### 2.5.5.3.0.0 Message
+
+5. Parses the JSON, retrieves the content for the active key ('kpi.aov'), and passes it as props to the <Popover> component, causing it to render.
+
+#### 2.5.5.4.0.0 Sequence Number
+
+5
+
+#### 2.5.5.5.0.0 Type
+
+🔹 Component Render
+
+#### 2.5.5.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.5.7.0.0 Return Message
+
+
+
+#### 2.5.5.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.5.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.5.10.0.0 Technical Details
+
+##### 2.5.5.10.1.0 Protocol
+
+React Lifecycle
+
+##### 2.5.5.10.2.0 Method
+
+render()
+
+##### 2.5.5.10.3.0 Parameters
+
+- {'name': 'props', 'type': 'object', 'description': "{ title: 'Average Order Value (AOV)', description: '...', url: '...' }"}
+
+##### 2.5.5.10.4.0 Authentication
+
+N/A
+
+##### 2.5.5.10.5.0 Error Handling
+
+If the key 'kpi.aov' does not exist in the JSON, the popover will not render, satisfying AC-006.
+
+##### 2.5.5.10.6.0 Performance
+
+###### 2.5.5.10.6.1 Latency
+
+< 20ms
+
+### 2.5.6.0.0.0 UI Update
+
+#### 2.5.6.1.0.0 Source Id
+
+spa-frontend-001
+
+#### 2.5.6.2.0.0 Target Id
+
+user-browser
+
+#### 2.5.6.3.0.0 Message
+
+6. The populated popover is displayed to the user, positioned adjacent to the help icon.
+
+#### 2.5.6.4.0.0 Sequence Number
+
+6
+
+#### 2.5.6.5.0.0 Type
+
+🔹 UI Update
+
+#### 2.5.6.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.6.7.0.0 Return Message
+
+
+
+#### 2.5.6.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.6.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.6.10.0.0 Technical Details
+
+##### 2.5.6.10.1.0 Protocol
+
+DOM Manipulation
+
+##### 2.5.6.10.2.0 Method
+
+
+
+##### 2.5.6.10.3.0 Parameters
+
+*No items available*
+
+##### 2.5.6.10.4.0 Authentication
+
+N/A
+
+##### 2.5.6.10.5.0 Error Handling
+
+N/A
+
+##### 2.5.6.10.6.0 Performance
+
+###### 2.5.6.10.6.1 Latency
+
+Dependent on browser paint time.
+
+### 2.5.7.0.0.0 User Interaction
+
+#### 2.5.7.1.0.0 Source Id
+
+user-browser
+
+#### 2.5.7.2.0.0 Target Id
+
+spa-frontend-001
+
+#### 2.5.7.3.0.0 Message
+
+7. [Alternative] User clicks the 'Learn More' link inside the popover.
+
+#### 2.5.7.4.0.0 Sequence Number
+
+7
+
+#### 2.5.7.5.0.0 Type
+
+🔹 User Interaction
+
+#### 2.5.7.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.7.7.0.0 Return Message
+
+
+
+#### 2.5.7.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.7.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.7.10.0.0 Technical Details
+
+##### 2.5.7.10.1.0 Protocol
+
+DOM Event
+
+##### 2.5.7.10.2.0 Method
+
+onClick
+
+##### 2.5.7.10.3.0 Parameters
+
+- {'name': 'event', 'type': 'MouseEvent'}
+
+##### 2.5.7.10.4.0 Authentication
+
+N/A
+
+##### 2.5.7.10.5.0 Error Handling
+
+The link's default behavior (navigation) is handled by the browser.
+
+##### 2.5.7.10.6.0 Performance
+
+###### 2.5.7.10.6.1 Latency
+
+< 10ms
+
+### 2.5.8.0.0.0 Browser Instruction
+
+#### 2.5.8.1.0.0 Source Id
+
+spa-frontend-001
+
+#### 2.5.8.2.0.0 Target Id
+
+user-browser
+
+#### 2.5.8.3.0.0 Message
+
+8. The link has `target='_blank'`, instructing the browser to open the URL in a new tab.
+
+#### 2.5.8.4.0.0 Sequence Number
+
+8
+
+#### 2.5.8.5.0.0 Type
+
+🔹 Browser Instruction
+
+#### 2.5.8.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.8.7.0.0 Return Message
+
+
+
+#### 2.5.8.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.8.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.8.10.0.0 Technical Details
+
+##### 2.5.8.10.1.0 Protocol
+
+HTML
+
+##### 2.5.8.10.2.0 Method
+
+
+
+##### 2.5.8.10.3.0 Parameters
+
+###### 2.5.8.10.3.1 string
+
+####### 2.5.8.10.3.1.1 Name
+
+href
+
+####### 2.5.8.10.3.1.2 Type
+
+🔹 string
+
+####### 2.5.8.10.3.1.3 Description
+
+URL from the help content JSON
+
+###### 2.5.8.10.3.2.0 string
+
+####### 2.5.8.10.3.2.1 Name
+
+target
+
+####### 2.5.8.10.3.2.2 Type
+
+🔹 string
+
+####### 2.5.8.10.3.2.3 Value
+
+_blank
+
+##### 2.5.8.10.4.0.0 Authentication
+
+N/A
+
+##### 2.5.8.10.5.0.0 Error Handling
+
+N/A
+
+##### 2.5.8.10.6.0.0 Performance
+
+###### 2.5.8.10.6.1.0 Latency
+
+< 5ms
+
+### 2.5.9.0.0.0.0 Navigation
+
+#### 2.5.9.1.0.0.0 Source Id
+
+user-browser
+
+#### 2.5.9.2.0.0.0 Target Id
+
+knowledge-base-service
+
+#### 2.5.9.3.0.0.0 Message
+
+9. Initiates a new navigation to the specified knowledge base URL.
+
+#### 2.5.9.4.0.0.0 Sequence Number
+
+9
+
+#### 2.5.9.5.0.0.0 Type
+
+🔹 Navigation
+
+#### 2.5.9.6.0.0.0 Is Synchronous
+
+❌ No
+
+#### 2.5.9.7.0.0.0 Return Message
+
+Returns HTML content for the article.
+
+#### 2.5.9.8.0.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.9.9.0.0.0 Is Activation
+
+❌ No
+
+#### 2.5.9.10.0.0.0 Technical Details
+
+##### 2.5.9.10.1.0.0 Protocol
+
+HTTPS
+
+##### 2.5.9.10.2.0.0 Method
+
+GET
+
+##### 2.5.9.10.3.0.0 Parameters
+
+*No items available*
+
+##### 2.5.9.10.4.0.0 Authentication
+
+N/A (Public documentation)
+
+##### 2.5.9.10.5.0.0 Error Handling
+
+Standard browser handling for navigation errors (e.g., 404 page).
+
+##### 2.5.9.10.6.0.0 Performance
+
+###### 2.5.9.10.6.1.0 Latency
+
+Dependent on external service
+
+### 2.5.10.0.0.0.0 User Interaction
+
+#### 2.5.10.1.0.0.0 Source Id
+
+user-browser
+
+#### 2.5.10.2.0.0.0 Target Id
+
+spa-frontend-001
+
+#### 2.5.10.3.0.0.0 Message
+
+10. [Alternative] User clicks anywhere on the page outside the popover.
+
+#### 2.5.10.4.0.0.0 Sequence Number
+
+10
+
+#### 2.5.10.5.0.0.0 Type
+
+🔹 User Interaction
+
+#### 2.5.10.6.0.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.10.7.0.0.0 Return Message
+
+
+
+#### 2.5.10.8.0.0.0 Has Return
+
+❌ No
+
+#### 2.5.10.9.0.0.0 Is Activation
+
+❌ No
+
+#### 2.5.10.10.0.0.0 Technical Details
+
+##### 2.5.10.10.1.0.0 Protocol
+
+DOM Event
+
+##### 2.5.10.10.2.0.0 Method
+
+onClick
+
+##### 2.5.10.10.3.0.0 Parameters
+
+- {'name': 'event', 'type': 'MouseEvent'}
+
+##### 2.5.10.10.4.0.0 Authentication
+
+N/A
+
+##### 2.5.10.10.5.0.0 Error Handling
+
+N/A
+
+##### 2.5.10.10.6.0.0 Performance
+
+###### 2.5.10.10.6.1.0 Latency
+
+< 10ms
+
+### 2.5.11.0.0.0.0 Internal State Change
+
+#### 2.5.11.1.0.0.0 Source Id
+
+spa-frontend-001
+
+#### 2.5.11.2.0.0.0 Target Id
+
+spa-frontend-001
+
+#### 2.5.11.3.0.0.0 Message
+
+11. The <Popover> component's logic detects an outside click and updates the central state to clear the active help key.
+
+#### 2.5.11.4.0.0.0 Sequence Number
+
+11
+
+#### 2.5.11.5.0.0.0 Type
+
+🔹 Internal State Change
+
+#### 2.5.11.6.0.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.11.7.0.0.0 Return Message
+
+
+
+#### 2.5.11.8.0.0.0 Has Return
+
+❌ No
+
+#### 2.5.11.9.0.0.0 Is Activation
+
+❌ No
+
+#### 2.5.11.10.0.0.0 Technical Details
+
+##### 2.5.11.10.1.0.0 Protocol
+
+Function Call
+
+##### 2.5.11.10.2.0.0 Method
+
+state.setActiveHelpKey(null)
+
+##### 2.5.11.10.3.0.0 Parameters
+
+*No items available*
+
+##### 2.5.11.10.4.0.0 Authentication
+
+N/A
+
+##### 2.5.11.10.5.0.0 Error Handling
+
+This also handles dismissal via the 'Escape' key through a `onKeyDown` event listener.
+
+##### 2.5.11.10.6.0.0 Performance
+
+###### 2.5.11.10.6.1.0 Latency
+
+< 5ms
+
+### 2.5.12.0.0.0.0 UI Update
+
+#### 2.5.12.1.0.0.0 Source Id
+
+spa-frontend-001
+
+#### 2.5.12.2.0.0.0 Target Id
+
+user-browser
+
+#### 2.5.12.3.0.0.0 Message
+
+12. React re-renders, and the popover is unmounted and removed from the display.
+
+#### 2.5.12.4.0.0.0 Sequence Number
+
+12
+
+#### 2.5.12.5.0.0.0 Type
+
+🔹 UI Update
+
+#### 2.5.12.6.0.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.12.7.0.0.0 Return Message
+
+
+
+#### 2.5.12.8.0.0.0 Has Return
+
+❌ No
+
+#### 2.5.12.9.0.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.12.10.0.0.0 Technical Details
+
+##### 2.5.12.10.1.0.0 Protocol
+
+DOM Manipulation
+
+##### 2.5.12.10.2.0.0 Method
+
+
+
+##### 2.5.12.10.3.0.0 Parameters
+
+*No items available*
+
+##### 2.5.12.10.4.0.0 Authentication
+
+N/A
+
+##### 2.5.12.10.5.0.0 Error Handling
+
+N/A
+
+##### 2.5.12.10.6.0.0 Performance
+
+###### 2.5.12.10.6.1.0 Latency
+
+Dependent on browser paint time.
+
+## 2.6.0.0.0.0.0 Notes
+
+### 2.6.1.0.0.0.0 Content
+
+#### 2.6.1.1.0.0.0 Content
+
+Accessibility (AC-007): The <HelpIcon> component must be a <button> element, be keyboard focusable, and have a descriptive `aria-label` (e.g., 'Help for Average Order Value'). It must respond to 'Enter' and 'Space' key presses.
+
+#### 2.6.1.2.0.0.0 Position
+
+Top
+
+#### 2.6.1.3.0.0.0 Participant Id
+
+spa-frontend-001
+
+#### 2.6.1.4.0.0.0 Sequence Number
+
+1
+
+### 2.6.2.0.0.0.0 Content
+
+#### 2.6.2.1.0.0.0 Content
+
+Positioning Logic (AC-005): The shadcn/ui <Popover> component is responsible for all positioning logic, including collision detection to prevent the popover from being rendered outside the viewport.
+
+#### 2.6.2.2.0.0.0 Position
+
+Bottom
+
+#### 2.6.2.3.0.0.0 Participant Id
+
+spa-frontend-001
+
+#### 2.6.2.4.0.0.0 Sequence Number
+
+6
+
+### 2.6.3.0.0.0.0 Content
+
+#### 2.6.3.1.0.0.0 Content
+
+Content Pre-loading Strategy: For optimal performance, the `help-content.json` file can be pre-fetched when the application loads, ensuring zero-latency content access on the first help icon click.
+
+#### 2.6.3.2.0.0.0 Position
+
+Right
+
+#### 2.6.3.3.0.0.0 Participant Id
+
+spa-frontend-001
+
+#### 2.6.3.4.0.0.0 Sequence Number
+
+3
+
+## 2.7.0.0.0.0.0 Implementation Guidance
+
+| Property | Value |
+|----------|-------|
+| Security Requirements | Help content MUST be sourced from a version-contro... |
+| Performance Targets | The total time from user click to popover display ... |
+| Error Handling Strategy | If the `help-content.json` file fails to load (e.g... |
+| Testing Considerations | E2E tests (Playwright) must validate popover visib... |
+| Monitoring Requirements | Set up monitoring to detect a high rate of 404 err... |
+| Deployment Considerations | The `help-content.json` is a static asset that mus... |
+

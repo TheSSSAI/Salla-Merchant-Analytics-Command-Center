@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@salla/db": ["packages/db/src"],
+      "@salla/ui": ["packages/ui/src"],
+      "@salla/ai-assistant/*": ["src/ai-assistant/*"]
+    }
+  },
+  "include": [
+    "src/**/*",
+    "packages/**/*",
+    "apps/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build"
+  ]
+}

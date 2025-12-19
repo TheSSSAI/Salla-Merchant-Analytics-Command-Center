@@ -1,0 +1,3 @@
+"scenario_name","team_size","estimated_duration_weeks","total_cost","risk_level","capacity_utilization","skill_constraints","critical_path_duration","parallel_work_percentage","resource_bottlenecks","mitigation_strategies","success_probability","quality_risk","timeline_buffer"
+"Optimization: Parallel Frontend Execution","3","8","91200","Medium","82","Backend bottleneck in Sprint 2","175","45","Fullstack Lead on Data Pipeline","Frontend dev builds 'dumb' UI components ahead of API availability using agreed schemas","90","Low","1.5"
+"Baseline: Sequential Dependency","3","10","114000","High","65","Frontend idle time in Sprint 1","185","20","Waiting for Backend APIs","None","70","Medium","0.5"

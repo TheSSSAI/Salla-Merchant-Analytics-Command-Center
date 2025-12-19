@@ -1,0 +1,1 @@
+This diagram illustrates the foundational entities for user authentication, multi-tenancy, and role-based access control. It shows how Users are linked to one or more Merchant Accounts through a specific Role. It also includes related features like password resets, user preferences, and invitations for team management.

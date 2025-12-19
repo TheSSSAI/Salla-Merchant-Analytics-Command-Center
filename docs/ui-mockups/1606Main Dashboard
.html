@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Main Dashboard | Analytics Platform</title>
+  <style>
+    /* 
+      DESIGN SYSTEM TOKENS 
+      Based on provided JSON configuration
+    */
+    :root {
+      /* Color Palette - Primary */
+      --color-primary-50: #eef2ff;
+      --color-primary-100: #e0e7ff;
+      --color-primary-500: #6366f1;
+      --color-primary-600: #4f46e5;
+      --color-primary-700: #4338ca;
+      
+      /* Color Palette - Neutrals */
+      --color-white: #ffffff;
+      --color-gray-50: #f8fafc;
+      --color-gray-100: #f1f5f9;
+      --color-gray-200: #e2e8f0;
+      --color-gray-300: #cbd5e1;
+      --color-gray-400: #94a3b8;
+      --color-gray-500: #64748b;
+      --color-gray-600: #475569;
+      --color-gray-700: #334155;
+      --color-gray-800: #1e293b;
+      --color-gray-900: #0f172a;
+
+      /* Semantic Colors */
+      --color-success: #10b981;
+      --color-success-bg: #ecfdf5;
+      --color-warning: #f59e0b;
+      --color-warning-bg: #fffbeb;
+      --color-error: #ef4444;
+      --color-error-bg: #fef2f2;
+      --color-info: #3b82f6;
+      --color-info-bg: #eff6ff;
+
+      /* Typography */
+      --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Spacing Scale */
+      --spacing-1: 4px;
+      --spacing-2: 8px;
+      --spacing-3: 12px;
+      --spacing-4: 16px;
+      --spacing-5: 20px;
+      --spacing-6: 24px;
+      --spacing-8: 32px;
+      --spacing-10: 40px;
+
+      /* Layout */
+      --sidebar-width: 256px;
+      --header-height: 64px;
+      --radius-md: 8px;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    /* 
+      CSS RESET & BASE STYLES 
+    */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-primary);
+      background-color: var(--color-gray-50);
+      color: var(--color-gray-900);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* 
+      APP SHELL LAYOUT 
+    */
+    .app-shell {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background-color: var(--color-white);
+      border-right: 1px solid var(--color-gray-200);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 50;
+      transition: transform 0.3s ease;
+    }
+
+    .sidebar-header {
+      height: var(--header-height);
+      display: flex;
+      align-items: center;
+      padding: 0 var(--spacing-6);
+      border-bottom: 1px solid var(--color-gray-100);
+    }
+
+    .logo {
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: var(--color-primary-600);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-2);
+    }
+
+    .sidebar-nav {
+      padding: var(--spacing-4) var(--spacing-2);
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-3);
+      padding: var(--spacing-3) var(--spacing-4);
+      color: var(--color-gray-600);
+      border-radius: var(--radius-md);
+      font-weight: 500;
+      margin-bottom: var(--spacing-1);
+      transition: all 0.2s;
+    }
+
+    .nav-item:hover {
+      background-color: var(--color-gray-50);
+      color: var(--color-gray-900);
+    }
+
+    .nav-item.active {
+      background-color: var(--color-primary-50);
+      color: var(--color-primary-700);
+    }
+
+    /* Main Content Area */
+    .main-content {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      display: flex;
+      flex-direction: column;
+      min-width: 0; /* Prevent flex blowout */
+    }
+
+    /* Top Header */
+    .header {
+      height: var(--header-height);
+      background-color: var(--color-white);
+      border-bottom: 1px solid var(--color-gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--spacing-6);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-4);
+    }
+
+    .mobile-menu-toggle {
+      display: none;
+      background: none;
+      border: none;
+      padding: var(--spacing-2);
+      color: var(--color-gray-600);
+    }
+
+    .global-search {
+      position: relative;
+      width: 320px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 8px 12px 8px 36px;
+      border: 1px solid var(--color-gray-300);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      background-color: var(--color-gray-50);
+      transition: all 0.2s;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--color-primary-500);
+      box-shadow: 0 0 0 3px var(--color-primary-100);
+      background-color: var(--color-white);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--color-gray-400);
+      pointer-events: none;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-4);
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      padding: var(--spacing-2);
+      color: var(--color-gray-500);
+      border-radius: 50%;
+      transition: background-color 0.2s;
+      position: relative;
+    }
+
+    .icon-btn:hover {
+      background-color: var(--color-gray-100);
+      color: var(--color-gray-700);
+    }
+
+    .notification-badge {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 8px;
+      height: 8px;
+      background-color: var(--color-error);
+      border-radius: 50%;
+      border: 2px solid var(--color-white);
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-3);
+      padding-left: var(--spacing-4);
+      border-left: 1px solid var(--color-gray-200);
+      cursor: pointer;
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: var(--color-primary-100);
+      color: var(--color-primary-700);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.875rem;
+    }
+
+    .user-info {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.2;
+    }
+
+    .user-name {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-gray-900);
+    }
+
+    .user-role {
+      font-size: 0.75rem;
+      color: var(--color-gray-500);
+    }
+
+    /* 
+      DASHBOARD CONTENT 
+    */
+    .dashboard-container {
+      padding: var(--spacing-6);
+      max-width: 1600px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Sync Banner */
+    .sync-banner {
+      background-color: var(--color-info-bg);
+      border: 1px solid var(--color-info);
+      color: var(--color-gray-800);
+      padding: var(--spacing-3) var(--spacing-4);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--spacing-6);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-3);
+      font-size: 0.875rem;
+    }
+
+    .progress-bar-container {
+      flex: 1;
+      height: 6px;
+      background-color: rgba(59, 130, 246, 0.2);
+      border-radius: 99px;
+      overflow: hidden;
+      max-width: 300px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background-color: var(--color-info);
+      width: 45%; /* Mock value */
+      transition: width 0.5s ease;
+    }
+
+    /* Dashboard Header */
+    .dashboard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: var(--spacing-6);
+      flex-wrap: wrap;
+      gap: var(--spacing-4);
+    }
+
+    .page-title h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--color-gray-900);
+      margin-bottom: var(--spacing-1);
+    }
+
+    .page-subtitle {
+      color: var(--color-gray-500);
+      font-size: 0.875rem;
+    }
+
+    .date-filter {
+      display: flex;
+      align-items: center;
+      background-color: var(--color-white);
+      border: 1px solid var(--color-gray-300);
+      border-radius: var(--radius-md);
+      padding: 0 var(--spacing-1);
+    }
+
+    .date-btn {
+      padding: 8px 12px;
+      font-size: 0.875rem;
+      color: var(--color-gray-600);
+      background: none;
+      border: none;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .date-btn.active {
+      background-color: var(--color-gray-100);
+      color: var(--color-gray-900);
+    }
+
+    /* KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: var(--spacing-6);
+      margin-bottom: var(--spacing-6);
+    }
+
+    .kpi-card {
+      background-color: var(--color-white);
+      padding: var(--spacing-5);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-gray-200);
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .kpi-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+
+    .kpi-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-2);
+    }
+
+    .kpi-title {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-gray-500);
+    }
+
+    .kpi-icon {
+      color: var(--color-gray-400);
+    }
+
+    .kpi-value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--color-gray-900);
+      margin-bottom: var(--spacing-2);
+    }
+
+    .kpi-trend {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .trend-up {
+      color: var(--color-success);
+    }
+
+    .trend-down {
+      color: var(--color-error);
+    }
+
+    /* Main Charts Layout */
+    .charts-layout {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: var(--spacing-6);
+    }
+
+    /* Generic Card Styles */
+    .card {
+      background-color: var(--color-white);
+      border: 1px solid var(--color-gray-200);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-header {
+      padding: var(--spacing-5);
+      border-bottom: 1px solid var(--color-gray-100);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-title {
+      font-weight: 600;
+      color: var(--color-gray-900);
+      font-size: 1rem;
+    }
+
+    .card-actions button {
+      background: none;
+      border: 1px solid var(--color-gray-300);
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 0.75rem;
+      color: var(--color-gray-600);
+    }
+
+    .card-body {
+      padding: var(--spacing-5);
+      flex: 1;
+    }
+
+    /* AI Insights Specifics */
+    .insight-item {
+      padding: var(--spacing-4);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--spacing-3);
+      display: flex;
+      gap: var(--spacing-3);
+      align-items: flex-start;
+    }
+
+    .insight-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .insight-success {
+      background-color: var(--color-success-bg);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .insight-warning {
+      background-color: var(--color-warning-bg);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    .insight-icon {
+      margin-top: 2px;
+    }
+
+    .insight-content h4 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 2px;
+      color: var(--color-gray-900);
+    }
+
+    .insight-content p {
+      font-size: 0.8125rem;
+      color: var(--color-gray-600);
+      line-height: 1.4;
+    }
+
+    /* Sales Chart Placeholder */
+    .chart-placeholder {
+      width: 100%;
+      height: 300px;
+      background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(99,102,241,0.05) 100%);
+      position: relative;
+      border-left: 1px solid var(--color-gray-200);
+      border-bottom: 1px solid var(--color-gray-200);
+      margin-top: 10px;
+    }
+    
+    .chart-bar {
+      position: absolute;
+      bottom: 0;
+      width: 4%;
+      background-color: var(--color-primary-500);
+      border-radius: 4px 4px 0 0;
+      transition: height 1s ease-out;
+    }
+
+    /* Skeleton Loading State */
+    .skeleton {
+      background: linear-gradient(90deg, var(--color-gray-100) 25%, var(--color-gray-200) 50%, var(--color-gray-100) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .is-loading .kpi-value,
+    .is-loading .kpi-trend {
+      color: transparent;
+      background: var(--color-gray-200);
+      border-radius: 4px;
+    }
+
+    /* 
+      RESPONSIVE BREAKPOINTS 
+    */
+    @media (max-width: 1280px) {
+      .kpi-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 1024px) {
+      /* Tablet */
+      .sidebar {
+        width: 64px;
+      }
+      
+      .logo span, .nav-item span {
+        display: none;
+      }
+      
+      .sidebar-nav {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: var(--spacing-4) 0;
+      }
+      
+      .nav-item {
+        justify-content: center;
+        padding: var(--spacing-3);
+      }
+
+      .main-content {
+        margin-left: 64px;
+      }
+
+      .charts-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      /* Mobile */
+      .sidebar {
+        transform: translateX(-100%);
+        width: 256px; /* Reset width for drawer */
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+        box-shadow: 20px 0 50px rgba(0,0,0,0.1);
+      }
+
+      .logo span, .nav-item span {
+        display: inline; /* Restore text in drawer */
+      }
+      
+      .nav-item {
+        justify-content: flex-start;
+        padding: var(--spacing-3) var(--spacing-4);
+      }
+
+      .main-content {
+        margin-left: 0;
+      }
+
+      .mobile-menu-toggle {
+        display: block;
+      }
+
+      .global-search {
+        display: none; /* Hide on mobile to save space */
+      }
+
+      .dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .date-filter {
+        width: 100%;
+        overflow-x: auto;
+      }
+
+      .kpi-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-4);
+      }
+      
+      .kpi-card {
+        padding: var(--spacing-4);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-shell">
+    
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar" id="sidebar" aria-label="Main Navigation">
+      <div class="sidebar-header">
+        <div class="logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>AnalyticsPro</span>
+        </div>
+      </div>
+      <div class="sidebar-nav">
+        <a href="#" class="nav-item active" aria-current="page">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 20V10M12 20V4M6 20V14"></path>
+          </svg>
+          <span>Sales Reports</span>
+        </a>
+        <a href="#" class="nav-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <span>Customers</span>
+        </a>
+        <a href="#" class="nav-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+          </svg>
+          <span>Products</span>
+        </a>
+        <a href="#" class="nav-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Data Import</span>
+        </a>
+      </div>
+    </nav>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-content">
+      
+      <!-- Top Header -->
+      <header class="header">
+        <div class="header-left">
+          <button class="mobile-menu-toggle" id="menuToggle" aria-label="Toggle Navigation">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          <div class="global-search">
+            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" class="search-input" placeholder="Search orders, customers, or products..." aria-label="Global Search">
+          </div>
+        </div>
+        <div class="header-right">
+          <button class="icon-btn" aria-label="Notifications">
+            <span class="notification-badge"></span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+          </button>
+          <button class="icon-btn" aria-label="Help & Support">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </button>
+          <div class="user-profile" role="button" tabindex="0">
+            <div class="avatar">JD</div>
+            <div class="user-info">
+              <span class="user-name">Jane Doe</span>
+              <span class="user-role">Store Owner</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Dashboard Content -->
+      <main class="dashboard-container">
+        
+        <!-- Sync Banner (Conditional State: Syncing) -->
+        <div class="sync-banner" role="status" aria-live="polite">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+            <path d="M3 3v5h5"></path>
+            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
+            <path d="M16 16h5v5"></path>
+          </svg>
+          <div style="flex:1">
+            <strong>Syncing historical data...</strong>
+            <span>45% complete. Estimated time remaining: 12 minutes.</span>
+          </div>
+          <div class="progress-bar-container">
+            <div class="progress-bar" style="width: 45%" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" role="progressbar"></div>
+          </div>
+        </div>
+
+        <!-- Dashboard Header & Filters -->
+        <div class="dashboard-header">
+          <div class="page-title">
+            <h1>Store Overview</h1>
+            <span class="page-subtitle">Welcome back, here's what's happening with your store today.</span>
+          </div>
+          
+          <div class="date-filter" role="group" aria-label="Date Range Filter">
+            <button class="date-btn">Today</button>
+            <button class="date-btn active" aria-current="true">Last 7 Days</button>
+            <button class="date-btn">Last 30 Days</button>
+            <button class="date-btn">Custom</button>
+          </div>
+        </div>
+
+        <!-- KPI Grid -->
+        <section class="kpi-grid" aria-label="Key Performance Indicators">
+          
+          <!-- KPI 1: Total Sales -->
+          <article class="kpi-card">
+            <div class="kpi-header">
+              <span class="kpi-title">Total Sales</span>
+              <svg class="kpi-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="1" x2="12" y2="23"></line>
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+              </svg>
+            </div>
+            <div class="kpi-value">$12,450.00</div>
+            <div class="kpi-trend trend-up">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+              </svg>
+              <span>15% vs last week</span>
+            </div>
+          </article>
+
+          <!-- KPI 2: Total Orders -->
+          <article class="kpi-card">
+            <div class="kpi-header">
+              <span class="kpi-title">Total Orders</span>
+              <svg class="kpi-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <path d="M16 10a4 4 0 0 1-8 0"></path>
+              </svg>
+            </div>
+            <div class="kpi-value">145</div>
+            <div class="kpi-trend trend-up">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+              </svg>
+              <span>8% vs last week</span>
+            </div>
+          </article>
+
+          <!-- KPI 3: AOV -->
+          <article class="kpi-card">
+            <div class="kpi-header">
+              <span class="kpi-title">Avg Order Value</span>
+              <svg class="kpi-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <div class="kpi-value">$85.86</div>
+            <div class="kpi-trend trend-down">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+                <polyline points="17 18 23 18 23 12"></polyline>
+              </svg>
+              <span>2.1% vs last week</span>
+            </div>
+          </article>
+
+          <!-- KPI 4: Conversion Rate -->
+          <article class="kpi-card">
+            <div class="kpi-header">
+              <span class="kpi-title">Conversion Rate</span>
+              <svg class="kpi-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
+            <div class="kpi-value">3.2%</div>
+            <div class="kpi-trend trend-up">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+              </svg>
+              <span>0.4% vs last week</span>
+            </div>
+          </article>
+
+          <!-- KPI 5: Abandoned Cart Rate -->
+          <article class="kpi-card">
+            <div class="kpi-header">
+              <span class="kpi-title">Abandoned Carts</span>
+              <svg class="kpi-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+              </svg>
+            </div>
+            <div class="kpi-value">65%</div>
+            <div class="kpi-trend trend-down">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline>
+                <polyline points="17 18 23 18 23 12"></polyline>
+              </svg>
+              <span>1.2% vs last week</span>
+            </div>
+          </article>
+        </section>
+
+        <!-- Main Charts & Insights Area -->
+        <div class="charts-layout">
+          
+          <!-- Sales Trend Chart -->
+          <section class="card" aria-labelledby="chart-title">
+            <div class="card-header">
+              <span id="chart-title" class="card-title">Sales Trends</span>
+              <div class="card-actions">
+                <button aria-label="Group by day">Day</button>
+                <button aria-label="Group by week">Week</button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="chart-placeholder">
+                <!-- CSS-only chart bars for demo -->
+                <div class="chart-bar" style="left: 5%; height: 40%"></div>
+                <div class="chart-bar" style="left: 15%; height: 55%"></div>
+                <div class="chart-bar" style="left: 25%; height: 45%"></div>
+                <div class="chart-bar" style="left: 35%; height: 70%"></div>
+                <div class="chart-bar" style="left: 45%; height: 60%"></div>
+                <div class="chart-bar" style="left: 55%; height: 85%"></div>
+                <div class="chart-bar" style="left: 65%; height: 75%"></div>
+                <div class="chart-bar" style="left: 75%; height: 65%"></div>
+                <div class="chart-bar" style="left: 85%; height: 90%"></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- AI Insights Widget -->
+          <section class="card" aria-labelledby="insights-title">
+            <div class="card-header">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-primary-600)">
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                </svg>
+                <span id="insights-title" class="card-title">AI Insights</span>
+              </div>
+            </div>
+            <div class="card-body">
+              
+              <div class="insight-item insight-success">
+                <div class="insight-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                </div>
+                <div class="insight-content">
+                  <h4>Significant Growth</h4>
+                  <p>Sales are up <strong>15%</strong> this week compared to your 30-day average. Great job!</p>
+                </div>
+              </div>
+
+              <div class="insight-item insight-warning">
+                <div class="insight-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-warning)" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                </div>
+                <div class="insight-content">
+                  <h4>Cart Abandonment Spike</h4>
+                  <p>We detected an unusual spike in abandoned carts yesterday between 2 PM and 4 PM.</p>
+                </div>
+              </div>
+
+            </div>
+          </section>
+
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // Simple interactions for the mockup
+    
+    // Sidebar toggle functionality for mobile
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.querySelector('.main-content');
+
+    menuToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+    });
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', (e) => {
+      if (window.innerWidth <= 768) {
+        if (!sidebar.contains(e.target) && !menuToggle.contains(e.target) && sidebar.classList.contains('open')) {
+          sidebar.classList.remove('open');
+        }
+      }
+    });
+
+    // Date filter active state toggle
+    const dateBtns = document.querySelectorAll('.date-btn');
+    dateBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        dateBtns.forEach(b => {
+          b.classList.remove('active');
+          b.removeAttribute('aria-current');
+        });
+        btn.classList.add('active');
+        btn.setAttribute('aria-current', 'true');
+        
+        // Mock loading state
+        const kpis = document.querySelectorAll('.kpi-value, .kpi-trend');
+        document.body.classList.add('is-loading');
+        setTimeout(() => {
+          document.body.classList.remove('is-loading');
+        }, 500);
+      });
+    });
+  </script>
+</body>
+</html>

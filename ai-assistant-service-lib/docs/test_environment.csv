@@ -1,0 +1,3 @@
+"environment_name","environment_type","deployment_frequency","data_refresh_frequency","infrastructure_stack","service_dependencies","monitoring_tools","access_control","backup_strategy","disaster_recovery","cost_optimization","maintenance_window"
+"Local Development","Isolated","Continuous","On Demand","Docker Compose (Postgres, ClickHouse, Redis)","Mock Salla API; Mock OpenAI","Console; Docker Logs","Local User","None","Rebuild containers","Runs on dev machine","N/A"
+"Staging","Shared","Per Merge to Main","Weekly (Sanitized Prod Data)","Vercel Preview; Neon (Branching); ClickHouse Cloud (Dev); QStash","Salla Sandbox Store; OpenAI API","Axiom; Vercel Analytics","Team Access","Daily Snapshots","Redeploy from Git","Auto-sleep DBs","Weekends"

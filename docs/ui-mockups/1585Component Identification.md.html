@@ -1,0 +1,307 @@
+
+{
+  "component_inventory": {
+    "atomic_components": [
+      {
+        "component_name": "Status Badge",
+        "category": "feedback",
+        "variants": ["success", "warning", "error", "neutral", "pending"],
+        "states": ["default"],
+        "responsive_needs": "scale font size on mobile",
+        "dependencies": ["REPO-LIB-UI-001/Badge"],
+        "complexity_level": "low",
+        "implementation_priority": 1,
+        "estimated_effort": "2 hours"
+      },
+      {
+        "component_name": "Help Icon Trigger",
+        "category": "navigation",
+        "variants": ["default", "subtle"],
+        "states": ["default", "hover", "active"],
+        "responsive_needs": "increased touch target on mobile",
+        "dependencies": ["REPO-LIB-UI-001/Tooltip"],
+        "complexity_level": "low",
+        "implementation_priority": 2,
+        "estimated_effort": "2 hours"
+      },
+      {
+        "component_name": "Theme Toggle",
+        "category": "system",
+        "variants": ["icon_only", "with_label"],
+        "states": ["light", "dark", "system"],
+        "responsive_needs": "none",
+        "dependencies": ["next-themes"],
+        "complexity_level": "low",
+        "implementation_priority": 1,
+        "estimated_effort": "2 hours"
+      },
+      {
+        "component_name": "Metric Trend Indicator",
+        "category": "data_display",
+        "variants": ["positive", "negative", "neutral"],
+        "states": ["default"],
+        "responsive_needs": "none",
+        "dependencies": ["REPO-LIB-UI-001/Icon"],
+        "complexity_level": "low",
+        "implementation_priority": 2,
+        "estimated_effort": "1 hour"
+      }
+    ],
+    "molecular_components": [
+      {
+        "component_name": "Date Range Filter",
+        "category": "filtering",
+        "variants": ["default", "comparison_mode"],
+        "states": ["preset_selected", "custom_range", "error"],
+        "responsive_needs": "full screen modal on mobile, dropdown on desktop",
+        "dependencies": ["REPO-LIB-UI-001/DatePicker", "REPO-LIB-UI-001/Button"],
+        "complexity_level": "high",
+        "implementation_priority": 1,
+        "estimated_effort": "8-12 hours"
+      },
+      {
+        "component_name": "Account Switcher",
+        "category": "navigation",
+        "variants": ["header_dropdown", "mobile_drawer_item"],
+        "states": ["loading", "list_visible", "switching"],
+        "responsive_needs": "bottom sheet on mobile",
+        "dependencies": ["REPO-LIB-UI-001/Avatar", "REPO-LIB-UI-001/Dropdown"],
+        "complexity_level": "medium",
+        "implementation_priority": 2,
+        "estimated_effort": "6 hours"
+      },
+      {
+        "component_name": "KPI Card",
+        "category": "data_display",
+        "variants": ["standard", "highlighted", "loading"],
+        "states": ["default", "hover", "active"],
+        "responsive_needs": "stack content on mobile",
+        "dependencies": ["Metric Trend Indicator", "Help Icon Trigger", "REPO-LIB-UI-001/Card"],
+        "complexity_level": "medium",
+        "implementation_priority": 1,
+        "estimated_effort": "4 hours"
+      },
+      {
+        "component_name": "Chat Input Area",
+        "category": "ai_assistant",
+        "variants": ["default", "disabled"],
+        "states": ["idle", "typing", "sending", "disabled"],
+        "responsive_needs": "sticky to bottom on mobile virtual keyboard",
+        "dependencies": ["REPO-LIB-UI-001/TextArea", "REPO-LIB-UI-001/Button"],
+        "complexity_level": "medium",
+        "implementation_priority": 3,
+        "estimated_effort": "5 hours"
+      },
+      {
+        "component_name": "Global Search Bar",
+        "category": "navigation",
+        "variants": ["header_expanded", "icon_trigger"],
+        "states": ["default", "focused", "loading", "results"],
+        "responsive_needs": "expands to full header width on mobile focus",
+        "dependencies": ["REPO-LIB-UI-001/Input"],
+        "complexity_level": "medium",
+        "implementation_priority": 2,
+        "estimated_effort": "4 hours"
+      }
+    ],
+    "organism_components": [
+      {
+        "component_name": "App Shell Layout",
+        "category": "layout",
+        "variants": ["authenticated", "public", "onboarding"],
+        "states": ["loading", "ready"],
+        "responsive_needs": "collapsible sidebar to drawer, sticky header",
+        "dependencies": ["Sidebar Navigation", "Header Bar", "Theme Toggle"],
+        "complexity_level": "high",
+        "implementation_priority": 1,
+        "estimated_effort": "16-20 hours"
+      },
+      {
+        "component_name": "AI Chat Interface",
+        "category": "ai_assistant",
+        "variants": ["sidebar_panel", "full_page"],
+        "states": ["empty", "conversation_active", "thinking", "error"],
+        "responsive_needs": "maximize screen real estate on mobile",
+        "dependencies": ["Chat Input Area", "Message Bubble", "REPO-LIB-SDK-001"],
+        "complexity_level": "high",
+        "implementation_priority": 3,
+        "estimated_effort": "16-24 hours"
+      },
+      {
+        "component_name": "Report Builder Container",
+        "category": "analytics",
+        "variants": ["sales", "product", "customer"],
+        "states": ["loading", "data_loaded", "empty", "error"],
+        "responsive_needs": "horizontal scroll for tables, stack charts",
+        "dependencies": ["Date Range Filter", "REPO-LIB-UI-001/DataTable", "Export Button"],
+        "complexity_level": "high",
+        "implementation_priority": 2,
+        "estimated_effort": "12-16 hours"
+      },
+      {
+        "component_name": "Cart Sequence Editor",
+        "category": "cart_recovery",
+        "variants": ["default"],
+        "states": ["view", "edit", "saving"],
+        "responsive_needs": "simplified view on mobile, full drag-drop on desktop",
+        "dependencies": ["Rich Text Editor Wrapper", "Sequence Step Card"],
+        "complexity_level": "very_high",
+        "implementation_priority": 4,
+        "estimated_effort": "24-32 hours"
+      },
+      {
+        "component_name": "Sync Progress Banner",
+        "category": "onboarding",
+        "variants": ["floating", "inline"],
+        "states": ["syncing", "calculating", "completed", "failed"],
+        "responsive_needs": "compact mode for mobile",
+        "dependencies": ["REPO-LIB-UI-001/ProgressBar"],
+        "complexity_level": "medium",
+        "implementation_priority": 1,
+        "estimated_effort": "6 hours"
+      }
+    ]
+  },
+  "screen_inventory": [
+    {
+      "screen_name": "Login / Authentication",
+      "screen_type": "auth",
+      "variants": ["desktop", "mobile"],
+      "states": ["default", "loading", "error", "mfa_challenge"],
+      "required_components": ["AuthShell", "LoginForm", "SocialLoginButtons"],
+      "platform_optimizations": "mobile: optimized keyboard types, auto-complete",
+      "implementation_priority": 1,
+      "estimated_effort": "8 hours",
+      "user_flow_criticality": "critical"
+    },
+    {
+      "screen_name": "Onboarding: Salla Connect",
+      "screen_type": "onboarding",
+      "variants": ["desktop", "mobile"],
+      "states": ["intro", "redirecting", "success", "error"],
+      "required_components": ["OnboardingLayout", "ConnectButton", "FeaturesList"],
+      "platform_optimizations": "mobile: handle deep linking / app switching",
+      "implementation_priority": 1,
+      "estimated_effort": "6 hours",
+      "user_flow_criticality": "critical"
+    },
+    {
+      "screen_name": "Onboarding: Import Configuration",
+      "screen_type": "onboarding",
+      "variants": ["default"],
+      "states": ["selection", "processing"],
+      "required_components": ["OnboardingLayout", "SelectionCard", "SyncProgressBanner"],
+      "platform_optimizations": "none",
+      "implementation_priority": 1,
+      "estimated_effort": "4 hours",
+      "user_flow_criticality": "high"
+    },
+    {
+      "screen_name": "Main Dashboard",
+      "screen_type": "dashboard",
+      "variants": ["desktop", "tablet", "mobile"],
+      "states": ["loading", "syncing_data", "loaded", "error", "empty_state"],
+      "required_components": ["App Shell Layout", "Date Range Filter", "KPI Card", "AI Insight Widget", "Sales Trend Chart"],
+      "platform_optimizations": "mobile: vertical stack of KPI cards, simplified chart views",
+      "implementation_priority": 2,
+      "estimated_effort": "20 hours",
+      "user_flow_criticality": "critical"
+    },
+    {
+      "screen_name": "Detailed Report: Product Performance",
+      "screen_type": "report",
+      "variants": ["desktop", "mobile"],
+      "states": ["loading", "loaded", "filtering", "empty"],
+      "required_components": ["Report Builder Container", "Category Filter", "Sortable Table Headers"],
+      "platform_optimizations": "mobile: card view instead of table rows",
+      "implementation_priority": 2,
+      "estimated_effort": "12 hours",
+      "user_flow_criticality": "high"
+    },
+    {
+      "screen_name": "Detailed Report: Customer Segmentation",
+      "screen_type": "report",
+      "variants": ["desktop", "mobile"],
+      "states": ["loading", "loaded", "map_interactive"],
+      "required_components": ["Report Builder Container", "Geo Map Visualization", "Segment List"],
+      "platform_optimizations": "mobile: static map image or list view only",
+      "implementation_priority": 2,
+      "estimated_effort": "12 hours",
+      "user_flow_criticality": "medium"
+    },
+    {
+      "screen_name": "Team Management",
+      "screen_type": "settings",
+      "variants": ["desktop", "mobile"],
+      "states": ["list", "inviting", "removing"],
+      "required_components": ["App Shell Layout", "User List Table", "Invite User Modal"],
+      "platform_optimizations": "mobile: modal for invite, swipe actions for list items",
+      "implementation_priority": 3,
+      "estimated_effort": "10 hours",
+      "user_flow_criticality": "medium"
+    },
+    {
+      "screen_name": "Cart Recovery Configuration",
+      "screen_type": "tool",
+      "variants": ["desktop", "mobile_readonly"],
+      "states": ["list_campaigns", "edit_sequence", "edit_template"],
+      "required_components": ["App Shell Layout", "Cart Sequence Editor", "Template Preview"],
+      "platform_optimizations": "mobile: view-only or simplified status toggling",
+      "implementation_priority": 4,
+      "estimated_effort": "24 hours",
+      "user_flow_criticality": "high"
+    },
+    {
+      "screen_name": "AI Assistant View",
+      "screen_type": "tool",
+      "variants": ["desktop", "mobile"],
+      "states": ["empty", "active", "history"],
+      "required_components": ["App Shell Layout", "AI Chat Interface"],
+      "platform_optimizations": "mobile: full screen chat experience",
+      "implementation_priority": 3,
+      "estimated_effort": "12 hours",
+      "user_flow_criticality": "medium"
+    }
+  ],
+  "implementation_plan": {
+    "phase_1_foundation": {
+      "components": ["App Shell Layout", "Status Badge", "Theme Toggle", "Account Switcher", "Sync Progress Banner"],
+      "screens": ["Login / Authentication", "Onboarding: Salla Connect", "Onboarding: Import Configuration"],
+      "rationale": "Establishes the application container, navigation, and the critical onboarding path required to get users into the system.",
+      "estimated_duration": "5-7 days"
+    },
+    "phase_2_core_analytics": {
+      "components": ["Date Range Filter", "KPI Card", "Report Builder Container", "Global Search Bar"],
+      "screens": ["Main Dashboard", "Detailed Report: Product Performance"],
+      "rationale": "Delivers the primary value proposition (analytics) using the data ingested during Phase 1.",
+      "estimated_duration": "7-10 days"
+    },
+    "phase_3_team_and_expansion": {
+      "components": ["Metric Trend Indicator", "Help Icon Trigger"],
+      "screens": ["Team Management", "Detailed Report: Customer Segmentation"],
+      "rationale": "Adds multi-user capabilities and deeper analytical reports.",
+      "estimated_duration": "5-7 days"
+    },
+    "phase_4_advanced_features": {
+      "components": ["AI Chat Interface", "Chat Input Area", "Cart Sequence Editor"],
+      "screens": ["AI Assistant View", "Cart Recovery Configuration"],
+      "rationale": "Implements the most complex, interactive features that sit on top of the core data platform.",
+      "estimated_duration": "10-14 days"
+    }
+  },
+  "platform_implementation_strategy": {
+    "target_platform": "Progressive Web App (PWA) optimized for Desktop and Mobile Web",
+    "implementation_approach": "mobile_first",
+    "responsive_strategy": "Fluid grids using Tailwind CSS; atomic components handle their own internal responsiveness (e.g., stacking columns). Layout organism handles drawer/sidebar transition.",
+    "progressive_enhancement": "Core navigation and data viewing work without JS (SSR). Interactive charts and AI chat require hydration. Drag-and-drop features in Cart Recovery strictly enhanced for desktop pointer devices.",
+    "browser_support": "Last 2 versions of Chrome, Safari (iOS/macOS), Firefox, Edge.",
+    "accessibility_integration": "Shadcn/UI primitives handle base accessibility. Focus management for complex components (DateRange, Chat) manually tested. Color contrast validated against Design System palette."
+  },
+  "quality_assurance_plan": {
+    "component_testing": "Storybook stories for all Atomic and Molecular components covering all defined states (loading, error, empty).",
+    "integration_testing": "Next.js page tests verifying data fetching and rendering of Organisms (e.g., Dashboard loads with KPI cards).",
+    "responsive_testing": "Visual regression testing at 375px, 768px, and 1440px breakpoints.",
+    "accessibility_testing": "Automated Axe core scans in CI/CD pipeline + Manual keyboard navigation audit for Cart Sequence Editor and Date Picker.",
+    "performance_testing": "Lighthouse CI checks on all core screens; strict budget of <2s LCP for Dashboard."
+  }
+}

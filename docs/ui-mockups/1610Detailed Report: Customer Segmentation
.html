@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Segmentation Report - Deep Analytics</title>
+  <style>
+    /* 
+      DESIGN SYSTEM TOKENS & RESET 
+    */
+    :root {
+      /* Colors */
+      --color-primary-50: #eef2ff;
+      --color-primary-100: #e0e7ff;
+      --color-primary-500: #6366f1;
+      --color-primary-600: #4f46e5;
+      --color-primary-700: #4338ca;
+      --color-primary-900: #312e81;
+
+      --color-white: #ffffff;
+      --color-gray-50: #f8fafc;
+      --color-gray-100: #f1f5f9;
+      --color-gray-200: #e2e8f0;
+      --color-gray-300: #cbd5e1;
+      --color-gray-400: #94a3b8;
+      --color-gray-500: #64748b;
+      --color-gray-600: #475569;
+      --color-gray-700: #334155;
+      --color-gray-800: #1e293b;
+      --color-gray-900: #0f172a;
+
+      --color-success: #10b981;
+      --color-success-bg: #ecfdf5;
+      --color-warning: #f59e0b;
+      --color-error: #ef4444;
+
+      /* Data Viz Colors */
+      --viz-series-1: #4f46e5;
+      --viz-series-2: #10b981;
+      --viz-series-3: #f59e0b;
+      --viz-map-low: #e0e7ff;
+      --viz-map-med: #818cf8;
+      --viz-map-high: #3730a3;
+
+      /* Typography */
+      --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --text-xs: 0.75rem;
+      --text-sm: 0.875rem;
+      --text-base: 1rem;
+      --text-lg: 1.125rem;
+      --text-xl: 1.25rem;
+      --text-2xl: 1.5rem;
+      --text-3xl: 2.25rem;
+
+      /* Spacing & Layout */
+      --spacing-1: 4px;
+      --spacing-2: 8px;
+      --spacing-3: 12px;
+      --spacing-4: 16px;
+      --spacing-6: 24px;
+      --spacing-8: 32px;
+      --sidebar-width: 256px;
+      --header-height: 64px;
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 8px;
+
+      /* Shadows */
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    }
+
+    /* CSS Reset */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-primary);
+      background-color: var(--color-gray-50);
+      color: var(--color-gray-900);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    a {
+      color: var(--color-primary-600);
+      text-decoration: none;
+    }
+
+    /* 
+      LAYOUT ARCHITECTURE 
+    */
+    .app-shell {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr;
+      grid-template-rows: var(--header-height) 1fr;
+      min-height: 100vh;
+    }
+
+    /* Mobile Layout Adaptation */
+    @media (max-width: 1024px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* 
+      COMPONENTS: SIDEBAR 
+    */
+    .sidebar {
+      background-color: var(--color-white);
+      border-right: 1px solid var(--color-gray-200);
+      grid-row: 1 / -1;
+      padding: var(--spacing-6) var(--spacing-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-8);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      z-index: 20;
+    }
+
+    @media (max-width: 1024px) {
+      .sidebar {
+        display: none; /* Hidden on mobile for this demo, would be drawer */
+      }
+    }
+
+    .sidebar__logo {
+      font-weight: 700;
+      font-size: var(--text-xl);
+      color: var(--color-primary-600);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-2);
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-1);
+    }
+
+    .nav-item {
+      padding: var(--spacing-2) var(--spacing-3);
+      border-radius: var(--radius-md);
+      color: var(--color-gray-600);
+      font-weight: 500;
+      font-size: var(--text-sm);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-3);
+      transition: all 0.2s;
+    }
+
+    .nav-item:hover {
+      background-color: var(--color-gray-50);
+      color: var(--color-gray-900);
+    }
+
+    .nav-item--active {
+      background-color: var(--color-primary-50);
+      color: var(--color-primary-700);
+      border-left: 3px solid var(--color-primary-600);
+    }
+
+    /* 
+      COMPONENTS: HEADER 
+    */
+    .header {
+      background-color: var(--color-white);
+      border-bottom: 1px solid var(--color-gray-200);
+      padding: 0 var(--spacing-6);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .header__title {
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--color-gray-800);
+    }
+
+    .header__actions {
+      display: flex;
+      gap: var(--spacing-4);
+      align-items: center;
+    }
+
+    /* 
+      COMPONENTS: BUTTONS & INPUTS 
+    */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      font-size: var(--text-sm);
+      font-weight: 500;
+      transition: all 0.2s;
+      gap: var(--spacing-2);
+    }
+
+    .btn--primary {
+      background-color: var(--color-primary-600);
+      color: var(--color-white);
+      border: 1px solid transparent;
+    }
+
+    .btn--primary:hover {
+      background-color: var(--color-primary-700);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn--secondary {
+      background-color: var(--color-white);
+      color: var(--color-gray-700);
+      border: 1px solid var(--color-gray-300);
+    }
+
+    .btn--secondary:hover {
+      background-color: var(--color-gray-50);
+      border-color: var(--color-gray-400);
+    }
+
+    .btn--icon {
+      padding: 8px;
+      border-radius: 50%;
+      color: var(--color-gray-500);
+      background: transparent;
+      border: none;
+    }
+
+    .btn--icon:hover {
+      background-color: var(--color-gray-100);
+      color: var(--color-gray-700);
+    }
+
+    .date-filter {
+      display: flex;
+      align-items: center;
+      background: var(--color-white);
+      border: 1px solid var(--color-gray-300);
+      border-radius: var(--radius-md);
+      padding: 4px;
+    }
+
+    .date-filter__input {
+      border: none;
+      padding: 6px 12px;
+      font-size: var(--text-sm);
+      color: var(--color-gray-700);
+      outline: none;
+      background: transparent;
+    }
+
+    /* 
+      MAIN CONTENT AREA 
+    */
+    .main-content {
+      padding: var(--spacing-6);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-6);
+      overflow-y: auto;
+    }
+
+    @media (max-width: 768px) {
+      .main-content {
+        padding: var(--spacing-4);
+        gap: var(--spacing-4);
+      }
+    }
+
+    /* Page Header Section */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--spacing-4);
+    }
+
+    .page-header__breadcrumb {
+      font-size: var(--text-sm);
+      color: var(--color-gray-500);
+      margin-bottom: var(--spacing-1);
+    }
+
+    .page-header__title {
+      font-size: var(--text-2xl);
+      font-weight: 600;
+      color: var(--color-gray-900);
+    }
+
+    .page-header__controls {
+      display: flex;
+      gap: var(--spacing-3);
+      flex-wrap: wrap;
+    }
+
+    /* 
+      COMPONENTS: KPI CARDS 
+    */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--spacing-6);
+    }
+
+    @media (max-width: 1280px) {
+      .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .kpi-card {
+      background: var(--color-white);
+      padding: var(--spacing-6);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--color-gray-200);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-2);
+    }
+
+    .kpi-card__label {
+      font-size: var(--text-sm);
+      color: var(--color-gray-500);
+      font-weight: 500;
+    }
+
+    .kpi-card__value {
+      font-size: var(--text-3xl);
+      font-weight: 700;
+      color: var(--color-gray-900);
+    }
+
+    .kpi-card__trend {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-1);
+      font-size: var(--text-sm);
+      font-weight: 500;
+    }
+
+    .trend--up {
+      color: var(--color-success);
+    }
+
+    .trend--down {
+      color: var(--color-error);
+    }
+
+    .trend--neutral {
+      color: var(--color-gray-500);
+    }
+
+    /* 
+      COMPONENTS: REPORT VISUALIZATION LAYOUT 
+    */
+    .report-split {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: var(--spacing-6);
+      align-items: start;
+    }
+
+    @media (max-width: 1024px) {
+      .report-split {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .chart-card {
+      background: var(--color-white);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--color-gray-200);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .chart-card__header {
+      padding: var(--spacing-4) var(--spacing-6);
+      border-bottom: 1px solid var(--color-gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chart-card__title {
+      font-size: var(--text-lg);
+      font-weight: 600;
+      color: var(--color-gray-800);
+    }
+
+    .chart-card__body {
+      padding: var(--spacing-6);
+      position: relative;
+      min-height: 400px;
+    }
+
+    /* 
+      VISUALIZATION: GEO MAP (SVG) 
+    */
+    .geo-map-container {
+      width: 100%;
+      height: 100%;
+      background: var(--color-gray-50);
+      border-radius: var(--radius-md);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .geo-map-svg {
+      width: 100%;
+      height: auto;
+      max-height: 400px;
+    }
+
+    .map-region {
+      fill: var(--viz-map-low);
+      stroke: var(--color-white);
+      stroke-width: 1px;
+      transition: fill 0.2s, transform 0.2s;
+      cursor: pointer;
+    }
+
+    .map-region:hover, .map-region:focus {
+      fill: var(--color-primary-400);
+      stroke: var(--color-primary-600);
+      outline: none;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+      z-index: 10; /* Bring to front */
+    }
+
+    .map-region[data-value="high"] { fill: var(--viz-map-high); }
+    .map-region[data-value="med"] { fill: var(--viz-map-med); }
+    .map-region[data-value="low"] { fill: var(--viz-map-low); }
+
+    /* Map Tooltip */
+    .map-tooltip {
+      position: absolute;
+      background: var(--color-gray-900);
+      color: var(--color-white);
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      font-size: var(--text-xs);
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.2s, transform 0.2s;
+      z-index: 100;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .map-region:hover + .map-tooltip,
+    .map-region:focus + .map-tooltip {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* 
+      COMPONENTS: SEGMENT LIST 
+    */
+    .segment-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .segment-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing-3) 0;
+      border-bottom: 1px solid var(--color-gray-100);
+    }
+
+    .segment-item:last-child {
+      border-bottom: none;
+    }
+
+    .segment-item__info {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-3);
+    }
+
+    .segment-rank {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--color-gray-100);
+      color: var(--color-gray-600);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .segment-name {
+      font-weight: 500;
+      color: var(--color-gray-800);
+    }
+
+    .segment-val {
+      font-weight: 600;
+      color: var(--color-gray-900);
+    }
+
+    .segment-bar-bg {
+      height: 6px;
+      width: 100%;
+      background: var(--color-gray-100);
+      border-radius: 10px;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+
+    .segment-bar-fill {
+      height: 100%;
+      background: var(--color-primary-500);
+      border-radius: 10px;
+    }
+
+    /* 
+      COMPONENTS: DATA TABLE 
+    */
+    .data-table-container {
+      overflow-x: auto;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--color-gray-200);
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--color-white);
+      text-align: left;
+    }
+
+    .data-table th {
+      background: var(--color-gray-50);
+      padding: var(--spacing-3) var(--spacing-6);
+      font-size: var(--text-xs);
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--color-gray-500);
+      border-bottom: 1px solid var(--color-gray-200);
+      white-space: nowrap;
+    }
+
+    .data-table td {
+      padding: var(--spacing-4) var(--spacing-6);
+      border-bottom: 1px solid var(--color-gray-200);
+      font-size: var(--text-sm);
+      color: var(--color-gray-700);
+    }
+
+    .data-table tr:hover td {
+      background: var(--color-gray-50);
+    }
+
+    .table-sort-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      font: inherit;
+      color: inherit;
+      text-transform: inherit;
+      cursor: pointer;
+    }
+
+    /* Mobile Table Card View Adaptation */
+    @media (max-width: 640px) {
+      .data-table thead {
+        display: none;
+      }
+      .data-table tbody, .data-table tr, .data-table td {
+        display: block;
+        width: 100%;
+      }
+      .data-table tr {
+        margin-bottom: var(--spacing-4);
+        border: 1px solid var(--color-gray-200);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+      }
+      .data-table td {
+        text-align: right;
+        padding: var(--spacing-3) var(--spacing-4);
+        position: relative;
+        padding-left: 50%;
+        border-bottom: 1px solid var(--color-gray-100);
+      }
+      .data-table td:last-child {
+        border-bottom: none;
+      }
+      .data-table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: var(--spacing-4);
+        width: 45%;
+        text-align: left;
+        font-weight: 600;
+        color: var(--color-gray-500);
+        font-size: var(--text-xs);
+        text-transform: uppercase;
+      }
+    }
+
+    /* 
+      UTILITIES 
+    */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+
+    /* Skeleton Loading State Animation */
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    .skeleton {
+      background: linear-gradient(90deg, var(--color-gray-100) 25%, var(--color-gray-200) 50%, var(--color-gray-100) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: var(--radius-sm);
+      color: transparent !important;
+    }
+
+    /* State Toggles for Demo */
+    .controls-demo {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--color-gray-900);
+      padding: 12px;
+      border-radius: var(--radius-lg);
+      z-index: 9999;
+      display: flex;
+      gap: 8px;
+      box-shadow: var(--shadow-lg);
+    }
+    
+    .controls-demo button {
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 4px;
+      background: var(--color-gray-700);
+      color: white;
+      border: none;
+    }
+    
+    .controls-demo button:hover {
+      background: var(--color-primary-600);
+    }
+
+    /* Interactive States Logic (Simulated with classes) */
+    .is-loading .kpi-card__value,
+    .is-loading .chart-card__body,
+    .is-loading td {
+      @extend .skeleton; /* Conceptually extending, implemented by JS toggling classes */
+    }
+    
+    .is-loading .kpi-card__value {
+      background: linear-gradient(90deg, var(--color-gray-100) 25%, var(--color-gray-200) 50%, var(--color-gray-100) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      color: transparent;
+      user-select: none;
+    }
+    
+    .is-loading .geo-map-svg {
+      opacity: 0.1;
+    }
+    
+    .is-loading .geo-map-container::after {
+      content: "Loading Map Data...";
+      position: absolute;
+      color: var(--color-gray-500);
+      font-weight: 500;
+    }
+
+  </style>
+</head>
+<body id="app">
+
+  <div class="app-shell">
+    
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="sidebar">
+      <div class="sidebar__logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Analytics Pro</span>
+      </div>
+
+      <nav aria-label="Main Navigation">
+        <ul class="nav-list">
+          <li>
+            <a href="#" class="nav-item">
+              <span aria-hidden="true">📊</span> Dashboard
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-item nav-item--active" aria-current="page">
+              <span aria-hidden="true">🌍</span> Customer Analytics
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-item">
+              <span aria-hidden="true">📦</span> Product Performance
+            </a>
+          </li>
+          <li>
+            <a href="#" class="nav-item">
+              <span aria-hidden="true">📈</span> Sales Trends
+            </a>
+          </li>
+        </ul>
+      </nav>
+
+      <div style="margin-top: auto;">
+        <div class="nav-item">
+          <span aria-hidden="true">⚙️</span> Settings
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT COLUMN -->
+    <div class="content-wrapper">
+      
+      <!-- STICKY HEADER -->
+      <header class="header">
+        <div class="header__title">Customer Segmentation</div>
+        <div class="header__actions">
+          <button class="btn btn--icon" aria-label="Search">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          </button>
+          <button class="btn btn--icon" aria-label="Notifications">
+            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+          </button>
+          <div class="avatar" style="width: 32px; height: 32px; background: var(--color-primary-100); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--color-primary-700); font-size: 12px; font-weight: 600;">JD</div>
+        </div>
+      </header>
+
+      <!-- SCROLLABLE PAGE CONTENT -->
+      <main class="main-content">
+        
+        <!-- PAGE CONTROLS HEADER -->
+        <section class="page-header">
+          <div>
+            <div class="page-header__breadcrumb">Analytics / Customers / Location</div>
+            <h1 class="page-header__title">Geographic Distribution</h1>
+          </div>
+          
+          <div class="page-header__controls">
+            <div class="date-filter">
+              <svg style="margin-left: 8px; color: var(--color-gray-500);" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+              <input type="text" class="date-filter__input" value="Oct 1, 2023 - Oct 31, 2023" aria-label="Select Date Range">
+            </div>
+            <button class="btn btn--secondary">
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+              Export Report
+            </button>
+          </div>
+        </section>
+
+        <!-- KPI SUMMARY CARDS -->
+        <section class="kpi-grid" aria-label="Key Performance Indicators">
+          <article class="kpi-card">
+            <h3 class="kpi-card__label">Total Active Customers</h3>
+            <div class="kpi-card__value">12,453</div>
+            <div class="kpi-card__trend trend--up">
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+              <span>+12.5%</span> <span style="color: var(--color-gray-500); margin-left: 4px; font-weight: 400;">vs last month</span>
+            </div>
+          </article>
+
+          <article class="kpi-card">
+            <h3 class="kpi-card__label">Regions Active</h3>
+            <div class="kpi-card__value">24</div>
+            <div class="kpi-card__trend trend--neutral">
+              <span>0%</span> <span style="color: var(--color-gray-500); margin-left: 4px; font-weight: 400;">vs last month</span>
+            </div>
+          </article>
+
+          <article class="kpi-card">
+            <h3 class="kpi-card__label">Top Region Revenue</h3>
+            <div class="kpi-card__value">$45.2k</div>
+            <div class="kpi-card__trend trend--up">
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+              <span>+5.3%</span> <span style="color: var(--color-gray-500); margin-left: 4px; font-weight: 400;">United States</span>
+            </div>
+          </article>
+
+          <article class="kpi-card">
+            <h3 class="kpi-card__label">Avg Spend (Global)</h3>
+            <div class="kpi-card__value">$128.50</div>
+            <div class="kpi-card__trend trend--down">
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>
+              <span>-2.1%</span> <span style="color: var(--color-gray-500); margin-left: 4px; font-weight: 400;">vs last month</span>
+            </div>
+          </article>
+        </section>
+
+        <!-- VISUALIZATION SECTION -->
+        <section class="report-split">
+          
+          <!-- MAP VISUALIZATION -->
+          <div class="chart-card">
+            <div class="chart-card__header">
+              <h2 class="chart-card__title">Sales Density by Region</h2>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn--secondary" style="padding: 4px 8px; font-size: 12px;">World</button>
+                <button class="btn btn--icon" style="padding: 4px;">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                </button>
+              </div>
+            </div>
+            <div class="chart-card__body">
+              <div class="geo-map-container" role="graphics-document" aria-label="World map showing sales density">
+                <!-- Simplified Abstract SVG Map for Demo Purposes -->
+                <svg class="geo-map-svg" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+                  <!-- North America -->
+                  <path class="map-region" data-value="high" d="M50,50 Q150,30 200,100 T150,180 T50,120 Z" role="button" aria-label="North America" tabindex="0">
+                    <title>North America: $120k Revenue</title>
+                  </path>
+                  <!-- South America -->
+                  <path class="map-region" data-value="low" d="M160,200 Q220,220 200,300 T140,350 T120,250 Z" role="button" aria-label="South America" tabindex="0">
+                    <title>South America: $30k Revenue</title>
+                  </path>
+                  <!-- Europe -->
+                  <path class="map-region" data-value="med" d="M320,60 Q400,50 420,100 T380,140 T300,100 Z" role="button" aria-label="Europe" tabindex="0">
+                    <title>Europe: $85k Revenue</title>
+                  </path>
+                  <!-- Africa -->
+                  <path class="map-region" data-value="low" d="M320,160 Q400,160 400,250 T350,320 T280,220 Z" role="button" aria-label="Africa" tabindex="0">
+                    <title>Africa: $12k Revenue</title>
+                  </path>
+                  <!-- Asia -->
+                  <path class="map-region" data-value="med" d="M450,60 Q650,40 700,120 T600,220 T480,180 Z" role="button" aria-label="Asia" tabindex="0">
+                    <title>Asia: $90k Revenue</title>
+                  </path>
+                  <!-- Australia -->
+                  <path class="map-region" data-value="low" d="M600,280 Q700,280 720,320 T650,380 T580,320 Z" role="button" aria-label="Australia" tabindex="0">
+                    <title>Australia: $25k Revenue</title>
+                  </path>
+                </svg>
+                <!-- Tooltip placeholder (functionality simulated via CSS sibling selector) -->
+                <div class="map-tooltip">North America: High Density</div>
+              </div>
+              
+              <!-- Map Legend -->
+              <div style="display: flex; gap: 16px; justify-content: center; margin-top: 16px; font-size: 12px; color: var(--color-gray-600);">
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <span style="width: 10px; height: 10px; background: var(--viz-map-low); border-radius: 2px;"></span> Low
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <span style="width: 10px; height: 10px; background: var(--viz-map-med); border-radius: 2px;"></span> Medium
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <span style="width: 10px; height: 10px; background: var(--viz-map-high); border-radius: 2px;"></span> High
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TOP SEGMENTS LIST -->
+          <div class="chart-card">
+            <div class="chart-card__header">
+              <h2 class="chart-card__title">Top Markets</h2>
+              <a href="#" style="font-size: 14px;">View All</a>
+            </div>
+            <div class="chart-card__body" style="padding: 0;">
+              <ul class="segment-list">
+                <li class="segment-item" style="padding: 16px 24px;">
+                  <div style="width: 100%;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                      <div class="segment-item__info">
+                        <span class="segment-rank">1</span>
+                        <span class="segment-name">United States</span>
+                      </div>
+                      <span class="segment-val">$45,230</span>
+                    </div>
+                    <div class="segment-bar-bg">
+                      <div class="segment-bar-fill" style="width: 85%;"></div>
+                    </div>
+                  </div>
+                </li>
+                <li class="segment-item" style="padding: 16px 24px;">
+                  <div style="width: 100%;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                      <div class="segment-item__info">
+                        <span class="segment-rank">2</span>
+                        <span class="segment-name">Germany</span>
+                      </div>
+                      <span class="segment-val">$28,450</span>
+                    </div>
+                    <div class="segment-bar-bg">
+                      <div class="segment-bar-fill" style="width: 60%;"></div>
+                    </div>
+                  </div>
+                </li>
+                <li class="segment-item" style="padding: 16px 24px;">
+                  <div style="width: 100%;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                      <div class="segment-item__info">
+                        <span class="segment-rank">3</span>
+                        <span class="segment-name">United Kingdom</span>
+                      </div>
+                      <span class="segment-val">$18,900</span>
+                    </div>
+                    <div class="segment-bar-bg">
+                      <div class="segment-bar-fill" style="width: 45%;"></div>
+                    </div>
+                  </div>
+                </li>
+                <li class="segment-item" style="padding: 16px 24px;">
+                  <div style="width: 100%;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                      <div class="segment-item__info">
+                        <span class="segment-rank">4</span>
+                        <span class="segment-name">Canada</span>
+                      </div>
+                      <span class="segment-val">$12,120</span>
+                    </div>
+                    <div class="segment-bar-bg">
+                      <div class="segment-bar-fill" style="width: 30%;"></div>
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- DETAILED DATA TABLE -->
+        <section class="chart-card">
+          <div class="chart-card__header">
+            <h2 class="chart-card__title">Detailed Breakdown</h2>
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <div class="date-filter">
+                <svg style="margin-left: 8px; color: var(--color-gray-500);" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <input type="text" class="date-filter__input" placeholder="Search region..." aria-label="Filter regions">
+              </div>
+            </div>
+          </div>
+          <div class="chart-card__body" style="padding: 0;">
+            <div class="data-table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>
+                      <button class="table-sort-btn">Region <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg></button>
+                    </th>
+                    <th>
+                      <button class="table-sort-btn">Customers <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="opacity: 0.3"><path d="M7 10l5 5 5-5z"/></svg></button>
+                    </th>
+                    <th>
+                      <button class="table-sort-btn">Orders <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="opacity: 0.3"><path d="M7 10l5 5 5-5z"/></svg></button>
+                    </th>
+                    <th>
+                      <button class="table-sort-btn">Total Spend <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="opacity: 0.3"><path d="M7 10l5 5 5-5z"/></svg></button>
+                    </th>
+                    <th>
+                      <button class="table-sort-btn">Avg Order Value <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="opacity: 0.3"><path d="M7 10l5 5 5-5z"/></svg></button>
+                    </th>
+                    <th>Trend</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td data-label="Region"><strong>United States</strong></td>
+                    <td data-label="Customers">4,521</td>
+                    <td data-label="Orders">8,900</td>
+                    <td data-label="Total Spend">$45,230.00</td>
+                    <td data-label="Avg Order Value">$145.20</td>
+                    <td data-label="Trend"><span style="color: var(--color-success); font-size: 12px; font-weight: 600;">↗ +12%</span></td>
+                  </tr>
+                  <tr>
+                    <td data-label="Region"><strong>Germany</strong></td>
+                    <td data-label="Customers">2,100</td>
+                    <td data-label="Orders">3,450</td>
+                    <td data-label="Total Spend">$28,450.00</td>
+                    <td data-label="Avg Order Value">$132.50</td>
+                    <td data-label="Trend"><span style="color: var(--color-success); font-size: 12px; font-weight: 600;">↗ +5%</span></td>
+                  </tr>
+                  <tr>
+                    <td data-label="Region"><strong>United Kingdom</strong></td>
+                    <td data-label="Customers">1,890</td>
+                    <td data-label="Orders">2,200</td>
+                    <td data-label="Total Spend">$18,900.00</td>
+                    <td data-label="Avg Order Value">$128.00</td>
+                    <td data-label="Trend"><span style="color: var(--color-gray-500); font-size: 12px; font-weight: 600;">→ 0%</span></td>
+                  </tr>
+                  <tr>
+                    <td data-label="Region"><strong>Canada</strong></td>
+                    <td data-label="Customers">980</td>
+                    <td data-label="Orders">1,150</td>
+                    <td data-label="Total Spend">$12,120.00</td>
+                    <td data-label="Avg Order Value">$115.40</td>
+                    <td data-label="Trend"><span style="color: var(--color-error); font-size: 12px; font-weight: 600;">↘ -2%</span></td>
+                  </tr>
+                  <tr>
+                    <td data-label="Region"><strong>France</strong></td>
+                    <td data-label="Customers">850</td>
+                    <td data-label="Orders">980</td>
+                    <td data-label="Total Spend">$10,500.00</td>
+                    <td data-label="Avg Order Value">$122.10</td>
+                    <td data-label="Trend"><span style="color: var(--color-success); font-size: 12px; font-weight: 600;">↗ +8%</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div style="padding: 16px 24px; border-top: 1px solid var(--color-gray-200); display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 14px; color: var(--color-gray-600);">Showing 1-5 of 24 results</span>
+              <div style="display: flex; gap: 8px;">
+                <button class="btn btn--secondary" disabled>Previous</button>
+                <button class="btn btn--secondary">Next</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- DEMO CONTROLS (Floating) -->
+  <div class="controls-demo">
+    <span style="color:white; font-size:12px; font-weight:600; align-self:center;">DEMO:</span>
+    <button onclick="document.body.classList.toggle('is-loading')">Toggle Loading</button>
+  </div>
+
+</body>
+</html>

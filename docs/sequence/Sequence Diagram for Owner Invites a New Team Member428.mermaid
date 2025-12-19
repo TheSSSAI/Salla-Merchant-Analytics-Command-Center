@@ -1,0 +1,36 @@
+sequenceDiagram
+    actor "User Browser" as UserBrowser
+    participant "Frontend SPA" as FrontendSPA
+    participant "API Gateway" as APIGateway
+    actor "User Management Service" as UserManagementService
+    participant "OLTP Repository" as OLTPRepository
+    participant "Audit Logger" as AuditLogger
+    participant "Notification Gateway" as NotificationGateway
+
+    activate FrontendSPA
+    UserBrowser->>FrontendSPA: 1. 1. Fills and submits team member invitation form with email and role.
+    activate APIGateway
+    FrontendSPA->>APIGateway: 2. 2. POST /api/v1/teams/invitations
+    APIGateway-->>FrontendSPA: 4.1 HTTP 201 Created | 409 Conflict | 403 Forbidden
+    activate UserManagementService
+    APIGateway->>UserManagementService: 3. 3. invoke(inviteTeamMember)
+    UserManagementService-->>APIGateway: 4. return { statusCode: 201 | 409 | 403, body: {...} }
+    activate OLTPRepository
+    UserManagementService->>OLTPRepository: 3.1. 3.1. [Validation] isUserOnTeam(email, merchantId)
+    OLTPRepository-->>UserManagementService: 3.2. return existingUser | null
+    UserManagementService->>OLTPRepository: 3.3. 3.3. createInvitation(details)
+    OLTPRepository-->>UserManagementService: 3.4. return newInvitation
+    activate AuditLogger
+    UserManagementService->>AuditLogger: 3.5. 3.5. [Async] logEvent('TeamMemberInvited')
+    activate NotificationGateway
+    UserManagementService->>NotificationGateway: 3.6. 3.6. [Async] sendInvitationEmail(email, link)
+    FrontendSPA->>UserBrowser: 5. 5. Displays 'Invitation sent successfully' message.
+
+    note over UserManagementService: The calls to the Audit Logger and Notification Gateway are modeled as asynchronous (fire-and-forg...
+
+    deactivate NotificationGateway
+    deactivate AuditLogger
+    deactivate OLTPRepository
+    deactivate UserManagementService
+    deactivate APIGateway
+    deactivate FrontendSPA

@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: salla_analytics_postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: salla_analytics
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - salla_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: salla_analytics_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - salla_network
+
+  # Mock ClickHouse for local dev (optional, usually connects to cloud)
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8
+    container_name: salla_analytics_clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: password
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    networks:
+      - salla_network
+
+networks:
+  salla_network:
+    driver: bridge
+
+volumes:
+  postgres_data:

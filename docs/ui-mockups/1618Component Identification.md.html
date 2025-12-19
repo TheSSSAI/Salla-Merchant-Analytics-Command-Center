@@ -1,0 +1,581 @@
+{
+  "component_inventory": {
+    "atomic_components": [
+      {
+        "component_name": "Status Badge",
+        "category": "data_display",
+        "variants": [
+          "success",
+          "warning",
+          "error",
+          "info",
+          "neutral",
+          "outline"
+        ],
+        "states": [
+          "default"
+        ],
+        "responsive_needs": "scale text size on mobile",
+        "dependencies": [
+          "tailwind-merge"
+        ],
+        "complexity_level": "low",
+        "implementation_priority": 1,
+        "estimated_effort": "2 hours"
+      },
+      {
+        "component_name": "Avatar",
+        "category": "data_display",
+        "variants": [
+          "circle",
+          "square",
+          "group"
+        ],
+        "states": [
+          "image_loaded",
+          "fallback_initials",
+          "offline"
+        ],
+        "responsive_needs": "size adaptation (sm/md/lg)",
+        "dependencies": [
+          "@radix-ui/react-avatar"
+        ],
+        "complexity_level": "low",
+        "implementation_priority": 1,
+        "estimated_effort": "2 hours"
+      },
+      {
+        "component_name": "Switch (Toggle)",
+        "category": "form_controls",
+        "variants": [
+          "default",
+          "labeled"
+        ],
+        "states": [
+          "on",
+          "off",
+          "disabled"
+        ],
+        "responsive_needs": "touch-friendly hit area",
+        "dependencies": [
+          "@radix-ui/react-switch"
+        ],
+        "complexity_level": "low",
+        "implementation_priority": 1,
+        "estimated_effort": "3 hours"
+      },
+      {
+        "component_name": "Help Tooltip",
+        "category": "overlay",
+        "variants": [
+          "icon_trigger",
+          "text_trigger"
+        ],
+        "states": [
+          "closed",
+          "open"
+        ],
+        "responsive_needs": "touch-to-toggle on mobile instead of hover",
+        "dependencies": [
+          "@radix-ui/react-tooltip"
+        ],
+        "complexity_level": "low",
+        "implementation_priority": 2,
+        "estimated_effort": "3 hours"
+      },
+      {
+        "component_name": "Skeleton Loader",
+        "category": "feedback",
+        "variants": [
+          "text",
+          "circle",
+          "rectangular",
+          "card"
+        ],
+        "states": [
+          "pulsing"
+        ],
+        "responsive_needs": "fluid width",
+        "dependencies": [
+          "class-variance-authority"
+        ],
+        "complexity_level": "low",
+        "implementation_priority": 1,
+        "estimated_effort": "2 hours"
+      },
+      {
+        "component_name": "Metric Trend Icon",
+        "category": "data_display",
+        "variants": [
+          "up_positive",
+          "down_negative",
+          "flat",
+          "up_negative",
+          "down_positive"
+        ],
+        "states": [
+          "default"
+        ],
+        "responsive_needs": "none",
+        "dependencies": [
+          "lucide-react"
+        ],
+        "complexity_level": "low",
+        "implementation_priority": 2,
+        "estimated_effort": "1 hour"
+      }
+    ],
+    "molecular_components": [
+      {
+        "component_name": "Date Range Picker",
+        "category": "form_controls",
+        "variants": [
+          "with_presets",
+          "simple",
+          "comparison"
+        ],
+        "states": [
+          "closed",
+          "open",
+          "selecting",
+          "error"
+        ],
+        "responsive_needs": "full-screen modal on mobile, popover on desktop",
+        "dependencies": [
+          "date-fns",
+          "@radix-ui/react-popover",
+          "react-day-picker"
+        ],
+        "complexity_level": "high",
+        "implementation_priority": 1,
+        "estimated_effort": "12 hours"
+      },
+      {
+        "component_name": "Account Switcher",
+        "category": "navigation",
+        "variants": [
+          "sidebar_bottom",
+          "header_dropdown"
+        ],
+        "states": [
+          "collapsed",
+          "expanded",
+          "loading"
+        ],
+        "responsive_needs": "sheet/drawer on mobile",
+        "dependencies": [
+          "@radix-ui/react-dropdown-menu",
+          "Avatar"
+        ],
+        "complexity_level": "medium",
+        "implementation_priority": 2,
+        "estimated_effort": "6 hours"
+      },
+      {
+        "component_name": "Password Strength Input",
+        "category": "form_controls",
+        "variants": [
+          "registration"
+        ],
+        "states": [
+          "default",
+          "weak",
+          "medium",
+          "strong",
+          "focused"
+        ],
+        "responsive_needs": "stack validation rules vertically",
+        "dependencies": [
+          "Input",
+          "Progress"
+        ],
+        "complexity_level": "medium",
+        "implementation_priority": 1,
+        "estimated_effort": "5 hours"
+      },
+      {
+        "component_name": "KPI Statistic Card",
+        "category": "data_display",
+        "variants": [
+          "standard",
+          "with_chart_sparkline"
+        ],
+        "states": [
+          "loading",
+          "error",
+          "data"
+        ],
+        "responsive_needs": "adapt padding",
+        "dependencies": [
+          "Card",
+          "Metric Trend Icon",
+          "Help Tooltip"
+        ],
+        "complexity_level": "medium",
+        "implementation_priority": 2,
+        "estimated_effort": "6 hours"
+      },
+      {
+        "component_name": "Sync Progress Banner",
+        "category": "feedback",
+        "variants": [
+          "global_header",
+          "inline"
+        ],
+        "states": [
+          "initializing",
+          "processing",
+          "completed",
+          "failed"
+        ],
+        "responsive_needs": "compact layout on mobile",
+        "dependencies": [
+          "Progress Bar",
+          "Alert"
+        ],
+        "complexity_level": "medium",
+        "implementation_priority": 1,
+        "estimated_effort": "4 hours"
+      },
+      {
+        "component_name": "Suggestion Card (AI)",
+        "category": "data_display",
+        "variants": [
+          "optimization",
+          "alert"
+        ],
+        "states": [
+          "default",
+          "dismissed"
+        ],
+        "responsive_needs": "stack actions",
+        "dependencies": [
+          "Card",
+          "Button",
+          "Icon"
+        ],
+        "complexity_level": "low",
+        "implementation_priority": 3,
+        "estimated_effort": "3 hours"
+      }
+    ],
+    "organism_components": [
+      {
+        "component_name": "Data Table (Advanced)",
+        "category": "data_display",
+        "variants": [
+          "sortable",
+          "paginated",
+          "filterable"
+        ],
+        "states": [
+          "loading",
+          "empty",
+          "data",
+          "error"
+        ],
+        "responsive_needs": "responsive card view or horizontal scroll for mobile",
+        "dependencies": [
+          "@tanstack/react-table",
+          "Button",
+          "Input",
+          "DropdownMenu"
+        ],
+        "complexity_level": "high",
+        "implementation_priority": 2,
+        "estimated_effort": "16 hours"
+      },
+      {
+        "component_name": "Chart Widget",
+        "category": "data_display",
+        "variants": [
+          "line",
+          "bar",
+          "pie",
+          "area"
+        ],
+        "states": [
+          "loading",
+          "no_data",
+          "loaded"
+        ],
+        "responsive_needs": "responsive container aspect ratio, simplified tooltips",
+        "dependencies": [
+          "recharts",
+          "Card"
+        ],
+        "complexity_level": "high",
+        "implementation_priority": 2,
+        "estimated_effort": "12 hours"
+      },
+      {
+        "component_name": "Rich Text Editor",
+        "category": "form_controls",
+        "variants": [
+          "email_template"
+        ],
+        "states": [
+          "editing",
+          "preview",
+          "readonly"
+        ],
+        "responsive_needs": "toolbar wrapping or scrolling",
+        "dependencies": [
+          "@tiptap/react",
+          "Button",
+          "ToggleGroup"
+        ],
+        "complexity_level": "high",
+        "implementation_priority": 3,
+        "estimated_effort": "14 hours"
+      },
+      {
+        "component_name": "Chat Interface",
+        "category": "interaction",
+        "variants": [
+          "ai_assistant"
+        ],
+        "states": [
+          "empty",
+          "typing",
+          "history",
+          "error"
+        ],
+        "responsive_needs": "virtual keyboard handling, sticky input",
+        "dependencies": [
+          "ScrollArea",
+          "Input",
+          "Avatar",
+          "MarkdownRenderer"
+        ],
+        "complexity_level": "medium",
+        "implementation_priority": 3,
+        "estimated_effort": "10 hours"
+      },
+      {
+        "component_name": "Sequence Stepper",
+        "category": "interaction",
+        "variants": [
+          "vertical_timeline",
+          "wizard"
+        ],
+        "states": [
+          "active",
+          "completed",
+          "inactive",
+          "error"
+        ],
+        "responsive_needs": "vertical layout on all devices",
+        "dependencies": [
+          "Card",
+          "Button",
+          "Badge"
+        ],
+        "complexity_level": "medium",
+        "implementation_priority": 3,
+        "estimated_effort": "8 hours"
+      }
+    ]
+  },
+  "screen_inventory": [
+    {
+      "screen_name": "Authentication",
+      "screen_type": "auth",
+      "variants": [
+        "login",
+        "register",
+        "forgot_password",
+        "reset_password"
+      ],
+      "states": [
+        "default",
+        "loading",
+        "error",
+        "success"
+      ],
+      "required_components": [
+        "Password Strength Input",
+        "Alert",
+        "Button",
+        "Card"
+      ],
+      "platform_optimizations": "Autofill support, mobile keyboard optimization",
+      "implementation_priority": 1,
+      "estimated_effort": "8 hours",
+      "user_flow_criticality": "critical"
+    },
+    {
+      "screen_name": "Onboarding",
+      "screen_type": "flow",
+      "variants": [
+        "connect_store",
+        "sync_config",
+        "invite_team"
+      ],
+      "states": [
+        "step_active",
+        "processing",
+        "error"
+      ],
+      "required_components": [
+        "Sequence Stepper",
+        "Sync Progress Banner",
+        "Card",
+        "Button"
+      ],
+      "platform_optimizations": "Simplified layout, focus on single action",
+      "implementation_priority": 1,
+      "estimated_effort": "12 hours",
+      "user_flow_criticality": "critical"
+    },
+    {
+      "screen_name": "Analytics Dashboard",
+      "screen_type": "dashboard",
+      "variants": [
+        "main",
+        "sales",
+        "customers",
+        "products"
+      ],
+      "states": [
+        "loading",
+        "data_loaded",
+        "empty",
+        "error"
+      ],
+      "required_components": [
+        "Date Range Picker",
+        "KPI Statistic Card",
+        "Chart Widget",
+        "Data Table (Advanced)"
+      ],
+      "platform_optimizations": "Stack KPI cards on mobile, horizontal scroll tables",
+      "implementation_priority": 2,
+      "estimated_effort": "24 hours",
+      "user_flow_criticality": "high"
+    },
+    {
+      "screen_name": "Team Settings",
+      "screen_type": "settings",
+      "variants": [
+        "list",
+        "invite_modal"
+      ],
+      "states": [
+        "list",
+        "loading",
+        "empty"
+      ],
+      "required_components": [
+        "Data Table (Advanced)",
+        "Status Badge",
+        "Avatar",
+        "Dialog (Modal)"
+      ],
+      "platform_optimizations": "Swipe actions on mobile list items",
+      "implementation_priority": 2,
+      "estimated_effort": "8 hours",
+      "user_flow_criticality": "medium"
+    },
+    {
+      "screen_name": "AI Assistant",
+      "screen_type": "tool",
+      "variants": [
+        "default"
+      ],
+      "states": [
+        "idle",
+        "conversation",
+        "thinking"
+      ],
+      "required_components": [
+        "Chat Interface",
+        "Suggestion Card (AI)"
+      ],
+      "platform_optimizations": "Full height on mobile",
+      "implementation_priority": 3,
+      "estimated_effort": "8 hours",
+      "user_flow_criticality": "medium"
+    },
+    {
+      "screen_name": "Cart Recovery Config",
+      "screen_type": "tool",
+      "variants": [
+        "sequence_builder",
+        "template_editor"
+      ],
+      "states": [
+        "view",
+        "edit",
+        "saving"
+      ],
+      "required_components": [
+        "Sequence Stepper",
+        "Rich Text Editor",
+        "Switch (Toggle)"
+      ],
+      "platform_optimizations": "Desktop optimized for complex editing",
+      "implementation_priority": 3,
+      "estimated_effort": "16 hours",
+      "user_flow_criticality": "high"
+    }
+  ],
+  "implementation_plan": {
+    "phase_1_foundations": {
+      "components": [
+        "Avatar",
+        "Status Badge",
+        "Skeleton Loader",
+        "Password Strength Input",
+        "Sync Progress Banner"
+      ],
+      "rationale": "Components required for Auth and Onboarding (US-001 to US-015)",
+      "estimated_duration": "3-4 days"
+    },
+    "phase_2_navigation_structure": {
+      "components": [
+        "Account Switcher",
+        "Help Tooltip",
+        "Switch (Toggle)"
+      ],
+      "rationale": "Establishing the shell and user settings capability (US-021)",
+      "estimated_duration": "2-3 days"
+    },
+    "phase_3_data_visualization": {
+      "components": [
+        "Date Range Picker",
+        "KPI Statistic Card",
+        "Metric Trend Icon",
+        "Chart Widget",
+        "Data Table (Advanced)"
+      ],
+      "rationale": "Core analytics features (US-022 to US-033)",
+      "estimated_duration": "7-10 days"
+    },
+    "phase_4_advanced_interactions": {
+      "components": [
+        "Chat Interface",
+        "Suggestion Card (AI)",
+        "Rich Text Editor",
+        "Sequence Stepper"
+      ],
+      "rationale": "Complex interaction models for AI and Cart Recovery (US-035+, US-040+)",
+      "estimated_duration": "8-12 days"
+    }
+  },
+  "platform_implementation_strategy": {
+    "target_platform": "Progressive Web App (PWA)",
+    "implementation_approach": "mobile_first",
+    "responsive_strategy": "Use Tailwind CSS utility classes with `sm:`, `md:`, `lg:` prefixes. Complex components like Data Tables and Charts handle their own responsive rendering logic (e.g., hiding columns or legends).",
+    "progressive_enhancement": "Rich Text Editor and Drag-and-Drop features will use dynamic imports to reduce initial bundle size. Basic data viewing works without hydration, but interactivity requires JS.",
+    "browser_support": "Modern Evergreen Browsers (Chrome, Safari, Firefox, Edge) - Last 2 major versions.",
+    "accessibility_integration": "Shadcn/UI primitives provide base a11y. Custom components (DateRangePicker, Charts) require manual ARIA role verification and keyboard navigation testing."
+  },
+  "quality_assurance_plan": {
+    "component_testing": "Unit tests using React Testing Library for all atomic/molecular logic (e.g., DatePicker range selection). Storybook for visual states.",
+    "integration_testing": "Visual regression tests (Chromatic/Percy) for atomic components to prevent style regressions.",
+    "responsive_testing": "Manual verification of layouts at 375px (Mobile), 768px (Tablet), and 1280px (Desktop).",
+    "accessibility_testing": "Automated Axe scans in Storybook. Manual keyboard audit for the 'Date Range Picker' and 'Rich Text Editor'.",
+    "performance_testing": "Bundle size analysis for heavy components (Recharts, Tiptap). Lazy loading implementation verification."
+  }
+}

@@ -1,0 +1,61 @@
+sequenceDiagram
+    actor "User's Browser" as UsersBrowser
+    participant "Frontend SPA" as FrontendSPA
+    participant "API Gateway" as APIGateway
+    actor "User Management Service" as UserManagementService
+    participant "OLTP Repository (PostgreSQL)" as OLTPRepositoryPostgreSQL
+    participant "Salla Platform" as SallaPlatform
+    participant "Data Pipeline Processor" as DataPipelineProcessor
+
+    UsersBrowser->>FrontendSPA: 1. 1. Fills out and submits registration form (email, password)
+    FrontendSPA-->>UsersBrowser: Client-side validation feedback (BR-001, BR-002)
+    FrontendSPA->>APIGateway: 2. 2. POST /api/v1/auth/register
+    APIGateway-->>FrontendSPA: 201 Created with JWTs or 409 Conflict
+    APIGateway->>UserManagementService: 3. 3. Invokes RegisterUser function
+    UserManagementService-->>APIGateway: Success or error result
+    UserManagementService->>OLTPRepositoryPostgreSQL: 4. 4. findUnique({ where: { email } })
+    OLTPRepositoryPostgreSQL-->>UserManagementService: User record or null
+    UserManagementService->>OLTPRepositoryPostgreSQL: 5. 5. create(User) & create(Merchant)
+    OLTPRepositoryPostgreSQL-->>UserManagementService: Newly created records
+    UserManagementService->>APIGateway: 6. 6. Returns JWTs (access & refresh)
+    FrontendSPA->>UsersBrowser: 7. 7. Stores tokens securely, renders onboarding prompt
+    UsersBrowser->>FrontendSPA: 8. 8. Clicks 'Connect Salla Store'
+    FrontendSPA->>APIGateway: 9. 9. GET /api/v1/salla/auth/url
+    APIGateway-->>FrontendSPA: Salla OAuth authorization URL
+    APIGateway->>UserManagementService: 10. 10. Generates state and constructs Salla OAuth URL
+    UserManagementService-->>APIGateway: Constructed URL
+    FrontendSPA->>UsersBrowser: 11. 11. Redirects browser to Salla authorization page
+    UsersBrowser->>SallaPlatform: 12. 12. User logs in and authorizes the application
+    SallaPlatform-->>UsersBrowser: Redirect to callback URL with code and state
+    SallaPlatform->>UsersBrowser: 13. 13. Redirects to /oauth/callback?code=...&state=...
+    FrontendSPA->>APIGateway: 14. 14. POST /api/v1/salla/auth/callback
+    APIGateway-->>FrontendSPA: 200 OK or 400 Bad Request
+    APIGateway->>UserManagementService: 15. 15. Validates state, exchanges code for tokens
+    UserManagementService-->>APIGateway: Token exchange result
+    UserManagementService->>SallaPlatform: 15.1. 15a. POST /oauth2/token (Server-to-Server)
+    SallaPlatform-->>UserManagementService: Salla access_token, refresh_token
+    UserManagementService->>OLTPRepositoryPostgreSQL: 16. 16. Encrypts and saves Salla tokens for the merchant
+    OLTPRepositoryPostgreSQL-->>UserManagementService: Confirmation
+    FrontendSPA->>UsersBrowser: 17. 17. Renders 'Select Data Import Depth' UI (FR-104)
+    UsersBrowser->>FrontendSPA: 18. 18. Selects depth and clicks 'Start Sync'
+    FrontendSPA->>APIGateway: 19. 19. POST /api/v1/sync/initial
+    APIGateway-->>FrontendSPA: 202 Accepted
+    APIGateway->>UserManagementService: 20. 20. Queues an InitialSyncRequested job
+    UserManagementService-->>APIGateway: Job queued successfully
+    DataPipelineProcessor->>SallaPlatform: 21. 21. [Async] Fetches historical data via paginated API calls
+    DataPipelineProcessor->>OLTPRepositoryPostgreSQL: 22. 22. [Async] Transforms and bulk-inserts data
+    DataPipelineProcessor->>OLTPRepositoryPostgreSQL: 23. 23. [Async] Periodically updates sync job status
+    FrontendSPA->>APIGateway: 24. 24. [Loop Start] GET /api/v1/sync/status
+    APIGateway-->>FrontendSPA: Sync status object
+    APIGateway->>UserManagementService: 25. 25. Fetches current sync status for merchant
+    UserManagementService-->>APIGateway: Status object
+    UserManagementService->>OLTPRepositoryPostgreSQL: 26. 26. findUnique({ where: { merchantId } }) on sync_jobs table
+    OLTPRepositoryPostgreSQL-->>UserManagementService: Sync job record
+    FrontendSPA->>UsersBrowser: 27. 27. [Loop] Updates progress bar UI
+    FrontendSPA->>UsersBrowser: 28. 28. [Loop End] Displays 'Sync Complete' notification
+
+    note over FrontendSPA: Client-side validation (BR-001, BR-002) is performed before submitting the registration form to p...
+    note over UserManagementService: The OAuth 2.0 'state' parameter is generated server-side, stored (e.g., in session or Redis), and...
+    note over FrontendSPA: Initial data sync is an asynchronous, long-running process. The API returns a 202 Accepted immedi...
+    note over FrontendSPA: The polling loop continues at a set interval (e.g., 10 seconds) until the sync status returned fr...
+

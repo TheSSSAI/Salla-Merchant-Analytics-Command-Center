@@ -1,0 +1,32 @@
+sequenceDiagram
+    actor "User Management Service" as UserManagementService
+    participant "Async Task Queue" as AsyncTaskQueue
+    participant "Data Pipeline Processor" as DataPipelineProcessor
+    participant "OLTP Repository" as OLTPRepository
+    actor "Salla Platform" as SallaPlatform
+
+    activate AsyncTaskQueue
+    UserManagementService->>AsyncTaskQueue: 1. Enqueues 'HistoricalSyncRequested' job
+    DataPipelineProcessor->>AsyncTaskQueue: 2. Consumes job from queue
+    AsyncTaskQueue-->>DataPipelineProcessor: Job payload
+    DataPipelineProcessor->>OLTPRepository: 3. Updates sync status to 'IN_PROGRESS'
+    OLTPRepository-->>DataPipelineProcessor: Updated status record
+    DataPipelineProcessor->>OLTPRepository: 4. Retrieves Salla API credentials
+    OLTPRepository-->>DataPipelineProcessor: Encrypted access and refresh tokens
+    activate SallaPlatform
+    DataPipelineProcessor->>SallaPlatform: 5. GET /orders?page={n}&per_page=100
+    SallaPlatform-->>DataPipelineProcessor: 200 OK with paginated order data
+    DataPipelineProcessor->>DataPipelineProcessor: 5.1. Transforms Salla API DTOs to internal domain models (Anti-Corruption Layer)
+    DataPipelineProcessor->>OLTPRepository: 5.2. Inserts batch of transformed orders
+    OLTPRepository-->>DataPipelineProcessor: Count of created records
+    DataPipelineProcessor->>OLTPRepository: 5.3. Updates sync progress (checkpoint)
+    DataPipelineProcessor->>OLTPRepository: 6. Updates sync status to 'COMPLETED'
+    OLTPRepository-->>DataPipelineProcessor: Final status record
+    DataPipelineProcessor->>AsyncTaskQueue: 7. Enqueues 'SyncCompleteNotification' job
+
+    note over DataPipelineProcessor: A 'loop' fragment begins here, iterating through all required Salla API endpoints (Orders, Custom...
+    note over SallaPlatform: An 'alt' fragment is used here for error handling. [Success] -> Continue loop [429 Rate Limit] ->...
+    note over DataPipelineProcessor: Loop completes when all pages for all required resources have been processed. The processor then ...
+
+    deactivate SallaPlatform
+    deactivate AsyncTaskQueue

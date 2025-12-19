@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Assistant - Merchant Dashboard</title>
+  <style>
+    /* 
+      DESIGN SYSTEM TOKENS 
+      Based on provided JSON configuration
+    */
+    :root {
+      /* Typography */
+      --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Colors - Primary (Indigo) */
+      --color-primary-50: #eef2ff;
+      --color-primary-100: #e0e7ff;
+      --color-primary-500: #6366f1;
+      --color-primary-600: #4f46e5;
+      --color-primary-700: #4338ca;
+      
+      /* Colors - Neutrals */
+      --color-white: #ffffff;
+      --color-gray-50: #f8fafc;
+      --color-gray-100: #f1f5f9;
+      --color-gray-200: #e2e8f0;
+      --color-gray-300: #cbd5e1;
+      --color-gray-400: #94a3b8;
+      --color-gray-500: #64748b;
+      --color-gray-600: #475569;
+      --color-gray-700: #334155;
+      --color-gray-800: #1e293b;
+      --color-gray-900: #0f172a;
+
+      /* Colors - Semantic */
+      --color-success: #10b981;
+      --color-error: #ef4444;
+
+      /* Spacing */
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-8: 32px;
+
+      /* Layout */
+      --sidebar-width: 256px;
+      --header-height: 64px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-full: 9999px;
+      
+      /* Shadows */
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+
+    /* CSS RESET & BASE STYLES */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-primary);
+      background-color: var(--color-gray-50);
+      color: var(--color-gray-900);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      height: 100vh;
+      overflow: hidden; /* App-like feel */
+    }
+
+    /* APP LAYOUT STRUCTURE */
+    .app-layout {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    /* SIDEBAR COMPONENT */
+    .sidebar {
+      width: var(--sidebar-width);
+      background-color: var(--color-white);
+      border-right: 1px solid var(--color-gray-200);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      transition: transform 0.3s ease;
+      z-index: 20;
+    }
+
+    .sidebar__logo {
+      height: var(--header-height);
+      display: flex;
+      align-items: center;
+      padding: 0 var(--space-6);
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: var(--color-primary-600);
+      border-bottom: 1px solid var(--color-gray-100);
+    }
+
+    .sidebar__nav {
+      padding: var(--space-4) var(--space-2);
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      padding: var(--space-3) var(--space-4);
+      color: var(--color-gray-600);
+      text-decoration: none;
+      border-radius: var(--radius-md);
+      margin-bottom: var(--space-1);
+      transition: all 0.2s ease;
+      font-weight: 500;
+    }
+
+    .nav-item:hover {
+      background-color: var(--color-gray-50);
+      color: var(--color-gray-900);
+    }
+
+    .nav-item.is-active {
+      background-color: var(--color-primary-50);
+      color: var(--color-primary-700);
+      position: relative;
+    }
+
+    .nav-item.is-active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      height: 20px;
+      width: 3px;
+      background-color: var(--color-primary-600);
+      border-radius: 0 4px 4px 0;
+    }
+
+    .nav-icon {
+      width: 20px;
+      height: 20px;
+      margin-right: var(--space-3);
+      flex-shrink: 0;
+    }
+
+    /* MAIN CONTENT AREA */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* HEADER */
+    .header {
+      height: var(--header-height);
+      background-color: var(--color-white);
+      border-bottom: 1px solid var(--color-gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--space-6);
+      flex-shrink: 0;
+    }
+
+    .header__title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--color-gray-900);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .mobile-menu-trigger {
+      display: none;
+      background: none;
+      border: none;
+      padding: var(--space-2);
+      margin-right: var(--space-2);
+      cursor: pointer;
+      color: var(--color-gray-600);
+    }
+
+    /* AI ASSISTANT INTERFACE */
+    .ai-tool {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      background-color: var(--color-gray-50);
+      overflow: hidden; /* Contain scrolls */
+    }
+
+    /* CHAT HISTORY AREA */
+    .chat-scroll-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--space-6);
+      scroll-behavior: smooth;
+      display: flex;
+      flex-direction: column;
+      align-items: center; /* Center max-width content */
+    }
+
+    .chat-container {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-6);
+      padding-bottom: var(--space-4);
+    }
+
+    /* MESSAGE BUBBLES */
+    .message {
+      display: flex;
+      gap: var(--space-4);
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .message--user {
+      flex-direction: row-reverse;
+    }
+
+    .message__avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+
+    .message__avatar--ai {
+      background-color: var(--color-primary-100);
+      color: var(--color-primary-700);
+    }
+
+    .message__avatar--user {
+      background-color: var(--color-gray-200);
+      color: var(--color-gray-700);
+    }
+
+    .message__content {
+      max-width: 80%;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .message__bubble {
+      padding: var(--space-4);
+      border-radius: var(--radius-lg);
+      font-size: 1rem;
+      line-height: 1.5;
+      position: relative;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .message--ai .message__bubble {
+      background-color: var(--color-white);
+      color: var(--color-gray-900);
+      border-top-left-radius: 2px;
+      border: 1px solid var(--color-gray-200);
+    }
+
+    .message--user .message__bubble {
+      background-color: var(--color-primary-600);
+      color: var(--color-white);
+      border-top-right-radius: 2px;
+    }
+
+    .message__timestamp {
+      font-size: 0.75rem;
+      color: var(--color-gray-500);
+      margin-top: var(--space-1);
+    }
+
+    .message--user .message__timestamp {
+      text-align: right;
+    }
+
+    /* DATA VIZ / CARD INSIDE CHAT */
+    .data-card {
+      background: var(--color-white);
+      border: 1px solid var(--color-gray-200);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4);
+      margin-top: var(--space-2);
+      width: 100%;
+      min-width: 300px;
+    }
+
+    .data-card__title {
+      font-size: 0.875rem;
+      color: var(--color-gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-2);
+      font-weight: 600;
+    }
+
+    .data-card__metric {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--color-gray-900);
+      margin-bottom: var(--space-1);
+    }
+
+    .data-card__trend {
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+    }
+
+    .trend--up { color: var(--color-success); }
+    .trend--down { color: var(--color-error); }
+
+    /* MOCK CHART (CSS ONLY) */
+    .simple-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      height: 120px;
+      margin-top: var(--space-4);
+      padding-top: var(--space-4);
+      border-top: 1px solid var(--color-gray-100);
+    }
+
+    .chart-bar {
+      flex: 1;
+      background-color: var(--color-primary-100);
+      border-radius: 4px 4px 0 0;
+      position: relative;
+      transition: height 0.5s ease;
+    }
+
+    .chart-bar:hover {
+      background-color: var(--color-primary-500);
+    }
+
+    .chart-bar:hover::after {
+      content: attr(data-value);
+      position: absolute;
+      top: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--color-gray-900);
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+    }
+
+    /* INPUT AREA */
+    .input-wrapper {
+      background-color: var(--color-white);
+      border-top: 1px solid var(--color-gray-200);
+      padding: var(--space-4) var(--space-6);
+      width: 100%;
+      flex-shrink: 0;
+      display: flex;
+      justify-content: center;
+    }
+
+    .input-container {
+      width: 100%;
+      max-width: 800px;
+      position: relative;
+    }
+
+    .chat-form {
+      display: flex;
+      gap: var(--space-3);
+      align-items: flex-end;
+      background: var(--color-gray-50);
+      border: 1px solid var(--color-gray-300);
+      border-radius: var(--radius-lg);
+      padding: var(--space-2);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .chat-form:focus-within {
+      border-color: var(--color-primary-500);
+      box-shadow: 0 0 0 3px var(--color-primary-100);
+      background: var(--color-white);
+    }
+
+    .chat-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: var(--space-2) var(--space-3);
+      font-size: 1rem;
+      font-family: var(--font-primary);
+      resize: none;
+      outline: none;
+      min-height: 24px;
+      max-height: 120px;
+      color: var(--color-gray-900);
+    }
+
+    .send-btn {
+      background-color: var(--color-primary-600);
+      color: var(--color-white);
+      border: none;
+      border-radius: var(--radius-md);
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .send-btn:hover {
+      background-color: var(--color-primary-700);
+    }
+
+    .send-btn:disabled {
+      background-color: var(--color-gray-300);
+      cursor: not-allowed;
+    }
+
+    /* SUGGESTION CHIPS */
+    .suggestions {
+      display: flex;
+      gap: var(--space-2);
+      overflow-x: auto;
+      padding-bottom: var(--space-3);
+      /* Hide scrollbar */
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .suggestions::-webkit-scrollbar { display: none; }
+
+    .chip {
+      background-color: var(--color-white);
+      border: 1px solid var(--color-gray-300);
+      border-radius: var(--radius-full);
+      padding: 6px 12px;
+      font-size: 0.875rem;
+      color: var(--color-gray-700);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+
+    .chip:hover {
+      border-color: var(--color-primary-500);
+      color: var(--color-primary-700);
+      background-color: var(--color-primary-50);
+    }
+
+    /* TYPING INDICATOR */
+    .typing-indicator {
+      display: flex;
+      gap: 4px;
+      padding: var(--space-2) 0;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      background-color: var(--color-gray-400);
+      border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+
+    .dot:nth-child(1) { animation-delay: -0.32s; }
+    .dot:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* RESPONSIVE BREAKPOINTS */
+    @media (max-width: 768px) {
+      /* Mobile/Tablet Adjustments */
+      .sidebar {
+        position: fixed;
+        height: 100%;
+        transform: translateX(-100%); /* Hidden by default on mobile */
+        box-shadow: var(--shadow-md);
+      }
+
+      .sidebar.is-open {
+        transform: translateX(0);
+      }
+
+      .mobile-menu-trigger {
+        display: block;
+      }
+
+      .header {
+        padding: 0 var(--space-4);
+      }
+
+      .chat-scroll-area {
+        padding: var(--space-4);
+      }
+
+      .input-wrapper {
+        padding: var(--space-3) var(--space-4);
+        padding-bottom: max(var(--space-3), env(safe-area-inset-bottom));
+      }
+
+      .message {
+        gap: var(--space-2);
+      }
+
+      .message__bubble {
+        padding: var(--space-3);
+      }
+    }
+
+    /* UTILITY */
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-layout">
+    
+    <!-- SIDEBAR NAVIGATION -->
+    <nav class="sidebar" id="sidebar" aria-label="Main Navigation">
+      <div class="sidebar__logo">
+        Platform<span style="color: var(--color-gray-900)">IQ</span>
+      </div>
+      <div class="sidebar__nav">
+        <a href="#" class="nav-item">
+          <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+          Dashboard
+        </a>
+        <a href="#" class="nav-item">
+          <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+          Analytics
+        </a>
+        <a href="#" class="nav-item is-active" aria-current="page">
+          <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+          AI Assistant
+        </a>
+        <a href="#" class="nav-item">
+          <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+          Customers
+        </a>
+        <a href="#" class="nav-item">
+          <svg class="nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          Settings
+        </a>
+      </div>
+    </nav>
+
+    <!-- MAIN APP CONTENT -->
+    <main class="main-content">
+      
+      <!-- TOP HEADER -->
+      <header class="header">
+        <div class="header__title">
+          <button class="mobile-menu-trigger" aria-label="Open Menu">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+          </button>
+          <h1>AI Assistant</h1>
+        </div>
+        <div class="user-profile">
+          <!-- Placeholder Avatar -->
+          <div style="width: 32px; height: 32px; background: var(--color-primary-100); border-radius: 50%; color: var(--color-primary-700); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.875rem;">
+            JD
+          </div>
+        </div>
+      </header>
+
+      <!-- AI TOOL CONTAINER -->
+      <section class="ai-tool" aria-label="Chat Interface">
+        
+        <!-- CHAT HISTORY -->
+        <div class="chat-scroll-area" id="chatHistory" role="log" aria-live="polite">
+          <div class="chat-container">
+            
+            <!-- EMPTY STATE / WELCOME (Visually at top of history) -->
+            <div class="message message--ai">
+              <div class="message__avatar message__avatar--ai" aria-hidden="true">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+              </div>
+              <div class="message__content">
+                <div class="message__bubble">
+                  Hello! I can help you analyze your store's performance. Ask me about your sales, inventory, or customers.
+                </div>
+                <div class="message__timestamp">10:00 AM</div>
+              </div>
+            </div>
+
+            <!-- USER QUERY -->
+            <div class="message message--user">
+              <div class="message__avatar message__avatar--user" aria-hidden="true">
+                JD
+              </div>
+              <div class="message__content">
+                <div class="message__bubble">
+                  Show me the sales trend for the last 7 days.
+                </div>
+                <div class="message__timestamp">10:01 AM</div>
+              </div>
+            </div>
+
+            <!-- AI RESPONSE WITH DATA -->
+            <div class="message message--ai">
+              <div class="message__avatar message__avatar--ai" aria-hidden="true">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+              </div>
+              <div class="message__content">
+                <div class="message__bubble">
+                  Here is your sales performance for the last week. You had a total revenue of <strong>$12,450</strong>, which is up 15% from the previous week.
+                  
+                  <!-- DATA CARD -->
+                  <div class="data-card">
+                    <div class="data-card__title">Total Revenue (Last 7 Days)</div>
+                    <div class="data-card__metric">$12,450</div>
+                    <div class="data-card__trend trend--up">
+                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                      <span>15% vs previous period</span>
+                    </div>
+
+                    <!-- CSS CHART -->
+                    <div class="simple-chart" role="img" aria-label="Bar chart showing sales for last 7 days">
+                      <div class="chart-bar" style="height: 40%" data-value="$1.2k" title="Mon"></div>
+                      <div class="chart-bar" style="height: 55%" data-value="$1.5k" title="Tue"></div>
+                      <div class="chart-bar" style="height: 35%" data-value="$0.9k" title="Wed"></div>
+                      <div class="chart-bar" style="height: 70%" data-value="$2.1k" title="Thu"></div>
+                      <div class="chart-bar" style="height: 60%" data-value="$1.8k" title="Fri"></div>
+                      <div class="chart-bar" style="height: 85%" data-value="$2.8k" title="Sat"></div>
+                      <div class="chart-bar" style="height: 65%" data-value="$2.1k" title="Sun"></div>
+                    </div>
+                  </div>
+
+                </div>
+                <div class="message__timestamp">10:01 AM</div>
+              </div>
+            </div>
+
+            <!-- USER FOLLOW UP -->
+            <div class="message message--user">
+              <div class="message__avatar message__avatar--user" aria-hidden="true">
+                JD
+              </div>
+              <div class="message__content">
+                <div class="message__bubble">
+                  What was the top selling product?
+                </div>
+                <div class="message__timestamp">10:02 AM</div>
+              </div>
+            </div>
+
+            <!-- AI TYPING STATE -->
+            <div class="message message--ai">
+              <div class="message__avatar message__avatar--ai" aria-hidden="true">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+              </div>
+              <div class="message__content">
+                <div class="message__bubble" style="padding: 8px 16px;">
+                  <div class="typing-indicator" aria-label="AI is thinking">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- INPUT AREA -->
+        <div class="input-wrapper">
+          <div class="input-container">
+            
+            <!-- SUGGESTION CHIPS -->
+            <div class="suggestions" role="list" aria-label="Suggested queries">
+              <button class="chip">What is my AOV?</button>
+              <button class="chip">Top customers by spend</button>
+              <button class="chip">Inventory alerts</button>
+              <button class="chip">Conversion rate trend</button>
+            </div>
+
+            <!-- INPUT FORM -->
+            <form class="chat-form" onsubmit="event.preventDefault();">
+              <label for="ai-input" class="sr-only">Ask a question about your data</label>
+              <textarea 
+                id="ai-input" 
+                class="chat-input" 
+                placeholder="Ask about sales, products, or customers..." 
+                rows="1"
+                aria-label="Chat message"
+              ></textarea>
+              <button type="submit" class="send-btn" aria-label="Send message">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+              </button>
+            </form>
+          </div>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // Simple script to handle textarea auto-resize
+    const textarea = document.getElementById('ai-input');
+    textarea.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+      // Limit max height via CSS is handled, but JS reset allows shrinking
+    });
+
+    // Mobile menu toggle (Logic only, minimal JS)
+    const toggleBtn = document.querySelector('.mobile-menu-trigger');
+    const sidebar = document.getElementById('sidebar');
+    
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('is-open');
+    });
+
+    // Close sidebar when clicking outside on mobile would act normally here
+    document.addEventListener('click', (e) => {
+      if (window.innerWidth <= 768 && 
+          !sidebar.contains(e.target) && 
+          !toggleBtn.contains(e.target) &&
+          sidebar.classList.contains('is-open')) {
+        sidebar.classList.remove('is-open');
+      }
+    });
+  </script>
+</body>
+</html>

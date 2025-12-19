@@ -1,0 +1,280 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Management
+model User {
+  userId             String                @id @default(uuid()) @db.Uuid
+  email              String                @unique @db.VarChar(255)
+  passwordHash       String                @db.VarChar(255)
+  firstName          String?               @db.VarChar(100)
+  lastName           String?               @db.VarChar(100)
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  
+  // Relations
+  passwordResetTokens PasswordResetToken[]
+  userPreferences     UserPreference?
+  merchantAccounts    UserMerchantAccount[]
+  sentInvitations     Invitation[]          @relation("Sender")
+  auditLogs           AuditLog[]
+  dataSubjectRequests DataSubjectRequest[]
+}
+
+model PasswordResetToken {
+  passwordResetTokenId String   @id @default(uuid()) @db.Uuid
+  tokenHash            String   @db.VarChar(255)
+  expiresAt            DateTime
+  createdAt            DateTime @default(now())
+  isUsed               Boolean  @default(false)
+  userId               String   @db.Uuid
+  user                 User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
+}
+
+model UserPreference {
+  userPreferenceId String @id @default(uuid()) @db.Uuid
+  theme            String @default("light") // light, dark, system
+  userId           String @unique @db.Uuid
+  user             User   @relation(fields: [userId], references: [userId], onDelete: Cascade)
+}
+
+// Tenancy
+model MerchantAccount {
+  merchantAccountId String   @id @default(uuid()) @db.Uuid
+  accountName       String   @db.VarChar(255)
+  sallaStoreId      String?  @unique
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  members              UserMerchantAccount[]
+  invitations          Invitation[]
+  customers            Customer[]
+  categories           Category[]
+  products             Product[]
+  salesOrders          SalesOrder[]
+  abandonedCarts       AbandonedCart[]
+  emailTemplates       EmailTemplate[]
+  domainAuthentication DomainAuthentication?
+  auditLogs            AuditLog[]
+  aiInsightCards       AIInsightCard[]
+  dataSubjectRequests  DataSubjectRequest[]
+}
+
+model Role {
+  roleId          String                @id @default(uuid()) @db.Uuid
+  roleName        String                @unique @db.VarChar(50) // Owner, Admin, Analyst, Marketer
+  description     String?
+  
+  // Relations
+  userAssignments UserMerchantAccount[]
+  invitations     Invitation[]
+}
+
+model UserMerchantAccount {
+  userMerchantAccountId String @id @default(uuid()) @db.Uuid
+  userId                String @db.Uuid
+  merchantAccountId     String @db.Uuid
+  roleId                String @db.Uuid
+  
+  user            User            @relation(fields: [userId], references: [userId])
+  merchantAccount MerchantAccount @relation(fields: [merchantAccountId], references: [merchantAccountId])
+  role            Role            @relation(fields: [roleId], references: [roleId])
+
+  @@unique([userId, merchantAccountId])
+}
+
+model Invitation {
+  invitationId      String   @id @default(uuid()) @db.Uuid
+  email             String   @db.VarChar(255)
+  tokenHash         String   @unique
+  expiresAt         DateTime
+  status            String   @default("PENDING") // PENDING, ACCEPTED, EXPIRED
+  createdAt         DateTime @default(now())
+  
+  merchantAccountId String   @db.Uuid
+  invitedByUserId   String   @db.Uuid
+  roleId            String   @db.Uuid
+
+  merchantAccount MerchantAccount @relation(fields: [merchantAccountId], references: [merchantAccountId])
+  invitedBy       User            @relation("Sender", fields: [invitedByUserId], references: [userId])
+  role            Role            @relation(fields: [roleId], references: [roleId])
+}
+
+// E-commerce Domain
+model Customer {
+  customerId        String   @id @default(uuid()) @db.Uuid
+  sallaCustomerId   String?
+  email             String?  @db.VarChar(255)
+  firstName         String?  @db.VarChar(100)
+  lastName          String?  @db.VarChar(100)
+  city              String?  @db.VarChar(100)
+  country           String?  @db.VarChar(100)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  merchantAccountId String   @db.Uuid
+  merchantAccount   MerchantAccount @relation(fields: [merchantAccountId], references: [merchantAccountId])
+
+  orders          SalesOrder[]
+  abandonedCarts  AbandonedCart[]
+}
+
+model Category {
+  categoryId        String   @id @default(uuid()) @db.Uuid
+  sallaCategoryId   String?
+  name              String   @db.VarChar(255)
+  parentCategoryId  String?  @db.Uuid
+  
+  merchantAccountId String   @db.Uuid
+  merchantAccount   MerchantAccount @relation(fields: [merchantAccountId], references: [merchantAccountId])
+  
+  parentCategory    Category?  @relation("CategoryHierarchy", fields: [parentCategoryId], references: [categoryId])
+  subCategories     Category[] @relation("CategoryHierarchy")
+  products          Product[]
+}
+
+model Product {
+  productId         String   @id @default(uuid()) @db.Uuid
+  sallaProductId    String?
+  name              String   @db.VarChar(255)
+  price             Decimal  @db.Decimal(10, 2)
+  categoryId        String?  @db.Uuid
+  
+  merchantAccountId String   @db.Uuid
+  merchantAccount   MerchantAccount @relation(fields: [merchantAccountId], references: [merchantAccountId])
+  category          Category?       @relation(fields: [categoryId], references: [categoryId])
+
+  orderItems          OrderItem[]
+  abandonedCartItems  AbandonedCartItem[]
+}
+
+model SalesOrder {
+  salesOrderId      String   @id @default(uuid()) @db.Uuid
+  sallaOrderId      String?  @unique
+  orderDate         DateTime
+  status            String   @db.VarChar(50)
+  totalAmount       Decimal  @db.Decimal(10, 2)
+  currency          String   @default("SAR")
+  
+  merchantAccountId String   @db.Uuid
+  customerId        String   @db.Uuid
+  
+  merchantAccount   MerchantAccount @relation(fields: [merchantAccountId], references: [merchantAccountId])
+  customer          Customer        @relation(fields: [customerId], references: [customerId])
+  items             OrderItem[]
+}
+
+model OrderItem {
+  orderItemId   String  @id @default(uuid()) @db.Uuid
+  salesOrderId  String  @db.Uuid
+  productId     String  @db.Uuid
+  quantity      Int
+  unitPrice     Decimal @db.Decimal(10, 2)
+  
+  salesOrder    SalesOrder @relation(fields: [salesOrderId], references: [salesOrderId])
+  product       Product    @relation(fields: [productId], references: [productId])
+}
+
+// Cart Recovery
+model AbandonedCart {
+  abandonedCartId   String   @id @default(uuid()) @db.Uuid
+  sallaCartId       String?
+  abandonedAt       DateTime
+  recoveryStatus    String   @default("OPEN") // OPEN, RECOVERED, LOST
+  totalValue        Decimal  @db.Decimal(10, 2)
+  recoveryLink      String?
+  
+  merchantAccountId String   @db.Uuid
+  customerId        String   @db.Uuid
+  
+  merchantAccount   MerchantAccount @relation(fields: [merchantAccountId], references: [merchantAccountId])
+  customer          Customer        @relation(fields: [customerId], references: [customerId])
+  items             AbandonedCartItem[]
+}
+
+model AbandonedCartItem {
+  abandonedCartItemId String  @id @default(uuid()) @db.Uuid
+  abandonedCartId     String  @db.Uuid
+  productId           String  @db.Uuid
+  quantity            Int
+  priceAtAbandonment  Decimal @db.Decimal(10, 2)
+  
+  abandonedCart       AbandonedCart @relation(fields: [abandonedCartId], references: [abandonedCartId])
+  product             Product       @relation(fields: [productId], references: [productId])
+}
+
+model EmailTemplate {
+  emailTemplateId   String   @id @default(uuid()) @db.Uuid
+  name              String   @db.VarChar(100)
+  subject           String   @db.VarChar(255)
+  bodyContent       String   @db.Text // HTML content
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  merchantAccountId String   @db.Uuid
+  merchantAccount   MerchantAccount @relation(fields: [merchantAccountId], references: [merchantAccountId])
+}
+
+model DomainAuthentication {
+  domainAuthenticationId String   @id @default(uuid()) @db.Uuid
+  domainName             String   @db.VarChar(255)
+  isVerified             Boolean  @default(false)
+  dnsRecords             Json     // Stores SPF, DKIM required records
+  verifiedAt             DateTime?
+  
+  merchantAccountId      String   @unique @db.Uuid
+  merchantAccount        MerchantAccount @relation(fields: [merchantAccountId], references: [merchantAccountId])
+}
+
+// System & Compliance
+model AuditLog {
+  auditLogId        BigInt   @id @default(autoincrement())
+  timestamp         DateTime @default(now())
+  action            String   @db.VarChar(100)
+  resourceType      String   @db.VarChar(50)
+  resourceId        String?  @db.VarChar(100)
+  details           Json?
+  
+  userId            String?  @db.Uuid
+  merchantAccountId String?  @db.Uuid
+  
+  user              User?            @relation(fields: [userId], references: [userId])
+  merchantAccount   MerchantAccount? @relation(fields: [merchantAccountId], references: [merchantAccountId])
+}
+
+model DataSubjectRequest {
+  dataSubjectRequestId String   @id @default(uuid()) @db.Uuid
+  requestType          String   @db.VarChar(50) // ACCESS, DELETION
+  status               String   @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  requestedAt          DateTime @default(now())
+  completedAt          DateTime?
+  customerEmail        String   @db.VarChar(255)
+  
+  userId               String   @db.Uuid // The admin/owner who initiated it
+  merchantAccountId    String   @db.Uuid
+  
+  user                 User            @relation(fields: [userId], references: [userId])
+  merchantAccount      MerchantAccount @relation(fields: [merchantAccountId], references: [merchantAccountId])
+}
+
+model AIInsightCard {
+  aiInsightCardId   String   @id @default(uuid()) @db.Uuid
+  type              String   @db.VarChar(50) // TREND, ANOMALY
+  title             String   @db.VarChar(255)
+  description       String   @db.Text
+  severity          String   @default("INFO") // INFO, WARNING, CRITICAL
+  generatedAt       DateTime @default(now())
+  isDismissed       Boolean  @default(false)
+  
+  merchantAccountId String   @db.Uuid
+  merchantAccount   MerchantAccount @relation(fields: [merchantAccountId], references: [merchantAccountId])
+}

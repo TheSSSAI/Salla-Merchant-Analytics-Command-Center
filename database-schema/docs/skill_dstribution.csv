@@ -1,0 +1,4 @@
+"skill_category","total_hours_required","available_capacity","utilization_rate","team_members_with_skill","experience_distribution","productivity_weighted_capacity","capacity_surplus","critical_path_impact","skill_gap_risk","cross_training_opportunities","contractor_augmentation_option","cost_optimization","future_scaling"
+"Backend & Auth","35","170","20.6","[""Backend Lead"",""Backend Developer"",""Security Engineer""]","1 Lead, 1 Senior, 1 Mid","190","135","High","Low","Security Eng trains Backend Dev on JWT","None needed","Efficient","High headroom"
+"Data Engineering","30","64","46.9","[""Data Engineer""]","1 Senior","76.8","34","High","Medium","Data Eng trains Backend Dev on ETL","Potential needed for SQL optimization","Single point of failure","Limited"
+"AI & RAG","25","128","19.5","[""Backend Lead"",""Fullstack Developer""]","1 Lead, 1 Mid","147","103","Medium","Medium","Lead mentors Fullstack on RAG","Prompt Engineering specialist","Good balance","Moderate"

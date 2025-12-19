@@ -1,0 +1,28 @@
+sequenceDiagram
+    actor "User Browser" as UserBrowser
+    participant "Frontend SPA" as FrontendSPA
+    participant "Content Delivery Network" as ContentDeliveryNetwork
+    participant "Knowledge Base" as KnowledgeBase
+
+    activate FrontendSPA
+    UserBrowser->>FrontendSPA: 1. 1. User clicks the help icon associated with the 'AOV' metric.
+    FrontendSPA->>FrontendSPA: 2. 2. The <HelpIcon> component's onClick handler is invoked. It updates a central state store (e.g., Zustand) with the active help key ('kpi.aov').
+    FrontendSPA->>ContentDeliveryNetwork: 3. 3. If help content is not already loaded, initiates an asynchronous fetch for the static content file.
+    ContentDeliveryNetwork->>FrontendSPA: 4. 4. Returns the static help content file.
+    FrontendSPA->>FrontendSPA: 5. 5. Parses the JSON, retrieves the content for the active key ('kpi.aov'), and passes it as props to the <Popover> component, causing it to render.
+    FrontendSPA->>UserBrowser: 6. 6. The populated popover is displayed to the user, positioned adjacent to the help icon.
+    UserBrowser->>FrontendSPA: 7. 7. [Alternative] User clicks the 'Learn More' link inside the popover.
+    FrontendSPA->>UserBrowser: 8. 8. The link has target='_blank', instructing the browser to open the URL in a new tab.
+    UserBrowser->>KnowledgeBase: 9. 9. Initiates a new navigation to the specified knowledge base URL.
+    KnowledgeBase-->>UserBrowser: Returns HTML content for the article.
+    UserBrowser->>FrontendSPA: 10. 10. [Alternative] User clicks anywhere on the page outside the popover.
+    FrontendSPA->>FrontendSPA: 11. 11. The <Popover> component's logic detects an outside click and updates the central state to clear the active help key.
+    activate UserBrowser
+    FrontendSPA->>UserBrowser: 12. 12. React re-renders, and the popover is unmounted and removed from the display.
+
+    note over FrontendSPA: Accessibility (AC-007): The <HelpIcon> component must be a <button> element, be keyboard focusabl...
+    note over FrontendSPA: Positioning Logic (AC-005): The shadcn/ui <Popover> component is responsible for all positioning ...
+    note over FrontendSPA: Content Pre-loading Strategy: For optimal performance, the help-content.json file can be pre-fetc...
+
+    deactivate UserBrowser
+    deactivate FrontendSPA

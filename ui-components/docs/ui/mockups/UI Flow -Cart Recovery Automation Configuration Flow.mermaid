@@ -1,0 +1,83 @@
+flowchart TD
+    %% Define styles based on Design System
+    classDef primary fill:#eef2ff,stroke:#4f46e5,stroke-width:2px,color:#312e81
+    classDef action fill:#fff,stroke:#4f46e5,stroke-width:2px,stroke-dasharray: 5 5,color:#4f46e5
+    classDef decision fill:#fffbeb,stroke:#f59e0b,stroke-width:2px,color:#78350f
+    classDef error fill:#fef2f2,stroke:#ef4444,stroke-width:2px,color:#7f1d1d
+    classDef success fill:#ecfdf5,stroke:#10b981,stroke-width:2px,color:#064e3b
+    classDef ui fill:#f8fafc,stroke:#94a3b8,stroke-width:1px,color:#0f172a
+
+    start((Start)) --> view_list[View Cart Recovery Dashboard]
+    view_list --> |Click 'Create New Sequence'| init_seq[Enter Sequence Name]
+    
+    subgraph Sequence_Editor [Sequence Editor UI]
+        direction TB
+        init_seq --> check_steps{Has Steps?}
+        
+        check_steps -- No --> add_step_action[Click 'Add Step']
+        check_steps -- Yes --> edit_loop
+        
+        add_step_action --> step_config_ui[Step Configuration Card]
+        
+        subgraph Step_Configuration [Step Configuration]
+            step_config_ui --> set_timing[Set Delay Value & Unit]
+            set_timing -- US-042 --> validate_timing{Valid Positive Integer?}
+            
+            validate_timing -- No --> timing_error[Show 'Invalid Delay' Error]:::error
+            timing_error --> set_timing
+            
+            validate_timing -- Yes --> select_template{Select Template}
+            
+            select_template -- Choose Existing --> pick_list[Dropdown: Select Saved Template]
+            select_template -- Create New --> open_modal[Open Template Editor Modal]
+            
+            pick_list --> step_ready[Step Configured]
+        end
+        
+        subgraph Template_Modal [Template Editor Modal US-043]
+            open_modal --> edit_content[Rich Text Editor]
+            edit_content --> insert_vars[Insert Dynamic Variables US-044]
+            insert_vars --> save_tpl_click{Click 'Save Template'}
+            
+            save_tpl_click --> validate_tpl{Name Unique & Subject Set?}
+            validate_tpl -- No --> tpl_error[Show Inline Validation Error]:::error
+            tpl_error --> edit_content
+            
+            validate_tpl -- Yes --> save_tpl_db[(Persist Template)]
+            save_tpl_db --> close_modal[Close Modal & Auto-select]
+        end
+        
+        close_modal --> step_ready
+        step_ready --> edit_loop{Add Another / Edit?}
+        edit_loop -- Add Step --> add_step_action
+        edit_loop -- Remove Step --> remove_step[Remove Step UI]
+        remove_step --> check_steps
+        
+        edit_loop -- "Done Editing" --> save_seq_click[Click 'Save Sequence']
+    end
+
+    save_seq_click --> final_validate{Validation Pass? US-041}
+    
+    final_validate -- "Fail (e.g. 0 steps)" --> seq_error[Show Global Error Toast]:::error
+    seq_error --> edit_loop
+    
+    final_validate -- Pass --> activate_check{Activate Immediately?}
+    
+    activate_check -- Yes --> set_active[Set Status = ACTIVE]
+    activate_check -- No --> set_draft[Set Status = DRAFT]
+    
+    set_active --> persist_seq[(Save Sequence to DB)]
+    set_draft --> persist_seq
+    
+    persist_seq --> success_toast[Show 'Sequence Saved' Notification]:::success
+    success_toast --> end_node((End))
+
+    %% Apply Styles
+    class start,end_node,view_list,step_ready ui
+    class init_seq,add_step_action,set_timing,edit_content,insert_vars,pick_list,set_active,set_draft primary
+    class save_tpl_click,save_seq_click,open_modal,remove_step action
+    class check_steps,validate_timing,select_template,validate_tpl,edit_loop,final_validate,activate_check decision
+    class persist_seq,save_tpl_db success
+
+    %% Link styles
+    linkStyle default stroke:#64748b,stroke-width:2px,fill:none

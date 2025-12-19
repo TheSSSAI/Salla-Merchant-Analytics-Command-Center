@@ -1,0 +1,768 @@
+# 1 Overview
+
+## 1.1 Diagram Id
+
+SEQ-CF-002
+
+## 1.2 Name
+
+Data Subject Access Request (DSAR) Processing
+
+## 1.3 Description
+
+A merchant with the 'Owner' role submits a DSAR on behalf of one of their customers to export or delete their data. The request is logged, and a workflow is initiated to gather all PII associated with the customer from the system's databases and package it for export or schedule it for deletion, in compliance with GDPR/CCPA.
+
+## 1.4 Type
+
+🔹 ComplianceFlow
+
+## 1.5 Purpose
+
+To provide merchants with the tools necessary to comply with data privacy regulations like GDPR and CCPA, as required by REQ-NFR-006.
+
+## 1.6 Complexity
+
+High
+
+## 1.7 Priority
+
+🔴 High
+
+## 1.8 Frequency
+
+OnDemand
+
+## 1.9 Participants
+
+- user-browser
+- spa-frontend-001
+- api-gateway-002
+- compliance-service-007
+- oltp-repository-008
+- audit-logger-010
+
+## 1.10 Key Interactions
+
+- Owner submits the DSAR form, providing the customer's identifier (e.g., email) and the request type (export/delete).
+- The Compliance Service receives the request and creates a trackable DSAR record in the database.
+- An audit event is logged for the DSAR submission.
+- For an 'export' request, the service asynchronously queries all relevant tables in the OLTP database to find records associated with the customer.
+- The data is aggregated and formatted into a portable, human-readable format (e.g., JSON).
+- The Owner is notified that the export is ready for secure download.
+- For a 'delete' request, the service flags all associated records for anonymization or hard deletion, which is then processed by a background job.
+
+## 1.11 Triggers
+
+- A store owner initiates a DSAR for one of their customers via the settings UI.
+
+## 1.12 Outcomes
+
+- The merchant receives a package of their customer's data or confirmation of its deletion.
+- The system fulfills its legal obligation as a data processor under privacy laws.
+- A complete record of the DSAR is maintained for audit purposes.
+
+## 1.13 Business Rules
+
+- Only the 'Owner' role can manage DSARs (REQ-NFR-006).
+- All PII data must be identified and included in the request processing.
+- Requests must be tracked and completed within a legally mandated timeframe (e.g., 30 days for GDPR).
+
+## 1.14 Error Scenarios
+
+- Customer identifier does not exist in the system.
+- Data aggregation process fails and requires manual intervention.
+
+## 1.15 Integration Points
+
+*No items available*
+
+# 2.0 Details
+
+## 2.1 Diagram Id
+
+SEQ-CF-002
+
+## 2.2 Name
+
+Data Subject Access Request (DSAR) Processing Flow
+
+## 2.3 Description
+
+Implementation sequence for a merchant with the 'Owner' role initiating a DSAR on behalf of a customer. This sequence covers the submission, validation, logging, and initiation of either a data export or deletion workflow, ensuring compliance with REQ-NFR-006 and data privacy regulations.
+
+## 2.4 Participants
+
+### 2.4.1 Actor
+
+#### 2.4.1.1 Repository Id
+
+user-browser
+
+#### 2.4.1.2 Display Name
+
+Owner's Browser
+
+#### 2.4.1.3 Type
+
+🔹 Actor
+
+#### 2.4.1.4 Technology
+
+Web Browser
+
+#### 2.4.1.5 Order
+
+1
+
+#### 2.4.1.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | actor |
+| Color | #999999 |
+| Stereotype | User |
+
+### 2.4.2.0 FrontendApplication
+
+#### 2.4.2.1 Repository Id
+
+spa-frontend-001
+
+#### 2.4.2.2 Display Name
+
+Frontend SPA
+
+#### 2.4.2.3 Type
+
+🔹 FrontendApplication
+
+#### 2.4.2.4 Technology
+
+React 18, TypeScript 5.4
+
+#### 2.4.2.5 Order
+
+2
+
+#### 2.4.2.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #4287f5 |
+| Stereotype | Presentation Layer |
+
+### 2.4.3.0 Gateway
+
+#### 2.4.3.1 Repository Id
+
+api-gateway-002
+
+#### 2.4.3.2 Display Name
+
+API Gateway
+
+#### 2.4.3.3 Type
+
+🔹 Gateway
+
+#### 2.4.3.4 Technology
+
+AWS API Gateway
+
+#### 2.4.3.5 Order
+
+3
+
+#### 2.4.3.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #f5a642 |
+| Stereotype | API Gateway Layer |
+
+### 2.4.4.0 Serverless Function Group
+
+#### 2.4.4.1 Repository Id
+
+compliance-service-007
+
+#### 2.4.4.2 Display Name
+
+Compliance Service
+
+#### 2.4.4.3 Type
+
+🔹 Serverless Function Group
+
+#### 2.4.4.4 Technology
+
+AWS Lambda, Node.js 20.x
+
+#### 2.4.4.5 Order
+
+4
+
+#### 2.4.4.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #52c234 |
+| Stereotype | Application Service |
+
+### 2.4.5.0 Service
+
+#### 2.4.5.1 Repository Id
+
+audit-logger-010
+
+#### 2.4.5.2 Display Name
+
+Audit Logger
+
+#### 2.4.5.3 Type
+
+🔹 Service
+
+#### 2.4.5.4 Technology
+
+TypeScript Library, Winston
+
+#### 2.4.5.5 Order
+
+5
+
+#### 2.4.5.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #d9534f |
+| Stereotype | Cross-Cutting Concern |
+
+### 2.4.6.0 Repository
+
+#### 2.4.6.1 Repository Id
+
+oltp-repository-008
+
+#### 2.4.6.2 Display Name
+
+OLTP Repository
+
+#### 2.4.6.3 Type
+
+🔹 Repository
+
+#### 2.4.6.4 Technology
+
+Prisma, PostgreSQL 16
+
+#### 2.4.6.5 Order
+
+6
+
+#### 2.4.6.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | database |
+| Color | #5bc0de |
+| Stereotype | Infrastructure Layer |
+
+## 2.5.0.0 Interactions
+
+### 2.5.1.0 UI Interaction
+
+#### 2.5.1.1 Source Id
+
+user-browser
+
+#### 2.5.1.2 Target Id
+
+spa-frontend-001
+
+#### 2.5.1.3 Message
+
+1. Submits DSAR form with customer identifier (email) and request type (export/delete).
+
+#### 2.5.1.4 Sequence Number
+
+1
+
+#### 2.5.1.5 Type
+
+🔹 UI Interaction
+
+#### 2.5.1.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.1.7 Return Message
+
+
+
+#### 2.5.1.8 Has Return
+
+❌ No
+
+#### 2.5.1.9 Is Activation
+
+✅ Yes
+
+#### 2.5.1.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | User Input |
+| Method | onSubmit |
+| Parameters | dsarFormData: { customerIdentifier: string, reques... |
+| Authentication | N/A |
+| Error Handling | Client-side validation for required fields and val... |
+| Performance | Form submission should be immediate. |
+
+### 2.5.2.0 API Call
+
+#### 2.5.2.1 Source Id
+
+spa-frontend-001
+
+#### 2.5.2.2 Target Id
+
+api-gateway-002
+
+#### 2.5.2.3 Message
+
+2. POST /dsar
+
+#### 2.5.2.4 Sequence Number
+
+2
+
+#### 2.5.2.5 Type
+
+🔹 API Call
+
+#### 2.5.2.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.2.7 Return Message
+
+3. 202 Accepted
+
+#### 2.5.2.8 Has Return
+
+✅ Yes
+
+#### 2.5.2.9 Is Activation
+
+✅ Yes
+
+#### 2.5.2.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | HTTPS/REST |
+| Method | POST |
+| Parameters | Body: { customerIdentifier: string, requestType: '... |
+| Authentication | JWT Bearer Token in 'Authorization' header. |
+| Error Handling | Handles 401/403 for auth errors, 429 for rate limi... |
+| Performance | p95 < 200ms as per REQ-PERF-001. |
+
+### 2.5.3.0 Function Invocation
+
+#### 2.5.3.1 Source Id
+
+api-gateway-002
+
+#### 2.5.3.2 Target Id
+
+compliance-service-007
+
+#### 2.5.3.3 Message
+
+4. Invoke DSAR handler function.
+
+#### 2.5.3.4 Sequence Number
+
+3
+
+#### 2.5.3.5 Type
+
+🔹 Function Invocation
+
+#### 2.5.3.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.3.7 Return Message
+
+12. Return result of DSAR initiation.
+
+#### 2.5.3.8 Has Return
+
+✅ Yes
+
+#### 2.5.3.9 Is Activation
+
+✅ Yes
+
+#### 2.5.3.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | AWS SDK Invoke |
+| Method | N/A |
+| Parameters | Lambda event payload containing request body and a... |
+| Authentication | IAM Role. |
+| Error Handling | Propagates exceptions from the service back to the... |
+| Performance | N/A |
+
+#### 2.5.3.11 Nested Interactions
+
+##### 2.5.3.11.1 Security Checkpoint
+
+###### 2.5.3.11.1.1 Source Id
+
+compliance-service-007
+
+###### 2.5.3.11.1.2 Target Id
+
+compliance-service-007
+
+###### 2.5.3.11.1.3 Message
+
+5. Validate role: Check if user role from JWT is 'Owner'.
+
+###### 2.5.3.11.1.4 Sequence Number
+
+4
+
+###### 2.5.3.11.1.5 Type
+
+🔹 Security Checkpoint
+
+###### 2.5.3.11.1.6 Is Synchronous
+
+✅ Yes
+
+###### 2.5.3.11.1.7 Return Message
+
+
+
+###### 2.5.3.11.1.8 Has Return
+
+❌ No
+
+###### 2.5.3.11.1.9 Is Activation
+
+❌ No
+
+###### 2.5.3.11.1.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Internal Logic |
+| Method | authorizeRequest(user.role) |
+| Parameters | role: string |
+| Authentication | N/A |
+| Error Handling | If role is not 'Owner', throw new ForbiddenError(4... |
+| Performance | Sub-millisecond operation. |
+
+##### 2.5.3.11.2.0 Service Call
+
+###### 2.5.3.11.2.1 Source Id
+
+compliance-service-007
+
+###### 2.5.3.11.2.2 Target Id
+
+audit-logger-010
+
+###### 2.5.3.11.2.3 Message
+
+6. logEvent('DSAR Submitted')
+
+###### 2.5.3.11.2.4 Sequence Number
+
+5
+
+###### 2.5.3.11.2.5 Type
+
+🔹 Service Call
+
+###### 2.5.3.11.2.6 Is Synchronous
+
+✅ Yes
+
+###### 2.5.3.11.2.7 Return Message
+
+7. Acknowledges log.
+
+###### 2.5.3.11.2.8 Has Return
+
+✅ Yes
+
+###### 2.5.3.11.2.9 Is Activation
+
+✅ Yes
+
+###### 2.5.3.11.2.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Internal Function Call |
+| Method | logEvent |
+| Parameters | event: { eventType: 'DSAR Submitted', actingUserId... |
+| Authentication | N/A |
+| Error Handling | Logging failures should not block the main workflo... |
+| Performance | Should be highly performant; potentially asynchron... |
+
+##### 2.5.3.11.3.0 Database Operation
+
+###### 2.5.3.11.3.1 Source Id
+
+compliance-service-007
+
+###### 2.5.3.11.3.2 Target Id
+
+oltp-repository-008
+
+###### 2.5.3.11.3.3 Message
+
+8. createDsarRecord(...)
+
+###### 2.5.3.11.3.4 Sequence Number
+
+6
+
+###### 2.5.3.11.3.5 Type
+
+🔹 Database Operation
+
+###### 2.5.3.11.3.6 Is Synchronous
+
+✅ Yes
+
+###### 2.5.3.11.3.7 Return Message
+
+9. Returns created DSAR record with unique ID.
+
+###### 2.5.3.11.3.8 Has Return
+
+✅ Yes
+
+###### 2.5.3.11.3.9 Is Activation
+
+✅ Yes
+
+###### 2.5.3.11.3.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Prisma Client |
+| Method | prisma.dsarRequest.create |
+| Parameters | data: { id, merchantId, customerIdentifier, reques... |
+| Authentication | Database connection credentials. |
+| Error Handling | Handles potential database errors (e.g., connectio... |
+| Performance | Typical transactional DB write latency. |
+
+##### 2.5.3.11.4.0 Asynchronous Task
+
+###### 2.5.3.11.4.1 Source Id
+
+compliance-service-007
+
+###### 2.5.3.11.4.2 Target Id
+
+compliance-service-007
+
+###### 2.5.3.11.4.3 Message
+
+10. Initiate asynchronous workflow based on request type.
+
+###### 2.5.3.11.4.4 Sequence Number
+
+7
+
+###### 2.5.3.11.4.5 Type
+
+🔹 Asynchronous Task
+
+###### 2.5.3.11.4.6 Is Synchronous
+
+❌ No
+
+###### 2.5.3.11.4.7 Return Message
+
+
+
+###### 2.5.3.11.4.8 Has Return
+
+❌ No
+
+###### 2.5.3.11.4.9 Is Activation
+
+❌ No
+
+###### 2.5.3.11.4.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Message Queue (e.g., SQS) |
+| Method | sendMessage |
+| Parameters | messageBody: { dsarRequestId: string, requestType:... |
+| Authentication | IAM Role. |
+| Error Handling | If queuing fails, the DSAR record status should be... |
+| Performance | The synchronous part of the API call ends here, re... |
+
+##### 2.5.3.11.5.0 API Response
+
+###### 2.5.3.11.5.1 Source Id
+
+compliance-service-007
+
+###### 2.5.3.11.5.2 Target Id
+
+spa-frontend-001
+
+###### 2.5.3.11.5.3 Message
+
+11. Acknowledges DSAR submission.
+
+###### 2.5.3.11.5.4 Sequence Number
+
+8
+
+###### 2.5.3.11.5.5 Type
+
+🔹 API Response
+
+###### 2.5.3.11.5.6 Is Synchronous
+
+✅ Yes
+
+###### 2.5.3.11.5.7 Return Message
+
+
+
+###### 2.5.3.11.5.8 Has Return
+
+❌ No
+
+###### 2.5.3.11.5.9 Is Activation
+
+❌ No
+
+###### 2.5.3.11.5.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | HTTPS/REST |
+| Method | N/A |
+| Parameters | Body: { message: 'DSAR successfully submitted. You... |
+| Authentication | N/A |
+| Error Handling | N/A |
+| Performance | N/A |
+
+### 2.5.4.0.0.0 UI Update
+
+#### 2.5.4.1.0.0 Source Id
+
+spa-frontend-001
+
+#### 2.5.4.2.0.0 Target Id
+
+user-browser
+
+#### 2.5.4.3.0.0 Message
+
+13. Displays success message to the Owner.
+
+#### 2.5.4.4.0.0 Sequence Number
+
+9
+
+#### 2.5.4.5.0.0 Type
+
+🔹 UI Update
+
+#### 2.5.4.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.4.7.0.0 Return Message
+
+
+
+#### 2.5.4.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.4.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.4.10.0.0 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | DOM Manipulation |
+| Method | N/A |
+| Parameters | N/A |
+| Authentication | N/A |
+| Error Handling | N/A |
+| Performance | Immediate. |
+
+## 2.6.0.0.0.0 Notes
+
+### 2.6.1.0.0.0 Content
+
+#### 2.6.1.1.0.0 Content
+
+The asynchronous worker (not shown) consumes the message from the queue. For 'export', it queries all tables with PII, aggregates data, and notifies the Owner. For 'delete', it flags records for anonymization, which is handled by another scheduled job.
+
+#### 2.6.1.2.0.0 Position
+
+bottom
+
+#### 2.6.1.3.0.0 Participant Id
+
+*Not specified*
+
+#### 2.6.1.4.0.0 Sequence Number
+
+7
+
+### 2.6.2.0.0.0 Content
+
+#### 2.6.2.1.0.0 Content
+
+All DSAR operations, including status changes (e.g., 'in_progress', 'completed', 'failed') and final actions, must be recorded in the audit log to maintain a complete and immutable compliance trail.
+
+#### 2.6.2.2.0.0 Position
+
+right
+
+#### 2.6.2.3.0.0 Participant Id
+
+audit-logger-010
+
+#### 2.6.2.4.0.0 Sequence Number
+
+5
+
+## 2.7.0.0.0.0 Implementation Guidance
+
+| Property | Value |
+|----------|-------|
+| Security Requirements | Strict RBAC must be enforced at the API Gateway an... |
+| Performance Targets | The initial synchronous API call must complete wit... |
+| Error Handling Strategy | If the asynchronous worker fails to process a requ... |
+| Testing Considerations | E2E tests must cover both 'export' and 'delete' sc... |
+| Monitoring Requirements | Monitor the DSAR processing queue for message back... |
+| Deployment Considerations | The list of tables and columns containing PII must... |
+

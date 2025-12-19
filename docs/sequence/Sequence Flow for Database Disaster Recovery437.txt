@@ -1,0 +1,1265 @@
+# 1 Overview
+
+## 1.1 Diagram Id
+
+SEQ-RF-001
+
+## 1.2 Name
+
+Database Disaster Recovery
+
+## 1.3 Description
+
+A catastrophic failure occurs, rendering the primary OLTP database unavailable. An on-call engineer is alerted and initiates the disaster recovery plan. They use a managed database service feature to restore the database to a new instance from the latest automated snapshot or point-in-time backup, then update the application configuration to point to the new database instance.
+
+## 1.4 Type
+
+🔹 RecoveryFlow
+
+## 1.5 Purpose
+
+To restore database service within the defined Recovery Time Objective (RTO) and Recovery Point Objective (RPO) in the event of a major failure, ensuring business continuity as per REQ-NFR-002.
+
+## 1.6 Complexity
+
+Critical
+
+## 1.7 Priority
+
+🚨 Critical
+
+## 1.8 Frequency
+
+OnDemand
+
+## 1.9 Participants
+
+- oltp-repository-008
+- cloud-provider-managed-db-service
+
+## 1.10 Key Interactions
+
+- Monitoring systems detect the database is down and send a critical alert to PagerDuty.
+- On-call engineer acknowledges the alert and assesses that a restore is necessary.
+- Engineer initiates the 'restore from backup' or 'point-in-time recovery' process in the cloud provider's console.
+- The managed service provisions a new database instance and restores data from the latest valid backup.
+- Once the restore is complete, the engineer performs a quick validation of data integrity.
+- The application's environment variables (e.g., Vercel Environment Variables) are updated with the new database connection string.
+- The application is redeployed to connect to the restored database.
+
+## 1.11 Triggers
+
+- A critical, unrecoverable failure of the primary database instance (e.g., hardware failure, data corruption).
+
+## 1.12 Outcomes
+
+- Database service is restored.
+- Data loss is limited to the Recovery Point Objective (RPO) of 24 hours.
+- The application becomes available again to users within the Recovery Time Objective (RTO) of 4 hours.
+
+## 1.13 Business Rules
+
+- RPO must be 24 hours or less.
+- RTO must be 4 hours or less.
+- The disaster recovery plan must be documented in a runbook and tested at least annually.
+
+## 1.14 Error Scenarios
+
+- The latest backup is found to be corrupt, requiring restoration from an older backup.
+- The restore process takes longer than the RTO, impacting the SLA.
+
+## 1.15 Integration Points
+
+- Cloud Provider's Managed Database Service (e.g., Vercel Postgres, AWS RDS).
+- Alerting System (e.g., PagerDuty).
+
+# 2.0 Details
+
+## 2.1 Diagram Id
+
+SEQ-RF-001
+
+## 2.2 Name
+
+Database Disaster Recovery from Managed Backup
+
+## 2.3 Description
+
+This sequence details the technical steps for recovering the primary OLTP database following a catastrophic failure. The process is initiated by an automated alert and executed by an on-call engineer, leveraging the cloud provider's managed database service. The primary goal is to restore service within the 4-hour Recovery Time Objective (RTO) and with data loss less than the 24-hour Recovery Point Objective (RPO), as mandated by REQ-NFR-002.
+
+## 2.4 Participants
+
+### 2.4.1 Monitoring Platform
+
+#### 2.4.1.1 Repository Id
+
+monitoring-system
+
+#### 2.4.1.2 Display Name
+
+Monitoring System
+
+#### 2.4.1.3 Type
+
+🔹 Monitoring Platform
+
+#### 2.4.1.4 Technology
+
+AWS CloudWatch / Vercel Observability
+
+#### 2.4.1.5 Order
+
+1
+
+#### 2.4.1.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | actor |
+| Color | #C0C0C0 |
+| Stereotype | System |
+
+### 2.4.2.0 Alerting Service
+
+#### 2.4.2.1 Repository Id
+
+pagerduty-service
+
+#### 2.4.2.2 Display Name
+
+PagerDuty
+
+#### 2.4.2.3 Type
+
+🔹 Alerting Service
+
+#### 2.4.2.4 Technology
+
+PagerDuty API v2
+
+#### 2.4.2.5 Order
+
+2
+
+#### 2.4.2.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | actor |
+| Color | #28A745 |
+| Stereotype | External |
+
+### 2.4.3.0 Human Actor
+
+#### 2.4.3.1 Repository Id
+
+on-call-engineer
+
+#### 2.4.3.2 Display Name
+
+On-Call Engineer
+
+#### 2.4.3.3 Type
+
+🔹 Human Actor
+
+#### 2.4.3.4 Technology
+
+Web Browser, Cloud CLI
+
+#### 2.4.3.5 Order
+
+3
+
+#### 2.4.3.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | actor |
+| Color | #007BFF |
+| Stereotype | Human |
+
+### 2.4.4.0 Managed Database Service
+
+#### 2.4.4.1 Repository Id
+
+cloud-provider-managed-db-service
+
+#### 2.4.4.2 Display Name
+
+Cloud Provider DB Service
+
+#### 2.4.4.3 Type
+
+🔹 Managed Database Service
+
+#### 2.4.4.4 Technology
+
+Vercel Postgres / AWS RDS
+
+#### 2.4.4.5 Order
+
+4
+
+#### 2.4.4.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | database |
+| Color | #FFC107 |
+| Stereotype | External |
+
+### 2.4.5.0 Configuration Management
+
+#### 2.4.5.1 Repository Id
+
+app-config-management-service
+
+#### 2.4.5.2 Display Name
+
+App Config Mgmt (Vercel)
+
+#### 2.4.5.3 Type
+
+🔹 Configuration Management
+
+#### 2.4.5.4 Technology
+
+Vercel API/Dashboard
+
+#### 2.4.5.5 Order
+
+5
+
+#### 2.4.5.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #6C757D |
+| Stereotype | System |
+
+### 2.4.6.0 CI/CD System
+
+#### 2.4.6.1 Repository Id
+
+ci-cd-pipeline
+
+#### 2.4.6.2 Display Name
+
+CI/CD Pipeline
+
+#### 2.4.6.3 Type
+
+🔹 CI/CD System
+
+#### 2.4.6.4 Technology
+
+GitHub Actions
+
+#### 2.4.6.5 Order
+
+6
+
+#### 2.4.6.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #17A2B8 |
+| Stereotype | System |
+
+### 2.4.7.0 Application
+
+#### 2.4.7.1 Repository Id
+
+application-services-layer
+
+#### 2.4.7.2 Display Name
+
+Application Services
+
+#### 2.4.7.3 Type
+
+🔹 Application
+
+#### 2.4.7.4 Technology
+
+Vercel Functions / AWS Lambda
+
+#### 2.4.7.5 Order
+
+7
+
+#### 2.4.7.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #FD7E14 |
+| Stereotype | System |
+
+## 2.5.0.0 Interactions
+
+### 2.5.1.0 System Event
+
+#### 2.5.1.1 Source Id
+
+application-services-layer
+
+#### 2.5.1.2 Target Id
+
+monitoring-system
+
+#### 2.5.1.3 Message
+
+1. Fails health checks and reports high error rate due to DB connection loss.
+
+#### 2.5.1.4 Sequence Number
+
+1
+
+#### 2.5.1.5 Type
+
+🔹 System Event
+
+#### 2.5.1.6 Is Synchronous
+
+❌ No
+
+#### 2.5.1.7 Has Return
+
+❌ No
+
+#### 2.5.1.8 Is Activation
+
+✅ Yes
+
+#### 2.5.1.9 Technical Details
+
+##### 2.5.1.9.1 Protocol
+
+Metrics/Logs Stream
+
+##### 2.5.1.9.2 Method
+
+N/A
+
+##### 2.5.1.9.3 Parameters
+
+*No data available*
+
+##### 2.5.1.9.4 Authentication
+
+IAM Role
+
+##### 2.5.1.9.5 Error Handling
+
+N/A
+
+##### 2.5.1.9.6 Performance
+
+*No data available*
+
+### 2.5.2.0.0 API Call
+
+#### 2.5.2.1.0 Source Id
+
+monitoring-system
+
+#### 2.5.2.2.0 Target Id
+
+pagerduty-service
+
+#### 2.5.2.3.0 Message
+
+2. Triggers Critical Alert: 'Primary OLTP Database is Unresponsive'
+
+#### 2.5.2.4.0 Sequence Number
+
+2
+
+#### 2.5.2.5.0 Type
+
+🔹 API Call
+
+#### 2.5.2.6.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.2.7.0 Return Message
+
+2.1. HTTP 202 Accepted
+
+#### 2.5.2.8.0 Has Return
+
+✅ Yes
+
+#### 2.5.2.9.0 Is Activation
+
+✅ Yes
+
+#### 2.5.2.10.0 Technical Details
+
+##### 2.5.2.10.1 Protocol
+
+HTTPS
+
+##### 2.5.2.10.2 Method
+
+POST /v2/enqueue
+
+##### 2.5.2.10.3 Parameters
+
+| Property | Value |
+|----------|-------|
+| Payload | { summary: 'DB Down', source: 'CloudWatch', severi... |
+
+##### 2.5.2.10.4 Authentication
+
+PagerDuty API Key (Header)
+
+##### 2.5.2.10.5 Error Handling
+
+Retry with exponential backoff on transient network errors.
+
+##### 2.5.2.10.6 Performance
+
+###### 2.5.2.10.6.1 Latency
+
+<2s
+
+### 2.5.3.0.0.0 Notification
+
+#### 2.5.3.1.0.0 Source Id
+
+pagerduty-service
+
+#### 2.5.3.2.0.0 Target Id
+
+on-call-engineer
+
+#### 2.5.3.3.0.0 Message
+
+3. Sends alert notification (Push, SMS, Call)
+
+#### 2.5.3.4.0.0 Sequence Number
+
+3
+
+#### 2.5.3.5.0.0 Type
+
+🔹 Notification
+
+#### 2.5.3.6.0.0 Is Synchronous
+
+❌ No
+
+#### 2.5.3.7.0.0 Has Return
+
+❌ No
+
+#### 2.5.3.8.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.3.9.0.0 Technical Details
+
+##### 2.5.3.9.1.0 Protocol
+
+Push/SMS/Voice
+
+##### 2.5.3.9.2.0 Method
+
+N/A
+
+##### 2.5.3.9.3.0 Parameters
+
+*No data available*
+
+##### 2.5.3.9.4.0 Authentication
+
+N/A
+
+##### 2.5.3.9.5.0 Error Handling
+
+Escalate to secondary on-call if no acknowledgement.
+
+##### 2.5.3.9.6.0 Performance
+
+*No data available*
+
+### 2.5.4.0.0.0 User Interaction
+
+#### 2.5.4.1.0.0 Source Id
+
+on-call-engineer
+
+#### 2.5.4.2.0.0 Target Id
+
+pagerduty-service
+
+#### 2.5.4.3.0.0 Message
+
+4. Acknowledges alert via PagerDuty app/website
+
+#### 2.5.4.4.0.0 Sequence Number
+
+4
+
+#### 2.5.4.5.0.0 Type
+
+🔹 User Interaction
+
+#### 2.5.4.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.4.7.0.0 Return Message
+
+4.1. Incident Acknowledged
+
+#### 2.5.4.8.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.4.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.4.10.0.0 Technical Details
+
+##### 2.5.4.10.1.0 Protocol
+
+HTTPS
+
+##### 2.5.4.10.2.0 Method
+
+PUT /incidents/{id}
+
+##### 2.5.4.10.3.0 Parameters
+
+| Property | Value |
+|----------|-------|
+| Status | acknowledged |
+
+##### 2.5.4.10.4.0 Authentication
+
+User Session
+
+##### 2.5.4.10.5.0 Error Handling
+
+UI displays error if acknowledgement fails.
+
+##### 2.5.4.10.6.0 Performance
+
+*No data available*
+
+### 2.5.5.0.0.0 User Interaction
+
+#### 2.5.5.1.0.0 Source Id
+
+on-call-engineer
+
+#### 2.5.5.2.0.0 Target Id
+
+monitoring-system
+
+#### 2.5.5.3.0.0 Message
+
+5. Investigates dashboards; confirms unrecoverable DB failure.
+
+#### 2.5.5.4.0.0 Sequence Number
+
+5
+
+#### 2.5.5.5.0.0 Type
+
+🔹 User Interaction
+
+#### 2.5.5.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.5.7.0.0 Return Message
+
+5.1. Displays logs and metrics showing sustained failure.
+
+#### 2.5.5.8.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.5.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.5.10.0.0 Technical Details
+
+##### 2.5.5.10.1.0 Protocol
+
+HTTPS
+
+##### 2.5.5.10.2.0 Method
+
+GET /dashboards/database-health
+
+##### 2.5.5.10.3.0 Parameters
+
+*No data available*
+
+##### 2.5.5.10.4.0 Authentication
+
+User Session (IAM)
+
+##### 2.5.5.10.5.0 Error Handling
+
+N/A
+
+##### 2.5.5.10.6.0 Performance
+
+*No data available*
+
+### 2.5.6.0.0.0 User Command
+
+#### 2.5.6.1.0.0 Source Id
+
+on-call-engineer
+
+#### 2.5.6.2.0.0 Target Id
+
+cloud-provider-managed-db-service
+
+#### 2.5.6.3.0.0 Message
+
+6. Initiates Point-in-Time Recovery via Cloud Console/CLI
+
+#### 2.5.6.4.0.0 Sequence Number
+
+6
+
+#### 2.5.6.5.0.0 Type
+
+🔹 User Command
+
+#### 2.5.6.6.0.0 Is Synchronous
+
+❌ No
+
+#### 2.5.6.7.0.0 Return Message
+
+6.1. Restore process started successfully.
+
+#### 2.5.6.8.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.6.9.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.6.10.0.0 Technical Details
+
+##### 2.5.6.10.1.0 Protocol
+
+HTTPS/CLI
+
+##### 2.5.6.10.2.0 Method
+
+e.g., `vercel-postgres restore --to=latest`
+
+##### 2.5.6.10.3.0 Parameters
+
+| Property | Value |
+|----------|-------|
+| Source Db Id | prod-db-01 |
+| Restore Point | Latest available within RPO |
+
+##### 2.5.6.10.4.0 Authentication
+
+IAM User Credentials with MFA
+
+##### 2.5.6.10.5.0 Error Handling
+
+Console/CLI provides immediate feedback on command failure.
+
+##### 2.5.6.10.6.0 Performance
+
+*No data available*
+
+### 2.5.7.0.0.0 Internal Process
+
+#### 2.5.7.1.0.0 Source Id
+
+cloud-provider-managed-db-service
+
+#### 2.5.7.2.0.0 Target Id
+
+cloud-provider-managed-db-service
+
+#### 2.5.7.3.0.0 Message
+
+7. Provisions new DB instance and restores data from snapshot.
+
+#### 2.5.7.4.0.0 Sequence Number
+
+7
+
+#### 2.5.7.5.0.0 Type
+
+🔹 Internal Process
+
+#### 2.5.7.6.0.0 Is Synchronous
+
+❌ No
+
+#### 2.5.7.7.0.0 Has Return
+
+❌ No
+
+#### 2.5.7.8.0.0 Is Activation
+
+❌ No
+
+#### 2.5.7.9.0.0 Technical Details
+
+##### 2.5.7.9.1.0 Protocol
+
+Internal
+
+##### 2.5.7.9.2.0 Method
+
+N/A
+
+##### 2.5.7.9.3.0 Parameters
+
+*No data available*
+
+##### 2.5.7.9.4.0 Authentication
+
+N/A
+
+##### 2.5.7.9.5.0 Error Handling
+
+Internal alerts to cloud provider SREs on failure.
+
+##### 2.5.7.9.6.0 Performance
+
+###### 2.5.7.9.6.1 Notes
+
+This is the longest step, must complete well within the 4-hour RTO.
+
+### 2.5.8.0.0.0 Notification
+
+#### 2.5.8.1.0.0 Source Id
+
+cloud-provider-managed-db-service
+
+#### 2.5.8.2.0.0 Target Id
+
+on-call-engineer
+
+#### 2.5.8.3.0.0 Message
+
+8. Notifies that restore is complete (e.g., via email or console status update)
+
+#### 2.5.8.4.0.0 Sequence Number
+
+8
+
+#### 2.5.8.5.0.0 Type
+
+🔹 Notification
+
+#### 2.5.8.6.0.0 Is Synchronous
+
+❌ No
+
+#### 2.5.8.7.0.0 Has Return
+
+❌ No
+
+#### 2.5.8.8.0.0 Is Activation
+
+❌ No
+
+#### 2.5.8.9.0.0 Technical Details
+
+##### 2.5.8.9.1.0 Protocol
+
+Email/UI
+
+##### 2.5.8.9.2.0 Method
+
+N/A
+
+##### 2.5.8.9.3.0 Parameters
+
+*No data available*
+
+##### 2.5.8.9.4.0 Authentication
+
+N/A
+
+##### 2.5.8.9.5.0 Error Handling
+
+N/A
+
+##### 2.5.8.9.6.0 Performance
+
+*No data available*
+
+### 2.5.9.0.0.0 Database Connection
+
+#### 2.5.9.1.0.0 Source Id
+
+on-call-engineer
+
+#### 2.5.9.2.0.0 Target Id
+
+cloud-provider-managed-db-service
+
+#### 2.5.9.3.0.0 Message
+
+9. Connects to new DB instance to perform data validation
+
+#### 2.5.9.4.0.0 Sequence Number
+
+9
+
+#### 2.5.9.5.0.0 Type
+
+🔹 Database Connection
+
+#### 2.5.9.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.9.7.0.0 Return Message
+
+9.1. Connection successful
+
+#### 2.5.9.8.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.9.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.9.10.0.0 Technical Details
+
+##### 2.5.9.10.1.0 Protocol
+
+TCP/Postgres
+
+##### 2.5.9.10.2.0 Method
+
+N/A
+
+##### 2.5.9.10.3.0 Parameters
+
+| Property | Value |
+|----------|-------|
+| Connection String | newly-provided-db-url |
+
+##### 2.5.9.10.4.0 Authentication
+
+Database Credentials
+
+##### 2.5.9.10.5.0 Error Handling
+
+Client tool reports connection failure.
+
+##### 2.5.9.10.6.0 Performance
+
+*No data available*
+
+### 2.5.10.0.0.0 API Call
+
+#### 2.5.10.1.0.0 Source Id
+
+on-call-engineer
+
+#### 2.5.10.2.0.0 Target Id
+
+app-config-management-service
+
+#### 2.5.10.3.0.0 Message
+
+10. Updates DATABASE_URL environment variable with new connection string
+
+#### 2.5.10.4.0.0 Sequence Number
+
+10
+
+#### 2.5.10.5.0.0 Type
+
+🔹 API Call
+
+#### 2.5.10.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.10.7.0.0 Return Message
+
+10.1. HTTP 200 OK
+
+#### 2.5.10.8.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.10.9.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.10.10.0.0 Technical Details
+
+##### 2.5.10.10.1.0 Protocol
+
+HTTPS
+
+##### 2.5.10.10.2.0 Method
+
+PATCH /v8/projects/{proj_id}/env/{env_id}
+
+##### 2.5.10.10.3.0 Parameters
+
+| Property | Value |
+|----------|-------|
+| Value | new-db-connection-string |
+
+##### 2.5.10.10.4.0 Authentication
+
+Vercel API Token / User Session
+
+##### 2.5.10.10.5.0 Error Handling
+
+API returns 4xx/5xx error on failure.
+
+##### 2.5.10.10.6.0 Performance
+
+###### 2.5.10.10.6.1 Latency
+
+<1s
+
+### 2.5.11.0.0.0 User Interaction
+
+#### 2.5.11.1.0.0 Source Id
+
+on-call-engineer
+
+#### 2.5.11.2.0.0 Target Id
+
+ci-cd-pipeline
+
+#### 2.5.11.3.0.0 Message
+
+11. Triggers redeployment of production application
+
+#### 2.5.11.4.0.0 Sequence Number
+
+11
+
+#### 2.5.11.5.0.0 Type
+
+🔹 User Interaction
+
+#### 2.5.11.6.0.0 Is Synchronous
+
+❌ No
+
+#### 2.5.11.7.0.0 Return Message
+
+11.1. New build/deployment pipeline initiated.
+
+#### 2.5.11.8.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.11.9.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.11.10.0.0 Technical Details
+
+##### 2.5.11.10.1.0 Protocol
+
+HTTPS
+
+##### 2.5.11.10.2.0 Method
+
+POST /repos/{owner}/{repo}/actions/workflows/{id}/dispatches
+
+##### 2.5.11.10.3.0 Parameters
+
+| Property | Value |
+|----------|-------|
+| Ref | main |
+
+##### 2.5.11.10.4.0 Authentication
+
+GitHub User Session
+
+##### 2.5.11.10.5.0 Error Handling
+
+UI shows error if trigger fails.
+
+##### 2.5.11.10.6.0 Performance
+
+*No data available*
+
+### 2.5.12.0.0.0 Deployment
+
+#### 2.5.12.1.0.0 Source Id
+
+ci-cd-pipeline
+
+#### 2.5.12.2.0.0 Target Id
+
+application-services-layer
+
+#### 2.5.12.3.0.0 Message
+
+12. Deploys new version of the application with updated configuration
+
+#### 2.5.12.4.0.0 Sequence Number
+
+12
+
+#### 2.5.12.5.0.0 Type
+
+🔹 Deployment
+
+#### 2.5.12.6.0.0 Is Synchronous
+
+❌ No
+
+#### 2.5.12.7.0.0 Has Return
+
+❌ No
+
+#### 2.5.12.8.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.12.9.0.0 Technical Details
+
+##### 2.5.12.9.1.0 Protocol
+
+Internal/Cloud API
+
+##### 2.5.12.9.2.0 Method
+
+N/A
+
+##### 2.5.12.9.3.0 Parameters
+
+*No data available*
+
+##### 2.5.12.9.4.0 Authentication
+
+IAM Role/Service Principal
+
+##### 2.5.12.9.5.0 Error Handling
+
+Deployment failure sends notification to dev team.
+
+##### 2.5.12.9.6.0 Performance
+
+*No data available*
+
+### 2.5.13.0.0.0 Database Connection
+
+#### 2.5.13.1.0.0 Source Id
+
+application-services-layer
+
+#### 2.5.13.2.0.0 Target Id
+
+cloud-provider-managed-db-service
+
+#### 2.5.13.3.0.0 Message
+
+13. Establishes successful connections to restored database
+
+#### 2.5.13.4.0.0 Sequence Number
+
+13
+
+#### 2.5.13.5.0.0 Type
+
+🔹 Database Connection
+
+#### 2.5.13.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.13.7.0.0 Return Message
+
+13.1. Connection successful
+
+#### 2.5.13.8.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.13.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.13.10.0.0 Technical Details
+
+##### 2.5.13.10.1.0 Protocol
+
+TCP/Postgres
+
+##### 2.5.13.10.2.0 Method
+
+N/A
+
+##### 2.5.13.10.3.0 Parameters
+
+*No data available*
+
+##### 2.5.13.10.4.0 Authentication
+
+Database Credentials
+
+##### 2.5.13.10.5.0 Error Handling
+
+Failed connections will cause function errors and trigger application-level alerts.
+
+##### 2.5.13.10.6.0 Performance
+
+*No data available*
+
+### 2.5.14.0.0.0 User Interaction
+
+#### 2.5.14.1.0.0 Source Id
+
+on-call-engineer
+
+#### 2.5.14.2.0.0 Target Id
+
+monitoring-system
+
+#### 2.5.14.3.0.0 Message
+
+14. Monitors application health and resolves incident
+
+#### 2.5.14.4.0.0 Sequence Number
+
+14
+
+#### 2.5.14.5.0.0 Type
+
+🔹 User Interaction
+
+#### 2.5.14.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.14.7.0.0 Return Message
+
+14.1. Dashboards show healthy status (2xx responses, low latency).
+
+#### 2.5.14.8.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.14.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.14.10.0.0 Technical Details
+
+##### 2.5.14.10.1.0 Protocol
+
+HTTPS
+
+##### 2.5.14.10.2.0 Method
+
+N/A
+
+##### 2.5.14.10.3.0 Parameters
+
+*No data available*
+
+##### 2.5.14.10.4.0 Authentication
+
+User Session
+
+##### 2.5.14.10.5.0 Error Handling
+
+If metrics are unhealthy, engineer re-investigates.
+
+##### 2.5.14.10.6.0 Performance
+
+*No data available*
+
+## 2.6.0.0.0.0 Notes
+
+### 2.6.1.0.0.0 Content
+
+#### 2.6.1.1.0.0 Content
+
+RTO Constraint: The entire process from alert (Step 2) to restored service (Step 13) must be completed in under 4 hours.
+
+#### 2.6.1.2.0.0 Position
+
+top-right
+
+#### 2.6.1.3.0.0 Participant Id
+
+*Not specified*
+
+#### 2.6.1.4.0.0 Sequence Number
+
+*Not specified*
+
+### 2.6.2.0.0.0 Content
+
+#### 2.6.2.1.0.0 Content
+
+RPO Constraint: The restore point (Step 6) must not be more than 24 hours in the past.
+
+#### 2.6.2.2.0.0 Position
+
+top-right
+
+#### 2.6.2.3.0.0 Participant Id
+
+*Not specified*
+
+#### 2.6.2.4.0.0 Sequence Number
+
+*Not specified*
+
+### 2.6.3.0.0.0 Content
+
+#### 2.6.3.1.0.0 Content
+
+This entire flow should be documented as a runbook and tested at least annually per REQ-NFR-002.
+
+#### 2.6.3.2.0.0 Position
+
+bottom-left
+
+#### 2.6.3.3.0.0 Participant Id
+
+*Not specified*
+
+#### 2.6.3.4.0.0 Sequence Number
+
+*Not specified*
+
+## 2.7.0.0.0.0 Implementation Guidance
+
+| Property | Value |
+|----------|-------|
+| Security Requirements | The on-call engineer must have pre-configured, hig... |
+| Performance Targets | The primary performance target is the Recovery Tim... |
+| Error Handling Strategy | If the latest backup/snapshot is found to be corru... |
+| Testing Considerations | A full disaster recovery drill must be performed a... |
+| Monitoring Requirements | Post-recovery, the newly provisioned database inst... |
+| Deployment Considerations | The application must be architected to handle data... |
+

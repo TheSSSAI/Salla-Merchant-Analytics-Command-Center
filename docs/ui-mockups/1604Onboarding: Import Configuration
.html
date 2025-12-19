@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configure Data Import - Onboarding</title>
+    <style>
+        /* 
+         * DESIGN SYSTEM TOKENS 
+         * Extracted from the provided Design System context
+         */
+        :root {
+            /* Color Palette: Primary (Indigo) */
+            --color-primary-50: #eef2ff;
+            --color-primary-100: #e0e7ff;
+            --color-primary-500: #6366f1;
+            --color-primary-600: #4f46e5;
+            --color-primary-700: #4338ca;
+            
+            /* Color Palette: Neutrals */
+            --color-white: #ffffff;
+            --color-gray-50: #f8fafc;
+            --color-gray-100: #f1f5f9;
+            --color-gray-200: #e2e8f0;
+            --color-gray-300: #cbd5e1;
+            --color-gray-400: #94a3b8;
+            --color-gray-500: #64748b;
+            --color-gray-600: #475569;
+            --color-gray-700: #334155;
+            --color-gray-900: #0f172a;
+
+            /* Color Palette: Semantic */
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+            --color-error: #ef4444;
+
+            /* Typography */
+            --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-size-h1: clamp(2rem, 5vw, 3rem);
+            --font-size-h2: 2.25rem;
+            --font-size-h3: 1.5rem;
+            --font-size-body: 1rem;
+            --font-size-small: 0.875rem;
+            
+            /* Spacing */
+            --spacing-2: 8px;
+            --spacing-3: 12px;
+            --spacing-4: 16px;
+            --spacing-6: 24px;
+            --spacing-8: 32px;
+            --spacing-12: 48px;
+
+            /* Component Properties */
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --focus-ring: 0 0 0 3px var(--color-primary-100);
+            --transition-base: all 200ms ease;
+        }
+
+        /* 
+         * RESET & BASE STYLES
+         */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family-primary);
+            background-color: var(--color-gray-50);
+            color: var(--color-gray-900);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 
+         * UTILITIES 
+         */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .text-center { text-align: center; }
+        .mb-2 { margin-bottom: var(--spacing-2); }
+        .mb-4 { margin-bottom: var(--spacing-4); }
+        .mb-8 { margin-bottom: var(--spacing-8); }
+
+        /* 
+         * COMPONENT: BUTTONS 
+         */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            font-size: var(--font-size-body);
+            cursor: pointer;
+            transition: var(--transition-base);
+            border: none;
+            text-decoration: none;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background-color: var(--color-primary-600);
+            color: var(--color-white);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: var(--color-primary-700);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(0);
+            background-color: var(--color-primary-700);
+        }
+
+        .btn-primary:focus-visible {
+            outline: none;
+            box-shadow: var(--focus-ring);
+        }
+
+        .btn-primary:disabled {
+            background-color: var(--color-gray-300);
+            color: var(--color-gray-500);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--color-white);
+            animation: spin 1s ease-in-out infinite;
+            display: none;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .btn.is-loading .btn-spinner {
+            display: block;
+        }
+
+        /* 
+         * LAYOUT: ONBOARDING CONTAINER 
+         */
+        .onboarding-layout {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            padding: var(--spacing-4);
+            max-width: 100%;
+        }
+
+        .onboarding-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: var(--spacing-8);
+            gap: var(--spacing-2);
+        }
+
+        .step-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--color-gray-300);
+        }
+
+        .step-dot.active {
+            background-color: var(--color-primary-600);
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        .step-dot.completed {
+            background-color: var(--color-primary-600);
+        }
+
+        .onboarding-header {
+            text-align: center;
+            margin-bottom: var(--spacing-12);
+        }
+
+        .onboarding-title {
+            font-size: var(--font-size-h1);
+            font-weight: 700;
+            color: var(--color-gray-900);
+            margin-bottom: var(--spacing-4);
+            letter-spacing: -0.02em;
+        }
+
+        .onboarding-subtitle {
+            font-size: 1.125rem;
+            color: var(--color-gray-600);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* 
+         * COMPONENT: SELECTION CARDS 
+         */
+        .selection-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--spacing-4);
+            margin-bottom: var(--spacing-8);
+        }
+
+        @media (min-width: 768px) {
+            .selection-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: var(--spacing-6);
+            }
+        }
+
+        /* Semantic Fieldset Styling */
+        .selection-fieldset {
+            border: none;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+        }
+
+        .selection-legend {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+        }
+
+        .option-card-label {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background-color: var(--color-white);
+            border: 2px solid var(--color-gray-200);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-6);
+            cursor: pointer;
+            transition: var(--transition-base);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option-card-label:hover {
+            border-color: var(--color-primary-300);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Styling based on checked state of sibling input */
+        .option-input:checked + .option-card-label {
+            border-color: var(--color-primary-600);
+            background-color: var(--color-primary-50);
+            box-shadow: 0 0 0 2px var(--color-primary-100);
+        }
+
+        .option-input:focus + .option-card-label {
+            box-shadow: var(--focus-ring);
+        }
+
+        /* Recommended Badge */
+        .badge-recommended {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background-color: var(--color-primary-100);
+            color: var(--color-primary-700);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 100px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-4);
+        }
+
+        .check-indicator {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid var(--color-gray-300);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition-base);
+            background-color: var(--color-white);
+            flex-shrink: 0;
+        }
+
+        .check-indicator svg {
+            width: 14px;
+            height: 14px;
+            color: var(--color-white);
+            opacity: 0;
+            transform: scale(0.8);
+            transition: var(--transition-base);
+        }
+
+        .option-input:checked + .option-card-label .check-indicator {
+            background-color: var(--color-primary-600);
+            border-color: var(--color-primary-600);
+        }
+
+        .option-input:checked + .option-card-label .check-indicator svg {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--color-gray-900);
+            margin-bottom: var(--spacing-2);
+        }
+
+        .card-description {
+            font-size: var(--font-size-body);
+            color: var(--color-gray-600);
+            margin-bottom: var(--spacing-4);
+            flex-grow: 1;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin-top: auto;
+            border-top: 1px solid var(--color-gray-200); /* Separator based on user feedback on clarity */
+            padding-top: var(--spacing-4);
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            font-size: var(--font-size-small);
+            color: var(--color-gray-600);
+            margin-bottom: var(--spacing-2);
+        }
+
+        .feature-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .feature-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 8px;
+            color: var(--color-primary-600);
+        }
+
+        /* 
+         * DISCLAIMER & FOOTER
+         */
+        .disclaimer-text {
+            font-size: var(--font-size-small);
+            color: var(--color-gray-500);
+            text-align: center;
+            margin-top: var(--spacing-6);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .disclaimer-text a {
+            color: var(--color-primary-600);
+            text-decoration: none;
+        }
+
+        .disclaimer-text a:hover {
+            text-decoration: underline;
+        }
+
+        .action-container {
+            margin-top: var(--spacing-8);
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* 
+         * TOAST NOTIFICATION (For Error State)
+         */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background-color: var(--color-white);
+            border-left: 4px solid var(--color-error);
+            padding: 16px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: flex-start;
+            max-width: 400px;
+            transform: translateY(150%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 50;
+        }
+
+        .toast.visible {
+            transform: translateY(0);
+        }
+
+        .toast-content {
+            margin-left: 12px;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            color: var(--color-gray-900);
+            margin-bottom: 4px;
+        }
+
+        .toast-message {
+            font-size: 0.875rem;
+            color: var(--color-gray-600);
+        }
+
+        .toast-icon {
+            color: var(--color-error);
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--color-gray-400);
+            cursor: pointer;
+            margin-left: 12px;
+            padding: 4px;
+        }
+
+        .toast-close:hover {
+            color: var(--color-gray-600);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="onboarding-layout">
+        <div class="onboarding-container">
+            
+            <!-- Step Indicator -->
+            <div class="step-indicator" role="progressbar" aria-valuenow="2" aria-valuemin="1" aria-valuemax="3" aria-label="Step 2 of 3: Data Configuration">
+                <div class="step-dot completed"></div>
+                <div class="step-dot active"></div>
+                <div class="step-dot"></div>
+            </div>
+
+            <!-- Header -->
+            <header class="onboarding-header">
+                <h1 class="onboarding-title">Choose Historical Data Depth</h1>
+                <p class="onboarding-subtitle">Select how much past sales data you want to import. This determines how far back your initial reports will go.</p>
+            </header>
+
+            <!-- Main Form -->
+            <main>
+                <form id="importConfigForm" novalidate>
+                    <fieldset class="selection-fieldset">
+                        <legend class="selection-legend">Select Data Import Duration</legend>
+                        
+                        <div class="selection-grid">
+                            
+                            <!-- Option 1: 12 Months -->
+                            <div class="option-wrapper">
+                                <input type="radio" name="import_depth" id="depth_12" value="12" class="option-input visually-hidden">
+                                <label for="depth_12" class="option-card-label">
+                                    <div class="card-header">
+                                        <div class="card-title-group">
+                                            <h3 class="card-title">12 Months</h3>
+                                        </div>
+                                        <div class="check-indicator">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <p class="card-description">Quick Start: Get access to your dashboard faster. Ideal for reviewing recent performance trends.</p>
+                                    <ul class="feature-list">
+                                        <li class="feature-item">
+                                            <svg class="feature-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Faster initial synchronization
+                                        </li>
+                                        <li class="feature-item">
+                                            <svg class="feature-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Last year's performance data
+                                        </li>
+                                    </ul>
+                                </label>
+                            </div>
+
+                            <!-- Option 2: 24 Months -->
+                            <div class="option-wrapper">
+                                <input type="radio" name="import_depth" id="depth_24" value="24" class="option-input visually-hidden">
+                                <label for="depth_24" class="option-card-label">
+                                    <span class="badge-recommended">Recommended</span>
+                                    <div class="card-header">
+                                        <div class="card-title-group">
+                                            <h3 class="card-title">24 Months</h3>
+                                        </div>
+                                        <div class="check-indicator">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <p class="card-description">Full Analysis: Enables immediate year-over-year comparisons and deeper trend analysis.</p>
+                                    <ul class="feature-list">
+                                        <li class="feature-item">
+                                            <svg class="feature-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Year-over-Year (YoY) Growth Reports
+                                        </li>
+                                        <li class="feature-item">
+                                            <svg class="feature-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            Better AI Forecasting Accuracy
+                                        </li>
+                                    </ul>
+                                </label>
+                            </div>
+
+                        </div>
+                    </fieldset>
+
+                    <div class="action-container">
+                        <button type="submit" class="btn btn-primary" id="startImportBtn" disabled>
+                            <span class="btn-spinner"></span>
+                            <span class="btn-text">Start Data Import</span>
+                        </button>
+                    </div>
+
+                    <div class="disclaimer-text">
+                        <p>Sync time varies based on order volume. You can continue setting up your account while we sync in the background. <a href="#">Learn more about data privacy.</a></p>
+                    </div>
+                </form>
+            </main>
+        </div>
+    </div>
+
+    <!-- Error Toast Notification -->
+    <div class="toast" id="errorToast" role="alert" aria-live="assertive">
+        <svg class="toast-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div class="toast-content">
+            <h4 class="toast-title">Import Failed</h4>
+            <p class="toast-message">We couldn't start the import process. Please try again or contact support.</p>
+        </div>
+        <button class="toast-close" aria-label="Close notification" onclick="hideToast()">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('importConfigForm');
+            const submitBtn = document.getElementById('startImportBtn');
+            const btnText = submitBtn.querySelector('.btn-text');
+            const inputs = document.querySelectorAll('input[name="import_depth"]');
+            const toast = document.getElementById('errorToast');
+
+            // State Management
+            let selectedValue = null;
+            let isSubmitting = false;
+
+            // Handle Selection
+            inputs.forEach(input => {
+                input.addEventListener('change', (e) => {
+                    selectedValue = e.target.value;
+                    submitBtn.disabled = false;
+                    
+                    // Visual feedback updates are handled by CSS via :checked selector
+                    // But we can add extra aria attributes here if needed
+                });
+            });
+
+            // Handle Submission
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                if (!selectedValue || isSubmitting) return;
+
+                isSubmitting = true;
+                submitBtn.disabled = true;
+                submitBtn.classList.add('is-loading');
+                btnText.textContent = 'Initiating Sync...';
+
+                // Simulate API Call
+                try {
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    
+                    // Simulate Success
+                    console.log(`Sync started for ${selectedValue} months`);
+                    // In a real app, redirect here: window.location.href = '/dashboard?sync_started=true';
+                    
+                    // For demo purposes, let's reset to allow re-testing or show generic success
+                    btnText.textContent = 'Sync Initiated!';
+                    setTimeout(() => {
+                        window.alert('Simulation: Sync Job Queued successfully. Redirecting to Dashboard...');
+                        isSubmitting = false;
+                        submitBtn.classList.remove('is-loading');
+                        submitBtn.disabled = false; // Usually stays disabled or redirects
+                        btnText.textContent = 'Start Data Import';
+                    }, 500);
+
+                } catch (error) {
+                    // Simulate Error
+                    showToast();
+                    isSubmitting = false;
+                    submitBtn.classList.remove('is-loading');
+                    submitBtn.disabled = false;
+                    btnText.textContent = 'Start Data Import';
+                }
+            });
+
+            // Toast Logic
+            window.hideToast = () => {
+                toast.classList.remove('visible');
+            };
+
+            const showToast = () => {
+                toast.classList.add('visible');
+                setTimeout(hideToast, 5000);
+            };
+        });
+    </script>
+</body>
+</html>

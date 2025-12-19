@@ -1,0 +1,76 @@
+flowchart TD
+    %% Nodes
+    Start([User Clicks Date Filter])
+    UI_Open[Date Picker UI Opens]
+    
+    subgraph Selection_Mode [Selection Mode]
+        direction TB
+        Dec_Type{Selection Type?}
+        Action_Preset[User Clicks Preset\ne.g., Last 7 Days]
+        Action_Custom[User Selects Custom Range]
+    end
+
+    subgraph Custom_Logic [Custom Range Validation Logic]
+        direction TB
+        Input_Date[User Clicks a Date]
+        Dec_Future{Is Date in Future?}
+        Context_Check{Is Future Data Allowed?\ne.g. Forecasts}
+        Err_Future[Display Error:\n'Future dates not available']
+        
+        State_Update[Update Selection State]
+        Dec_Range{Both Dates Selected?}
+        Check_Valid{Is Start Date > End Date?}
+        
+        Err_Range[Display Error:\n'Start date must be before End date']
+        State_Invalid[Disable 'Apply' Button\nHighlight Field Red]
+        State_Valid[Enable 'Apply' Button\nClear Errors]
+    end
+
+    Result_Apply[Apply Filter]
+    Update_Global[Update Global App State\nTrigger Data Fetch]
+    End([Close Picker])
+
+    %% Flow Connections
+    Start --> UI_Open
+    UI_Open --> Dec_Type
+    
+    Dec_Type -- Preset --> Action_Preset
+    Action_Preset --> Result_Apply
+    
+    Dec_Type -- Custom --> Action_Custom
+    Action_Custom --> Input_Date
+    
+    Input_Date --> Dec_Future
+    Dec_Future -- Yes --> Context_Check
+    Context_Check -- No --> Err_Future
+    Err_Future --> Action_Custom
+    
+    Context_Check -- Yes --> State_Update
+    Dec_Future -- No --> State_Update
+    
+    State_Update --> Dec_Range
+    Dec_Range -- No --> State_Valid:::warning
+    %% Partial selection is valid state but waiting for second input
+    
+    Dec_Range -- Yes --> Check_Valid
+    Check_Valid -- Yes --> Err_Range
+    Err_Range --> State_Invalid
+    State_Invalid --> Action_Custom
+    
+    Check_Valid -- No --> State_Valid
+    State_Valid --> Result_Apply
+    
+    Result_Apply --> Update_Global
+    Update_Global --> End
+
+    %% Styling
+    classDef interaction fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#0d47a1
+    classDef logic fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#e65100
+    classDef error fill:#ffebee,stroke:#c62828,stroke-width:2px,stroke-dasharray: 5 5,color:#b71c1c
+    classDef success fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#1b5e20
+    classDef warning fill:#fffde7,stroke:#fbc02d,stroke-width:2px,color:#f57f17
+
+    class Start,UI_Open,Action_Preset,Action_Custom,Input_Date,Result_Apply interaction
+    class Dec_Type,Dec_Future,Context_Check,State_Update,Dec_Range,Check_Valid logic
+    class Err_Future,Err_Range,State_Invalid error
+    class Update_Global,End,State_Valid success

@@ -1,0 +1,782 @@
+# 1 Overview
+
+## 1.1 Diagram Id
+
+SEQ-UJ-003
+
+## 1.2 Name
+
+View and Filter Sales Trend Report
+
+## 1.3 Description
+
+A user navigates to the Sales Trend Analysis report. They use the UI controls to select a primary date range, an optional comparison date range, and a grouping level (day, week, month). The frontend sends these parameters to the API, which queries the OLAP data warehouse and returns the aggregated data for visualization in a chart and table.
+
+## 1.4 Type
+
+🔹 UserJourney
+
+## 1.5 Purpose
+
+To allow merchants to analyze sales trends over time, compare performance periods, and understand their business cycles, fulfilling requirement REQ-FUN-302.
+
+## 1.6 Complexity
+
+Medium
+
+## 1.7 Priority
+
+🔴 High
+
+## 1.8 Frequency
+
+OnDemand
+
+## 1.9 Participants
+
+- user-browser
+- spa-frontend-001
+- api-gateway-002
+- analytics-service-004
+- olap-repository-008
+
+## 1.10 Key Interactions
+
+- User selects 'Sales Trends' from the navigation.
+- The SPA displays the report UI with default filters (e.g., last 30 days, grouped by day).
+- The SPA sends an API request to the Analytics Service with the filter parameters.
+- The Analytics Service constructs a complex SQL query with the specified date ranges, comparison periods, and GROUP BY clause against the 'SalesFact' materialized view.
+- The query is executed against the ClickHouse OLAP database.
+- The aggregated time-series data is returned to the SPA.
+- The SPA uses a charting library (e.g., Recharts) to render the data as a line chart and displays it in a summary table.
+
+## 1.11 Triggers
+
+- User navigates to the sales report page or changes a filter on the page.
+
+## 1.12 Outcomes
+
+- The user sees a visual representation of their sales performance over time.
+- The user can interactively explore their data by changing filters to gain deeper insights.
+
+## 1.13 Business Rules
+
+- All data access must be scoped to the user's merchant account at the API and database query level.
+- All KPIs displayed must be calculated using the standardized formulas defined in BR-004.
+
+## 1.14 Error Scenarios
+
+- The OLAP query times out for a very large, complex date range; a user-friendly error is displayed.
+- The user selects an invalid date range (e.g., end date before start date), which is caught by API payload validation and returns a 400 error.
+
+## 1.15 Integration Points
+
+*No items available*
+
+# 2.0 Details
+
+## 2.1 Diagram Id
+
+SEQ-UJ-003
+
+## 2.2 Name
+
+User Journey: View and Filter Sales Trend Analysis Report
+
+## 2.3 Description
+
+A detailed technical sequence illustrating the end-to-end user journey for viewing and interacting with the sales trend report. This covers the initial page load with default filters, the subsequent API request and data fetching from the ClickHouse OLAP data warehouse, and the UI rendering process. It also models the flow for when a user changes a filter, triggering a new data fetch and UI update, and includes critical error handling paths.
+
+## 2.4 Participants
+
+### 2.4.1 User/Actor
+
+#### 2.4.1.1 Repository Id
+
+user-browser
+
+#### 2.4.1.2 Display Name
+
+User (Browser)
+
+#### 2.4.1.3 Type
+
+🔹 User/Actor
+
+#### 2.4.1.4 Technology
+
+Web Browser (Chrome, Firefox, etc.)
+
+#### 2.4.1.5 Order
+
+1
+
+#### 2.4.1.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | actor |
+| Color | #999999 |
+| Stereotype | User |
+
+### 2.4.2.0 FrontendApplication
+
+#### 2.4.2.1 Repository Id
+
+spa-frontend-001
+
+#### 2.4.2.2 Display Name
+
+Frontend SPA
+
+#### 2.4.2.3 Type
+
+🔹 FrontendApplication
+
+#### 2.4.2.4 Technology
+
+React 18, Recharts, Zustand
+
+#### 2.4.2.5 Order
+
+2
+
+#### 2.4.2.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #4287f5 |
+| Stereotype | React SPA |
+
+### 2.4.3.0 Gateway
+
+#### 2.4.3.1 Repository Id
+
+api-gateway-002
+
+#### 2.4.3.2 Display Name
+
+API Gateway
+
+#### 2.4.3.3 Type
+
+🔹 Gateway
+
+#### 2.4.3.4 Technology
+
+AWS API Gateway
+
+#### 2.4.3.5 Order
+
+3
+
+#### 2.4.3.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #f5a623 |
+| Stereotype | Gateway |
+
+### 2.4.4.0 Serverless Function Group
+
+#### 2.4.4.1 Repository Id
+
+analytics-service-004
+
+#### 2.4.4.2 Display Name
+
+Analytics Service
+
+#### 2.4.4.3 Type
+
+🔹 Serverless Function Group
+
+#### 2.4.4.4 Technology
+
+AWS Lambda, Node.js 20.x
+
+#### 2.4.4.5 Order
+
+4
+
+#### 2.4.4.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #7ed321 |
+| Stereotype | Service |
+
+### 2.4.5.0 Repository
+
+#### 2.4.5.1 Repository Id
+
+olap-repository-008
+
+#### 2.4.5.2 Display Name
+
+OLAP Repository
+
+#### 2.4.5.3 Type
+
+🔹 Repository
+
+#### 2.4.5.4 Technology
+
+ClickHouse Client, TypeScript
+
+#### 2.4.5.5 Order
+
+5
+
+#### 2.4.5.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | database |
+| Color | #d0021b |
+| Stereotype | Data Warehouse |
+
+## 2.5.0.0 Interactions
+
+### 2.5.1.0 User Interaction
+
+#### 2.5.1.1 Source Id
+
+user-browser
+
+#### 2.5.1.2 Target Id
+
+spa-frontend-001
+
+#### 2.5.1.3 Message
+
+1. Navigates to '/reports/sales-trends'.
+
+#### 2.5.1.4 Sequence Number
+
+1
+
+#### 2.5.1.5 Type
+
+🔹 User Interaction
+
+#### 2.5.1.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.1.7 Return Message
+
+
+
+#### 2.5.1.8 Has Return
+
+❌ No
+
+#### 2.5.1.9 Is Activation
+
+❌ No
+
+#### 2.5.1.10 Technical Details
+
+##### 2.5.1.10.1 Protocol
+
+User Action
+
+##### 2.5.1.10.2 Method
+
+Click navigation link
+
+##### 2.5.1.10.3 Parameters
+
+*No items available*
+
+##### 2.5.1.10.4 Authentication
+
+N/A
+
+##### 2.5.1.10.5 Error Handling
+
+N/A
+
+##### 2.5.1.10.6 Performance
+
+###### 2.5.1.10.6.1 Latency
+
+N/A
+
+### 2.5.2.0.0.0 Internal State Change
+
+#### 2.5.2.1.0.0 Source Id
+
+spa-frontend-001
+
+#### 2.5.2.2.0.0 Target Id
+
+spa-frontend-001
+
+#### 2.5.2.3.0.0 Message
+
+2. Mounts 'SalesTrendReportPage' component. Sets state: { isLoading: true, data: null, error: null }.
+
+#### 2.5.2.4.0.0 Sequence Number
+
+2
+
+#### 2.5.2.5.0.0 Type
+
+🔹 Internal State Change
+
+#### 2.5.2.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.2.7.0.0 Return Message
+
+
+
+#### 2.5.2.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.2.9.0.0 Is Activation
+
+✅ Yes
+
+#### 2.5.2.10.0.0 Technical Details
+
+##### 2.5.2.10.1.0 Protocol
+
+React Lifecycle
+
+##### 2.5.2.10.2.0 Method
+
+useEffect()
+
+##### 2.5.2.10.3.0 Parameters
+
+*No items available*
+
+##### 2.5.2.10.4.0 Authentication
+
+N/A
+
+##### 2.5.2.10.5.0 Error Handling
+
+Component error boundary catches rendering errors.
+
+##### 2.5.2.10.6.0 Performance
+
+###### 2.5.2.10.6.1 Latency
+
+Component should render skeleton loader immediately.
+
+### 2.5.3.0.0.0 API Request
+
+#### 2.5.3.1.0.0 Source Id
+
+spa-frontend-001
+
+#### 2.5.3.2.0.0 Target Id
+
+api-gateway-002
+
+#### 2.5.3.3.0.0 Message
+
+3. GET /api/v1/reports/sales-trends
+
+#### 2.5.3.4.0.0 Sequence Number
+
+3
+
+#### 2.5.3.5.0.0 Type
+
+🔹 API Request
+
+#### 2.5.3.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.3.7.0.0 Return Message
+
+10. 200 OK with JSON payload | 400 Bad Request | 5xx Server Error
+
+#### 2.5.3.8.0.0 Has Return
+
+✅ Yes
+
+#### 2.5.3.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.3.10.0.0 Technical Details
+
+##### 2.5.3.10.1.0 Protocol
+
+HTTPS
+
+##### 2.5.3.10.2.0 Method
+
+GET
+
+##### 2.5.3.10.3.0 Parameters
+
+- Query Params: { startDate: '...', endDate: '...', groupBy: 'day', compareTo: null }
+
+##### 2.5.3.10.4.0 Authentication
+
+###### 2.5.3.10.4.1 Type
+
+🔹 JWT Bearer Token
+
+###### 2.5.3.10.4.2 Header
+
+Authorization: Bearer <access_token>
+
+##### 2.5.3.10.5.0 Error Handling
+
+Axios/Fetch client handles non-2xx responses in a try/catch block.
+
+##### 2.5.3.10.6.0 Performance
+
+###### 2.5.3.10.6.1 Latency
+
+Request timeout set to 30 seconds.
+
+#### 2.5.3.11.0.0 Nested Interactions
+
+- {'sourceId': 'api-gateway-002', 'targetId': 'analytics-service-004', 'message': '4. Authorizes request and invokes Lambda function.', 'sequenceNumber': 4, 'type': 'Function Invocation', 'isSynchronous': True, 'returnMessage': '9. Returns API Gateway response object.', 'hasReturn': True, 'isActivation': True, 'technicalDetails': {'protocol': 'AWS SDK', 'method': 'Invoke', 'parameters': ['event payload containing HTTP request details', 'user context from JWT authorizer (userId, merchantId, roles)'], 'authentication': 'IAM Role', 'errorHandling': 'Handles Lambda invocation errors, returns 502 Bad Gateway if function fails to start.', 'performance': {'latency': 'Monitors for cold start latency.'}}, 'nestedInteractions': [{'sourceId': 'analytics-service-004', 'targetId': 'analytics-service-004', 'message': '5. Validates input query parameters (dates, groupBy).', 'sequenceNumber': 5, 'type': 'Validation', 'isSynchronous': True, 'returnMessage': '', 'hasReturn': False, 'isActivation': False, 'technicalDetails': {'protocol': 'Internal Logic', 'method': 'validateSalesTrendRequest(dto)', 'parameters': [], 'authentication': 'N/A', 'errorHandling': "If validation fails, throws a 'BadRequestException' which is caught and formatted into a 400 response.", 'performance': {'latency': '< 5ms'}}}, {'sourceId': 'analytics-service-004', 'targetId': 'olap-repository-008', 'message': '6. Calls repository to fetch trend data.', 'sequenceNumber': 6, 'type': 'Method Call', 'isSynchronous': True, 'returnMessage': '8. Returns aggregated time-series data.', 'hasReturn': True, 'isActivation': True, 'technicalDetails': {'protocol': 'Internal', 'method': 'fetchSalesData(params)', 'parameters': ['params: { merchantId, startDate, endDate, groupBy, compareStartDate, compareEndDate }'], 'authentication': 'N/A', 'errorHandling': "Catches database connection errors or query timeouts, throws 'ServiceUnavailableException'.", 'performance': {'latency': 'Depends on query complexity.'}}, 'nestedInteractions': [{'sourceId': 'olap-repository-008', 'targetId': 'olap-repository-008', 'message': "7. Executes parameterized SQL query against 'SalesFact' view.", 'sequenceNumber': 7, 'type': 'Database Query', 'isSynchronous': True, 'returnMessage': 'Returns result set.', 'hasReturn': True, 'isActivation': False, 'technicalDetails': {'protocol': 'TCP/IP', 'method': 'SELECT toDate(eventDateTime) as date, SUM(revenue) as totalSales FROM SalesFact WHERE merchantId = ? AND eventDateTime BETWEEN ? AND ? GROUP BY date ORDER BY date', 'parameters': ['merchantId', 'startDate', 'endDate'], 'authentication': 'Database credentials from Secrets Manager.', 'errorHandling': 'ClickHouse client handles low-level connection errors and query execution failures.', 'performance': {'latency': 'Query timeout is set to 25 seconds.'}}}]}]}
+
+### 2.5.4.0.0.0 Internal State Change
+
+#### 2.5.4.1.0.0 Source Id
+
+spa-frontend-001
+
+#### 2.5.4.2.0.0 Target Id
+
+spa-frontend-001
+
+#### 2.5.4.3.0.0 Message
+
+11. Sets state: { isLoading: false, data: [...], error: null }.
+
+#### 2.5.4.4.0.0 Sequence Number
+
+11
+
+#### 2.5.4.5.0.0 Type
+
+🔹 Internal State Change
+
+#### 2.5.4.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.4.7.0.0 Return Message
+
+
+
+#### 2.5.4.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.4.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.4.10.0.0 Technical Details
+
+##### 2.5.4.10.1.0 Protocol
+
+React State Management
+
+##### 2.5.4.10.2.0 Method
+
+setData(response.data)
+
+##### 2.5.4.10.3.0 Parameters
+
+*No items available*
+
+##### 2.5.4.10.4.0 Authentication
+
+N/A
+
+##### 2.5.4.10.5.0 Error Handling
+
+N/A
+
+##### 2.5.4.10.6.0 Performance
+
+###### 2.5.4.10.6.1 Latency
+
+Triggers an efficient re-render of child components.
+
+### 2.5.5.0.0.0 UI Render
+
+#### 2.5.5.1.0.0 Source Id
+
+spa-frontend-001
+
+#### 2.5.5.2.0.0 Target Id
+
+user-browser
+
+#### 2.5.5.3.0.0 Message
+
+12. Renders Recharts line chart and data table with results.
+
+#### 2.5.5.4.0.0 Sequence Number
+
+12
+
+#### 2.5.5.5.0.0 Type
+
+🔹 UI Render
+
+#### 2.5.5.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.5.7.0.0 Return Message
+
+
+
+#### 2.5.5.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.5.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.5.10.0.0 Technical Details
+
+##### 2.5.5.10.1.0 Protocol
+
+DOM Update
+
+##### 2.5.5.10.2.0 Method
+
+Virtual DOM diffing and rendering
+
+##### 2.5.5.10.3.0 Parameters
+
+*No items available*
+
+##### 2.5.5.10.4.0 Authentication
+
+N/A
+
+##### 2.5.5.10.5.0 Error Handling
+
+N/A
+
+##### 2.5.5.10.6.0 Performance
+
+###### 2.5.5.10.6.1 Latency
+
+Rendering performance should be monitored to ensure smooth user experience.
+
+### 2.5.6.0.0.0 User Interaction
+
+#### 2.5.6.1.0.0 Source Id
+
+user-browser
+
+#### 2.5.6.2.0.0 Target Id
+
+spa-frontend-001
+
+#### 2.5.6.3.0.0 Message
+
+13. Changes filter (e.g., selects 'last 90 days').
+
+#### 2.5.6.4.0.0 Sequence Number
+
+13
+
+#### 2.5.6.5.0.0 Type
+
+🔹 User Interaction
+
+#### 2.5.6.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.6.7.0.0 Return Message
+
+
+
+#### 2.5.6.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.6.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.6.10.0.0 Technical Details
+
+##### 2.5.6.10.1.0 Protocol
+
+User Action
+
+##### 2.5.6.10.2.0 Method
+
+onChange event
+
+##### 2.5.6.10.3.0 Parameters
+
+*No items available*
+
+##### 2.5.6.10.4.0 Authentication
+
+N/A
+
+##### 2.5.6.10.5.0 Error Handling
+
+N/A
+
+##### 2.5.6.10.6.0 Performance
+
+###### 2.5.6.10.6.1 Latency
+
+N/A
+
+### 2.5.7.0.0.0 Internal State Change
+
+#### 2.5.7.1.0.0 Source Id
+
+spa-frontend-001
+
+#### 2.5.7.2.0.0 Target Id
+
+spa-frontend-001
+
+#### 2.5.7.3.0.0 Message
+
+14. Updates filter state, sets isLoading: true. Triggers API request with new parameters.
+
+#### 2.5.7.4.0.0 Sequence Number
+
+14
+
+#### 2.5.7.5.0.0 Type
+
+🔹 Internal State Change
+
+#### 2.5.7.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.7.7.0.0 Return Message
+
+
+
+#### 2.5.7.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.7.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.7.10.0.0 Technical Details
+
+##### 2.5.7.10.1.0 Protocol
+
+React State Management
+
+##### 2.5.7.10.2.0 Method
+
+setFilters({...})
+
+##### 2.5.7.10.3.0 Parameters
+
+*No items available*
+
+##### 2.5.7.10.4.0 Authentication
+
+N/A
+
+##### 2.5.7.10.5.0 Error Handling
+
+N/A
+
+##### 2.5.7.10.6.0 Performance
+
+###### 2.5.7.10.6.1 Latency
+
+Re-initiates the data fetching flow (steps 3-12).
+
+## 2.6.0.0.0.0 Notes
+
+### 2.6.1.0.0.0 Content
+
+#### 2.6.1.1.0.0 Content
+
+The React state management (e.g., Zustand) holds the filter values, loading status, data, and error state. A 'useEffect' hook observes changes in the filter state and triggers a new API call.
+
+#### 2.6.1.2.0.0 Position
+
+top-right
+
+#### 2.6.1.3.0.0 Participant Id
+
+spa-frontend-001
+
+#### 2.6.1.4.0.0 Sequence Number
+
+2
+
+### 2.6.2.0.0.0 Content
+
+#### 2.6.2.1.0.0 Content
+
+The SQL query constructed by the Analytics Service is complex. It must handle optional comparison periods (requiring a separate query and UNION ALL), dynamic grouping (by hour, day, week, month), and strict merchantId scoping for security.
+
+#### 2.6.2.2.0.0 Position
+
+bottom-right
+
+#### 2.6.2.3.0.0 Participant Id
+
+analytics-service-004
+
+#### 2.6.2.4.0.0 Sequence Number
+
+7
+
+### 2.6.3.0.0.0 Content
+
+#### 2.6.3.1.0.0 Content
+
+An ETag-based caching strategy can be implemented at the API Gateway layer to return 304 Not Modified for identical, repeated filter requests, reducing load on the backend and improving UI responsiveness.
+
+#### 2.6.3.2.0.0 Position
+
+bottom-left
+
+#### 2.6.3.3.0.0 Participant Id
+
+api-gateway-002
+
+#### 2.6.3.4.0.0 Sequence Number
+
+10
+
+## 2.7.0.0.0.0 Implementation Guidance
+
+| Property | Value |
+|----------|-------|
+| Security Requirements | The API Gateway must enforce JWT authentication an... |
+| Performance Targets | The end-to-end API response time (p95) for a stand... |
+| Error Handling Strategy | Client-side: The SPA must have validation to preve... |
+| Testing Considerations | Unit tests (Jest) should cover the SQL query build... |
+| Monitoring Requirements | Monitor the p95 latency and error rate (4xx/5xx) o... |
+| Deployment Considerations | The 'SalesFact' materialized view in ClickHouse mu... |
+

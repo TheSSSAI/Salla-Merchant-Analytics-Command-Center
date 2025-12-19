@@ -1,0 +1,69 @@
+stateDiagram-v2
+    direction TB
+
+    %% Definition of states
+    state "Active Shopping" as Active
+    state "Abandoned Candidate" as Abandoned
+    state "Recovered (Converted)" as Recovered
+    state "Lost (Archived)" as Lost
+    state "Suppressed (Unsubscribed)" as Suppressed
+
+    %% Composite state for the recovery workflow
+    state "Recovery Sequence Workflow" as RecoveryProcess {
+        state "Evaluating Eligibility" as Evaluating
+        state "Scheduling Step" as Scheduling
+        state "Waiting (Delay)" as Waiting
+        state "Sending Email" as Sending
+        state "Email Sent" as Sent
+        
+        [*] --> Evaluating
+        Evaluating --> Scheduling: Eligible & Consent Valid
+        Evaluating --> [*]: Not Eligible / No Consent
+        
+        Scheduling --> Waiting: Timer Set (Hours/Days)
+        Waiting --> Sending: Timer Expired
+        
+        Sending --> Sent: Email Dispatched
+        Sending --> Sending: Retryable Error
+        
+        Sent --> Scheduling: More Steps Available
+        Sent --> [*]: Sequence Complete
+    }
+
+    %% Initial Transitions
+    [*] --> Active: Cart Created / Updated via Webhook
+    Active --> Active: Items Added / Removed
+    Active --> Abandoned: Inactivity > 60 Mins (BR-003)
+    Active --> Recovered: Order Completed (Direct)
+
+    %% Entering Recovery
+    Abandoned --> RecoveryProcess: Trigger Recovery Job
+    Abandoned --> Recovered: Customer Returns & Buys
+
+    %% Exits from Recovery Process (Global Interrupts)
+    RecoveryProcess --> Recovered: Order Created Event (BR-502.3)
+    RecoveryProcess --> Suppressed: Unsubscribe Link Clicked (US-051)
+    
+    %% End of Lifecycle
+    RecoveryProcess --> Lost: All Steps Completed (No Purchase)
+    
+    Recovered --> [*]
+    Lost --> [*]
+    Suppressed --> [*]
+
+    %% Notes
+    note right of Active
+        Listens to 'cart.updated'
+        events from Salla
+    end note
+
+    note right of RecoveryProcess
+        Manages multi-step
+        email cadence
+        (US-041, US-042)
+    end note
+
+    note left of Recovered
+        Success State:
+        Revenue Attributed
+    end note

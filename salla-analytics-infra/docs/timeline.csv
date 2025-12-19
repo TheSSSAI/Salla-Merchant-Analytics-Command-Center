@@ -1,0 +1,3 @@
+"scenario_name","duration_weeks","team_composition","utilization_avg","risk_level","cost_impact","pros","cons","resource_changes"
+"Baseline (4 Sprints)","8","Full Team (7 roles)","45","Low","High (Idle time)","Low stress, ample buffer for discovery","Inefficient resource usage, frontend idle for 4 weeks",""
+"Compressed (3 Sprints)","6","Optimized Core Team","75","Medium","Optimal","Faster TTM, better resource utilization","Reduced buffer for OAuth/Salla integration issues","Start Frontend tasks in Sprint 2; Parallelize Analytics API and Charts"

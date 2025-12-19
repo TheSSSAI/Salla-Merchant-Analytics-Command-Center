@@ -1,0 +1,28 @@
+{
+  "name": "salla-analytics-monorepo",
+  "version": "0.0.1",
+  "private": true,
+  "packageManager": "pnpm@8.15.0",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "db:generate": "turbo run db:generate",
+    "db:push": "turbo run db:push",
+    "prepare": "husky install",
+    "infra:fmt": "terraform fmt -recursive infrastructure/"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0",
+    "husky": "^9.0.0",
+    "prettier": "^3.2.0",
+    "turbo": "^1.12.0",
+    "typescript": "^5.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}

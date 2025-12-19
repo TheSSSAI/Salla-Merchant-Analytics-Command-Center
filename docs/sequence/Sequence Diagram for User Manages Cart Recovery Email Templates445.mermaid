@@ -1,0 +1,22 @@
+sequenceDiagram
+    actor "User Browser" as UserBrowser
+    participant "Frontend SPA" as FrontendSPA
+
+    activate FrontendSPA
+    UserBrowser->>FrontendSPA: 1. 1. Clicks help icon (?) or focuses and presses 'Enter'
+    FrontendSPA->>FrontendSPA: 2. 2. handleOpen(): Updates component state to show popover
+    FrontendSPA-->>FrontendSPA: State updated: { isOpen: true }
+    FrontendSPA->>FrontendSPA: 2.1. 2.1. Looks up help content by ID from local store
+    FrontendSPA-->>FrontendSPA: { title, description, learnMoreUrl }
+    FrontendSPA->>UserBrowser: 3. 3. Renders <Popover.Content> with help text and displays it
+    UserBrowser->>FrontendSPA: 4. 4. Clicks 'Learn More' link
+    FrontendSPA->>UserBrowser: 5. 5. Opens knowledge base URL in a new tab
+    UserBrowser->>FrontendSPA: 6. 6. Clicks outside popover or presses 'Escape' key
+    FrontendSPA->>FrontendSPA: 7. 7. handleClose(): Updates component state to hide popover
+    FrontendSPA-->>FrontendSPA: State updated: { isOpen: false }
+    FrontendSPA->>UserBrowser: 8. 8. Removes popover from the DOM
+
+    note over FrontendSPA: Accessibility (AC-007): The help icon is implemented as a <button> element to be keyboard focusab...
+    note over FrontendSPA: Content Management: Help content (title, description, URL) is managed in a centralized, version-c...
+
+    deactivate FrontendSPA

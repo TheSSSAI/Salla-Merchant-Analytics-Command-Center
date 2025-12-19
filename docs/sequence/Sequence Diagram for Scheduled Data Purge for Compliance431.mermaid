@@ -1,0 +1,22 @@
+sequenceDiagram
+    participant "Cloud Scheduler" as CloudScheduler
+    participant "Scheduled Jobs Processor" as ScheduledJobsProcessor
+    participant "OLTP Repository" as OLTPRepository
+    participant "Observability Platform" as ObservabilityPlatform
+
+    activate ScheduledJobsProcessor
+    CloudScheduler->>ScheduledJobsProcessor: 1. invoke(ScheduledEvent)
+    ScheduledJobsProcessor->>ObservabilityPlatform: 2. log('Data purge job started.')
+    activate OLTPRepository
+    ScheduledJobsProcessor->>OLTPRepository: 3. deleteExpiredAbandonedCarts(cutoffDate, batchSize)
+    OLTPRepository-->>ScheduledJobsProcessor: { totalDeleted: number }
+    OLTPRepository->>OLTPRepository: 3.1. [LOOP] prisma.abandonedCart.deleteMany({ where: { createdAt: { lt: cutoffDate } }, take: batchSize })
+    OLTPRepository-->>OLTPRepository: { count: number }
+    ScheduledJobsProcessor->>ObservabilityPlatform: 4. log('Data purge job finished successfully.')
+    ScheduledJobsProcessor->>ObservabilityPlatform: 5. emitMetric('DataPurgeSuccess', 1, 'Count')
+
+    note over OLTPRepository: The delete operation is performed in a loop with a fixed batch size to prevent locking the databa...
+    note over ScheduledJobsProcessor: If a database error occurs during the delete operation, the function will log the error, emit a '...
+
+    deactivate OLTPRepository
+    deactivate ScheduledJobsProcessor

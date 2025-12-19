@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cart Recovery Configuration - Merchant Dashboard</title>
+  <style>
+    /* -----------------------------------------------------------------------------
+     * 1. CSS RESET & VARIABLES
+     * ----------------------------------------------------------------------------- */
+    :root {
+      /* Colors - Primary (Indigo) */
+      --color-primary-50: #eef2ff;
+      --color-primary-100: #e0e7ff;
+      --color-primary-500: #6366f1;
+      --color-primary-600: #4f46e5;
+      --color-primary-700: #4338ca;
+      --color-primary-900: #312e81;
+
+      /* Colors - Neutrals */
+      --color-white: #ffffff;
+      --color-gray-50: #f8fafc;
+      --color-gray-100: #f1f5f9;
+      --color-gray-200: #e2e8f0;
+      --color-gray-300: #cbd5e1;
+      --color-gray-400: #94a3b8;
+      --color-gray-500: #64748b;
+      --color-gray-600: #475569;
+      --color-gray-700: #334155;
+      --color-gray-900: #0f172a;
+
+      /* Colors - Semantic */
+      --color-success: #10b981;
+      --color-success-bg: #ecfdf5;
+      --color-warning: #f59e0b;
+      --color-warning-bg: #fffbeb;
+      --color-error: #ef4444;
+      --color-error-bg: #fef2f2;
+
+      /* Typography */
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Spacing */
+      --spacing-1: 4px;
+      --spacing-2: 8px;
+      --spacing-3: 12px;
+      --spacing-4: 16px;
+      --spacing-6: 24px;
+      --spacing-8: 32px;
+
+      /* Borders & Shadows */
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 8px;
+      --radius-xl: 12px;
+      --border-light: 1px solid var(--color-gray-200);
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --shadow-focus: 0 0 0 3px var(--color-primary-100);
+
+      /* Layout */
+      --sidebar-width: 260px;
+      --header-height: 64px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--color-gray-50);
+      color: var(--color-gray-900);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      height: 100vh;
+      overflow: hidden; /* App-like structure */
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    /* -----------------------------------------------------------------------------
+     * 2. APP SHELL LAYOUT
+     * ----------------------------------------------------------------------------- */
+    .app-layout {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr;
+      grid-template-rows: var(--header-height) 1fr;
+      height: 100vh;
+    }
+
+    /* Sidebar */
+    .app-sidebar {
+      grid-row: 1 / -1;
+      background-color: var(--color-gray-900);
+      color: var(--color-gray-300);
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--color-gray-800);
+    }
+
+    .sidebar-header {
+      height: var(--header-height);
+      display: flex;
+      align-items: center;
+      padding: 0 var(--spacing-6);
+      border-bottom: 1px solid var(--color-gray-800);
+    }
+
+    .brand-logo {
+      font-weight: 700;
+      color: var(--color-white);
+      font-size: 1.125rem;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-2);
+    }
+
+    .sidebar-nav {
+      padding: var(--spacing-6) var(--spacing-3);
+      flex: 1;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-3);
+      padding: var(--spacing-3) var(--spacing-4);
+      border-radius: var(--radius-md);
+      color: var(--color-gray-400);
+      transition: all 0.2s;
+      margin-bottom: var(--spacing-1);
+    }
+
+    .nav-item:hover {
+      background-color: var(--color-gray-800);
+      color: var(--color-white);
+    }
+
+    .nav-item.active {
+      background-color: var(--color-primary-900);
+      color: var(--color-primary-100);
+      border-left: 3px solid var(--color-primary-500);
+    }
+
+    /* Header */
+    .app-header {
+      grid-column: 2;
+      background-color: var(--color-white);
+      border-bottom: var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--spacing-8);
+      z-index: 10;
+    }
+
+    .header-breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-2);
+      font-size: 0.875rem;
+      color: var(--color-gray-500);
+    }
+
+    .breadcrumb-separator {
+      color: var(--color-gray-300);
+    }
+
+    .breadcrumb-current {
+      color: var(--color-gray-900);
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-4);
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-3);
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background-color: var(--color-primary-100);
+      color: var(--color-primary-700);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+
+    /* -----------------------------------------------------------------------------
+     * 3. MAIN CONTENT AREA
+     * ----------------------------------------------------------------------------- */
+    .app-main {
+      grid-column: 2;
+      background-color: var(--color-gray-50);
+      overflow-y: auto;
+      padding: var(--spacing-8);
+      display: grid;
+      grid-template-columns: 320px 1fr; /* Campaign List | Editor */
+      gap: var(--spacing-6);
+      align-items: start;
+    }
+
+    /* -----------------------------------------------------------------------------
+     * 4. CAMPAIGN LIST (Sidebar within main)
+     * ----------------------------------------------------------------------------- */
+    .campaign-list-panel {
+      background: var(--color-white);
+      border-radius: var(--radius-lg);
+      border: var(--border-light);
+      box-shadow: var(--shadow-sm);
+      height: calc(100vh - var(--header-height) - var(--spacing-8) * 2);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: var(--spacing-4) var(--spacing-6);
+      border-bottom: var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--color-gray-900);
+    }
+
+    .btn-icon-only {
+      background: transparent;
+      border: none;
+      color: var(--color-gray-500);
+      padding: var(--spacing-1);
+      border-radius: var(--radius-sm);
+    }
+    
+    .btn-icon-only:hover {
+      background-color: var(--color-gray-100);
+      color: var(--color-gray-700);
+    }
+
+    .campaign-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--spacing-2);
+    }
+
+    .campaign-item {
+      padding: var(--spacing-4);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      border: 1px solid transparent;
+      margin-bottom: var(--spacing-1);
+      transition: all 0.2s;
+    }
+
+    .campaign-item:hover {
+      background-color: var(--color-gray-50);
+    }
+
+    .campaign-item.active {
+      background-color: var(--color-primary-50);
+      border-color: var(--color-primary-200);
+    }
+
+    .campaign-name {
+      font-weight: 500;
+      color: var(--color-gray-900);
+      font-size: 0.875rem;
+      margin-bottom: var(--spacing-1);
+    }
+
+    .campaign-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      color: var(--color-gray-500);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      font-weight: 500;
+    }
+
+    .status-badge.active {
+      background-color: var(--color-success-bg);
+      color: var(--color-success);
+    }
+
+    .status-badge.paused {
+      background-color: var(--color-warning-bg);
+      color: var(--color-warning);
+    }
+
+    /* -----------------------------------------------------------------------------
+     * 5. SEQUENCE EDITOR CANVAS
+     * ----------------------------------------------------------------------------- */
+    .editor-canvas {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-6);
+    }
+
+    .editor-header {
+      background: var(--color-white);
+      padding: var(--spacing-6);
+      border-radius: var(--radius-lg);
+      border: var(--border-light);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .campaign-title-input {
+      border: 1px solid transparent;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--color-gray-900);
+      padding: var(--spacing-1);
+      border-radius: var(--radius-sm);
+      width: 100%;
+      margin-bottom: var(--spacing-2);
+    }
+
+    .campaign-title-input:hover {
+      border-color: var(--color-gray-200);
+    }
+
+    .campaign-title-input:focus {
+      border-color: var(--color-primary-500);
+      outline: none;
+      background-color: var(--color-white);
+    }
+
+    .campaign-stats {
+      display: flex;
+      gap: var(--spacing-6);
+      font-size: 0.875rem;
+      color: var(--color-gray-600);
+    }
+
+    .stat-item strong {
+      color: var(--color-gray-900);
+      font-weight: 600;
+    }
+
+    .editor-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-4);
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-2);
+      cursor: pointer;
+    }
+
+    .toggle-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-gray-700);
+    }
+
+    .toggle-input {
+      appearance: none;
+      width: 44px;
+      height: 24px;
+      background: var(--color-gray-200);
+      border-radius: 99px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .toggle-input::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 20px;
+      height: 20px;
+      background: var(--color-white);
+      border-radius: 50%;
+      transition: transform 0.2s;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+
+    .toggle-input:checked {
+      background: var(--color-success);
+    }
+
+    .toggle-input:checked::after {
+      transform: translateX(20px);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 20px;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 500;
+      border: 1px solid transparent;
+      transition: all 0.2s;
+      gap: var(--spacing-2);
+    }
+
+    .btn-primary {
+      background-color: var(--color-primary-600);
+      color: var(--color-white);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--color-primary-700);
+      box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+    }
+
+    .btn-secondary {
+      background-color: var(--color-white);
+      border-color: var(--color-gray-300);
+      color: var(--color-gray-700);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--color-gray-50);
+      border-color: var(--color-gray-400);
+    }
+
+    .btn-danger {
+      color: var(--color-error);
+      background-color: transparent;
+    }
+    
+    .btn-danger:hover {
+      background-color: var(--color-error-bg);
+    }
+
+    /* Timeline & Sequence Steps */
+    .sequence-timeline {
+      position: relative;
+      padding-left: var(--spacing-8);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-6);
+    }
+
+    /* Vertical Line */
+    .sequence-timeline::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 20px; /* Aligned with icon center */
+      width: 2px;
+      background-color: var(--color-gray-200);
+      z-index: 0;
+    }
+
+    .timeline-start {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-4);
+      position: relative;
+      z-index: 1;
+    }
+
+    .trigger-icon {
+      width: 40px;
+      height: 40px;
+      background-color: var(--color-gray-100);
+      border: 2px solid var(--color-gray-300);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-gray-500);
+    }
+
+    .trigger-label {
+      font-weight: 600;
+      color: var(--color-gray-500);
+      font-size: 0.875rem;
+      background: var(--color-gray-50);
+      padding: var(--spacing-1) var(--spacing-2);
+    }
+
+    .sequence-step {
+      position: relative;
+      z-index: 1;
+    }
+
+    .step-connector {
+      position: absolute;
+      left: -28px;
+      top: 24px;
+      width: 16px;
+      height: 2px;
+      background-color: var(--color-gray-200);
+    }
+
+    /* Wait Block */
+    .step-wait {
+      margin-bottom: var(--spacing-4);
+      display: inline-flex;
+      align-items: center;
+      background: var(--color-white);
+      border: 1px solid var(--color-gray-300);
+      border-radius: 99px;
+      padding: var(--spacing-2) var(--spacing-4);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-gray-700);
+      gap: var(--spacing-2);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .step-wait svg {
+      color: var(--color-gray-400);
+    }
+
+    .wait-input {
+      border: none;
+      background: var(--color-gray-50);
+      width: 40px;
+      text-align: center;
+      border-radius: var(--radius-sm);
+      padding: 2px;
+      font-weight: 600;
+      color: var(--color-primary-700);
+    }
+
+    /* Email Card */
+    .step-card {
+      background: var(--color-white);
+      border: var(--border-light);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+
+    .step-card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--color-primary-200);
+    }
+
+    .step-header {
+      padding: var(--spacing-4) var(--spacing-6);
+      border-bottom: var(--border-light);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: var(--color-gray-50);
+    }
+
+    .step-title {
+      font-weight: 600;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-2);
+    }
+
+    .step-number {
+      background: var(--color-primary-100);
+      color: var(--color-primary-700);
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+    }
+
+    .step-body {
+      padding: var(--spacing-6);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-6);
+    }
+
+    .form-group {
+      margin-bottom: var(--spacing-4);
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-gray-700);
+      margin-bottom: var(--spacing-2);
+    }
+
+    .form-select, .form-input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--color-gray-300);
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      color: var(--color-gray-900);
+      background-color: var(--color-white);
+      transition: border 0.2s, box-shadow 0.2s;
+    }
+
+    .form-select:focus, .form-input:focus {
+      border-color: var(--color-primary-500);
+      outline: none;
+      box-shadow: var(--shadow-focus);
+    }
+
+    .template-preview-box {
+      background: var(--color-gray-50);
+      border: 1px dashed var(--color-gray-300);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-2);
+    }
+
+    .preview-subject {
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: var(--color-gray-900);
+    }
+
+    .preview-body-excerpt {
+      font-size: 0.875rem;
+      color: var(--color-gray-500);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .step-stats {
+      display: flex;
+      gap: var(--spacing-4);
+      margin-top: var(--spacing-4);
+      padding-top: var(--spacing-4);
+      border-top: 1px solid var(--color-gray-100);
+    }
+
+    .stat-pill {
+      background: var(--color-primary-50);
+      color: var(--color-primary-700);
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    /* Add Step Button */
+    .add-step-wrapper {
+      position: relative;
+      z-index: 1;
+      padding-left: 2px; /* align with line */
+    }
+
+    .btn-add-step {
+      background: var(--color-white);
+      border: 1px dashed var(--color-gray-400);
+      color: var(--color-gray-500);
+      width: 100%;
+      padding: var(--spacing-3);
+      border-radius: var(--radius-md);
+      transition: all 0.2s;
+    }
+
+    .btn-add-step:hover {
+      border-color: var(--color-primary-500);
+      color: var(--color-primary-600);
+      background: var(--color-primary-50);
+    }
+
+    /* -----------------------------------------------------------------------------
+     * 6. RESPONSIVE MEDIA QUERIES
+     * ----------------------------------------------------------------------------- */
+    @media (max-width: 1024px) {
+      .app-layout {
+        grid-template-columns: 64px 1fr; /* Collapsed sidebar */
+      }
+      .app-sidebar {
+        width: 64px;
+      }
+      .sidebar-header span, .nav-item span {
+        display: none;
+      }
+      .nav-item {
+        justify-content: center;
+        padding: var(--spacing-3) 0;
+      }
+      .app-main {
+        grid-template-columns: 240px 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .app-layout {
+        display: block; /* Remove grid */
+        height: auto;
+        overflow-y: visible;
+      }
+      
+      .app-sidebar {
+        display: none; /* Hide sidebar on mobile for this demo, assume hamburger menu */
+      }
+
+      .app-header {
+        position: sticky;
+        top: 0;
+        padding: 0 var(--spacing-4);
+      }
+
+      .app-main {
+        display: flex;
+        flex-direction: column;
+        padding: var(--spacing-4);
+        height: auto;
+        overflow: visible;
+      }
+
+      .campaign-list-panel {
+        width: 100%;
+        height: auto;
+        max-height: 300px;
+        margin-bottom: var(--spacing-6);
+      }
+
+      .step-body {
+        grid-template-columns: 1fr; /* Stack inputs on mobile */
+      }
+
+      .editor-header {
+        flex-direction: column;
+        gap: var(--spacing-4);
+      }
+
+      .editor-actions {
+        width: 100%;
+        justify-content: space-between;
+      }
+      
+      .campaign-stats {
+        flex-wrap: wrap;
+        gap: var(--spacing-3);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="app-sidebar">
+      <div class="sidebar-header">
+        <div class="brand-logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          <span>MerchantOS</span>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+          </svg>
+          <span>Marketing</span>
+        </a>
+        <a href="#" class="nav-item active" aria-current="page">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+          <span>Cart Recovery</span>
+        </a>
+        <a href="#" class="nav-item">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+          </svg>
+          <span>Templates</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="header-breadcrumbs">
+        <span>Marketing</span>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">Cart Recovery</span>
+      </div>
+      <div class="header-actions">
+        <button class="btn-icon-only" aria-label="Notifications">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+        </button>
+        <div class="user-profile">
+          <div class="avatar">JD</div>
+          <span class="text-sm font-medium">Jane Doe</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="app-main">
+      
+      <!-- Left Panel: Campaign List -->
+      <section class="campaign-list-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Campaigns</h2>
+          <button class="btn-icon-only" aria-label="Add new campaign">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="campaign-list" role="list">
+          <!-- Active Item -->
+          <div class="campaign-item active" role="listitem" tabindex="0">
+            <div class="campaign-name">Standard Recovery Flow</div>
+            <div class="campaign-meta">
+              <span>3 Steps</span>
+              <span class="status-badge active">Active</span>
+            </div>
+          </div>
+          <!-- Inactive Item -->
+          <div class="campaign-item" role="listitem" tabindex="0">
+            <div class="campaign-name">VIP High Value</div>
+            <div class="campaign-meta">
+              <span>2 Steps</span>
+              <span class="status-badge paused">Paused</span>
+            </div>
+          </div>
+          <!-- Inactive Item -->
+          <div class="campaign-item" role="listitem" tabindex="0">
+            <div class="campaign-name">Holiday Special</div>
+            <div class="campaign-meta">
+              <span>1 Step</span>
+              <span class="status-badge paused">Draft</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Panel: Editor Canvas -->
+      <section class="editor-canvas">
+        
+        <!-- Editor Header -->
+        <div class="editor-header">
+          <div class="header-left">
+            <input type="text" class="campaign-title-input" value="Standard Recovery Flow" aria-label="Campaign Name">
+            <div class="campaign-stats">
+              <span class="stat-item">Recovered: <strong>$12,450</strong></span>
+              <span class="stat-item">Conversion: <strong>14.2%</strong></span>
+            </div>
+          </div>
+          <div class="editor-actions">
+            <label class="toggle-switch">
+              <span class="toggle-label">Active</span>
+              <input type="checkbox" class="toggle-input" checked aria-label="Toggle campaign status">
+            </label>
+            <button class="btn btn-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+              Save Changes
+            </button>
+          </div>
+        </div>
+
+        <!-- Sequence Timeline -->
+        <div class="sequence-timeline">
+          
+          <!-- Trigger Start -->
+          <div class="timeline-start">
+            <div class="trigger-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+              </svg>
+            </div>
+            <div class="trigger-label">Trigger: Cart Abandoned</div>
+          </div>
+
+          <!-- Step 1 -->
+          <div class="sequence-step">
+            <div class="step-connector"></div>
+            
+            <div class="step-wait">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>Wait</span>
+              <input type="text" class="wait-input" value="1" aria-label="Wait duration value">
+              <select class="form-select" style="width: auto; padding: 2px; border: none; background: transparent; font-weight: 500; color: var(--color-gray-700);" aria-label="Wait duration unit">
+                <option value="hours" selected>Hour</option>
+                <option value="days">Days</option>
+              </select>
+            </div>
+
+            <article class="step-card">
+              <div class="step-header">
+                <div class="step-title">
+                  <span class="step-number">1</span>
+                  <span>Email 1: Friendly Reminder</span>
+                </div>
+                <div class="step-actions">
+                  <button class="btn-icon-only btn-danger" aria-label="Delete step">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="step-body">
+                <!-- Left: Configuration -->
+                <div class="step-config">
+                  <div class="form-group">
+                    <label class="form-label">Email Template</label>
+                    <select class="form-select">
+                      <option value="tpl_1" selected>Basic Cart Reminder</option>
+                      <option value="tpl_2">Discount Offer (5%)</option>
+                      <option value="tpl_3">Urgency Warning</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Subject Line</label>
+                    <input type="text" class="form-input" value="You left something behind! 👀">
+                  </div>
+                  <button class="btn btn-secondary btn-sm" style="width: 100%;">
+                    Edit Template Content
+                  </button>
+                </div>
+                <!-- Right: Preview -->
+                <div class="template-preview-box">
+                  <div class="preview-subject">Subject: You left something behind! 👀</div>
+                  <div class="preview-body-excerpt">
+                    Hi {{customer_name}}, we noticed you left some great items in your cart. Don't worry, we saved them for you! Click here to complete your purchase before they sell out.
+                  </div>
+                  <div class="step-stats">
+                    <span class="stat-pill">Open Rate: 45%</span>
+                    <span class="stat-pill">CTR: 12%</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="sequence-step">
+            <div class="step-connector"></div>
+            
+            <div class="step-wait">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>Wait</span>
+              <input type="text" class="wait-input" value="24" aria-label="Wait duration value">
+              <select class="form-select" style="width: auto; padding: 2px; border: none; background: transparent; font-weight: 500; color: var(--color-gray-700);" aria-label="Wait duration unit">
+                <option value="hours" selected>Hours</option>
+                <option value="days">Days</option>
+              </select>
+            </div>
+
+            <article class="step-card">
+              <div class="step-header">
+                <div class="step-title">
+                  <span class="step-number">2</span>
+                  <span>Email 2: Discount Offer</span>
+                </div>
+                <div class="step-actions">
+                  <button class="btn-icon-only btn-danger" aria-label="Delete step">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2-2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="step-body">
+                <div class="step-config">
+                  <div class="form-group">
+                    <label class="form-label">Email Template</label>
+                    <select class="form-select">
+                      <option value="tpl_1">Basic Cart Reminder</option>
+                      <option value="tpl_2" selected>Discount Offer (5%)</option>
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Subject Line</label>
+                    <input type="text" class="form-input" value="Take 5% off your order today">
+                  </div>
+                  <button class="btn btn-secondary btn-sm" style="width: 100%;">
+                    Edit Template Content
+                  </button>
+                </div>
+                <div class="template-preview-box">
+                  <div class="preview-subject">Subject: Take 5% off your order today</div>
+                  <div class="preview-body-excerpt">
+                    Still thinking about it? Here is a special 5% discount code just for you: SAVE5. This code expires in 24 hours.
+                  </div>
+                  <div class="step-stats">
+                    <span class="stat-pill">Open Rate: 32%</span>
+                    <span class="stat-pill">CTR: 8%</span>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <!-- Add Step Action -->
+          <div class="add-step-wrapper">
+            <button class="btn-add-step">
+              + Add Email Step
+            </button>
+          </div>
+
+        </div> <!-- End Timeline -->
+      </section>
+    </main>
+  </div>
+
+  <!-- Variants Description -->
+  <div style="padding: 20px; background: #fff; border-top: 1px solid #ccc; margin-top: 0;">
+    <h3>Screen Variants & States</h3>
+    <ul>
+      <li><strong>Desktop State:</strong> As shown above. Full editing capabilities, 2-column layout.</li>
+      <li><strong>Mobile Read-only:</strong> On screens < 768px, the layout stacks. Complex inputs like the template preview are simplified or hidden. The left campaign list becomes a top selector or separate screen.</li>
+      <li><strong>Loading State:</strong> Skeleton loaders replace the list items and the sequence step cards while data is fetched.</li>
+    </ul>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,2 @@
+"total_risks_identified","critical_risks","high_priority_risks","average_risk_score","key_risk_themes","immediate_actions_required"
+"7","0","4","14.3","[""Data consistency across dual-database architecture"",""External API dependency (Salla) reliability"",""AI/LLM nondeterminism in critical analytics""]","[""Finalize the ELT Processor design to ensure idempotency and atomicity"",""Implement automated multi-tenant security tests for RBAC enforcement"",""Design the API rate-limit handling strategy for the historical data import job""]"

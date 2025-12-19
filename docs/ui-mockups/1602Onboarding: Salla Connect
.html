@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect Salla Store | Onboarding</title>
+    <style>
+        /* 
+         * DESIGN SYSTEM & RESET 
+         * Based on Inter font family, Indigo primary, and Slate grays 
+         */
+        :root {
+            /* Typography */
+            --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            
+            /* Color Palette - Primary (Indigo) */
+            --color-primary-50: #eef2ff;
+            --color-primary-100: #e0e7ff;
+            --color-primary-500: #6366f1;
+            --color-primary-600: #4f46e5;
+            --color-primary-700: #4338ca;
+            --color-primary-900: #312e81;
+
+            /* Color Palette - Neutrals (Slate) */
+            --color-white: #ffffff;
+            --color-gray-50: #f8fafc;
+            --color-gray-100: #f1f5f9;
+            --color-gray-200: #e2e8f0;
+            --color-gray-400: #94a3b8;
+            --color-gray-500: #64748b;
+            --color-gray-600: #475569;
+            --color-gray-700: #334155;
+            --color-gray-900: #0f172a;
+
+            /* Semantic Colors */
+            --color-success: #10b981;
+            --color-success-bg: #ecfdf5;
+            --color-success-border: #a7f3d0;
+            --color-error: #ef4444;
+            --color-error-bg: #fef2f2;
+            --color-error-border: #fecaca;
+
+            /* Spacing & Layout */
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 16px;
+            --spacing-lg: 24px;
+            --spacing-xl: 32px;
+            --spacing-2xl: 48px;
+            
+            /* Component Properties */
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-full: 9999px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            
+            /* Transitions */
+            --transition-base: all 0.2s ease-in-out;
+        }
+
+        /* Reset */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-primary);
+            color: var(--color-gray-900);
+            background-color: var(--color-white);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            height: 100vh;
+            overflow: hidden; /* For split layout */
+        }
+
+        button {
+            font-family: inherit;
+            border: none;
+            cursor: pointer;
+            background: none;
+        }
+
+        /* 
+         * LAYOUT ARCHITECTURE 
+         */
+        .onboarding-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* 50/50 Split */
+            height: 100vh;
+            width: 100%;
+        }
+
+        /* LEFT PANE: BRAND & FEATURES */
+        .brand-pane {
+            background-color: var(--color-primary-900);
+            color: var(--color-white);
+            padding: var(--spacing-2xl);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Decorative background pattern */
+        .brand-pane::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 10% 10%, rgba(99, 102, 241, 0.15) 0%, transparent 20%),
+                radial-gradient(circle at 90% 90%, rgba(79, 70, 229, 0.15) 0%, transparent 30%);
+            z-index: 0;
+        }
+
+        .brand-content {
+            position: relative;
+            z-index: 1;
+            max-width: 480px;
+            margin: auto;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-2xl);
+            font-weight: 700;
+            font-size: 1.25rem;
+            letter-spacing: -0.02em;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--color-white);
+            border-radius: var(--radius-md);
+            color: var(--color-primary-600);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .brand-heading {
+            font-size: 2.5rem; /* h2 scale */
+            line-height: 1.2;
+            font-weight: 700;
+            margin-bottom: var(--spacing-lg);
+            letter-spacing: -0.02em;
+        }
+
+        .brand-subtext {
+            font-size: 1.125rem;
+            color: var(--color-primary-100);
+            margin-bottom: var(--spacing-2xl);
+            line-height: 1.6;
+        }
+
+        /* Feature List Component */
+        .feature-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--spacing-md);
+        }
+
+        .feature-icon {
+            width: 24px;
+            height: 24px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .feature-text {
+            font-weight: 500;
+            color: var(--color-white);
+        }
+
+        .feature-desc {
+            font-size: 0.875rem;
+            color: var(--color-primary-200);
+            margin-top: 2px;
+        }
+
+        /* RIGHT PANE: ACTION */
+        .action-pane {
+            background-color: var(--color-white);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: var(--spacing-lg);
+            position: relative;
+            overflow-y: auto;
+        }
+
+        .action-container {
+            width: 100%;
+            max-width: 440px;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        .action-header {
+            text-align: center;
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .action-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--color-gray-900);
+            margin-bottom: var(--spacing-sm);
+            letter-spacing: -0.01em;
+        }
+
+        .action-subtitle {
+            color: var(--color-gray-500);
+            font-size: 1rem;
+        }
+
+        /* Connection Card Component */
+        .connect-card {
+            background: var(--color-white);
+            border: 1px solid var(--color-gray-200);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-xl);
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+            position: relative;
+            transition: var(--transition-base);
+        }
+
+        /* Salla Platform Icon */
+        .platform-icon-wrapper {
+            width: 64px;
+            height: 64px;
+            background: #bbf7d0; /* Salla-ish light green */
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto var(--spacing-lg);
+            position: relative;
+        }
+        
+        .platform-icon-wrapper svg {
+            width: 36px;
+            height: 36px;
+            color: #059669;
+        }
+
+        /* Connected State Badge */
+        .status-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--color-success);
+            border: 2px solid var(--color-white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            opacity: 0;
+            transform: scale(0.5);
+            transition: var(--transition-base);
+        }
+
+        .connect-card.is-success .status-badge {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Primary Button (Salla Styled or Primary) */
+        .btn-connect {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-sm);
+            background-color: var(--color-primary-600);
+            color: var(--color-white);
+            padding: 14px 24px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 1rem;
+            transition: var(--transition-base);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-connect:hover:not(:disabled) {
+            background-color: var(--color-primary-700);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .btn-connect:active:not(:disabled) {
+            transform: translateY(0) scale(0.98);
+        }
+
+        .btn-connect:focus-visible {
+            outline: 2px solid var(--color-primary-600);
+            outline-offset: 2px;
+        }
+
+        .btn-connect:disabled {
+            background-color: var(--color-gray-200);
+            color: var(--color-gray-400);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Loading State within Button */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        .btn-connect.is-loading .spinner {
+            display: block;
+        }
+        
+        .btn-connect.is-loading .btn-text {
+            display: none;
+        }
+
+        /* Alert Box */
+        .alert-box {
+            margin-top: var(--spacing-lg);
+            padding: var(--spacing-md);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: start;
+            gap: var(--spacing-sm);
+            text-align: left;
+            display: none; /* Hidden by default */
+        }
+
+        .alert-box.is-error {
+            display: flex;
+            background-color: var(--color-error-bg);
+            border: 1px solid var(--color-error-border);
+            color: #b91c1c;
+        }
+
+        .alert-box.is-success {
+            display: flex;
+            background-color: var(--color-success-bg);
+            border: 1px solid var(--color-success-border);
+            color: #047857;
+        }
+
+        .help-links {
+            margin-top: var(--spacing-xl);
+            display: flex;
+            justify-content: center;
+            gap: var(--spacing-lg);
+            font-size: 0.875rem;
+            color: var(--color-gray-500);
+        }
+
+        .help-link {
+            color: var(--color-gray-600);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .help-link:hover {
+            color: var(--color-primary-600);
+            text-decoration: underline;
+        }
+
+        /* 
+         * RESPONSIVE MEDIA QUERIES 
+         */
+        
+        /* Tablet & Mobile */
+        @media (max-width: 1024px) {
+            .onboarding-layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+                height: auto;
+                min-height: 100vh;
+                overflow-y: auto;
+            }
+
+            .brand-pane {
+                padding: var(--spacing-lg);
+                min-height: auto;
+            }
+
+            .brand-heading {
+                font-size: 1.75rem;
+                margin-bottom: var(--spacing-sm);
+            }
+
+            .brand-subtext {
+                font-size: 1rem;
+                margin-bottom: var(--spacing-lg);
+            }
+
+            .feature-list {
+                display: none; /* Simplify for mobile, or move to bottom */
+            }
+
+            .logo-container {
+                margin-bottom: var(--spacing-lg);
+            }
+
+            .action-pane {
+                padding: var(--spacing-lg) var(--spacing-md);
+                align-items: flex-start; /* Align top on mobile */
+            }
+            
+            .action-container {
+                margin-top: var(--spacing-xl);
+            }
+        }
+
+        /* Animations */
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Utility for State Demo */
+        .demo-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            padding: 10px;
+            border-radius: 8px;
+            z-index: 100;
+            display: flex;
+            gap: 8px;
+        }
+        .demo-btn {
+            font-size: 12px;
+            color: white;
+            padding: 4px 8px;
+            border: 1px solid white;
+            border-radius: 4px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Main Layout -->
+    <main class="onboarding-layout">
+        
+        <!-- Left Pane: Branding -->
+        <aside class="brand-pane">
+            <div class="brand-content">
+                <div class="logo-container">
+                    <div class="logo-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                        </svg>
+                    </div>
+                    <span>AnalyticsPro</span>
+                </div>
+
+                <h1 class="brand-heading">Unlocking your store's potential starts here.</h1>
+                <p class="brand-subtext">Connect your Salla store to securely sync your data and generate actionable insights in minutes.</p>
+
+                <ul class="feature-list">
+                    <li class="feature-item">
+                        <div class="feature-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <div>
+                            <div class="feature-text">Automated Data Sync</div>
+                            <div class="feature-desc">Securely import your historical orders and products.</div>
+                        </div>
+                    </li>
+                    <li class="feature-item">
+                        <div class="feature-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <div>
+                            <div class="feature-text">AI-Powered Insights</div>
+                            <div class="feature-desc">Get instant answers about your business performance.</div>
+                        </div>
+                    </li>
+                    <li class="feature-item">
+                        <div class="feature-icon">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                        <div>
+                            <div class="feature-text">Revenue Recovery</div>
+                            <div class="feature-desc">Identify and recover lost sales automatically.</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            
+            <div style="font-size: 0.75rem; opacity: 0.6; margin-top: 24px;">
+                &copy; 2024 AnalyticsPro. All rights reserved.
+            </div>
+        </aside>
+
+        <!-- Right Pane: Action -->
+        <section class="action-pane">
+            <div class="action-container">
+                <header class="action-header">
+                    <h2 class="action-title" id="action-heading">Connect Store</h2>
+                    <p class="action-subtitle">Authorize access to your Salla merchant account.</p>
+                </header>
+
+                <div class="connect-card" id="connectCard">
+                    <!-- Icon -->
+                    <div class="platform-icon-wrapper">
+                        <!-- Salla Logo Placeholder -->
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zm0 9l2-1-2-1-2 1 2 1zm0-3.5L6 7l6-3 6 3-6 2.5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                        <!-- Success Badge -->
+                        <div class="status-badge">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </div>
+                    </div>
+
+                    <!-- Connect Button -->
+                    <button id="connectBtn" class="btn-connect" aria-labelledby="action-heading">
+                        <span class="spinner"></span>
+                        <span class="btn-text">Connect Salla Store</span>
+                    </button>
+
+                    <!-- Alert: Error -->
+                    <div id="errorAlert" class="alert-box is-error" role="alert" aria-live="assertive">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        <div>
+                            <strong>Connection Failed.</strong>
+                            <span>Access was denied by Salla. Please try again.</span>
+                        </div>
+                    </div>
+
+                    <!-- Alert: Success -->
+                    <div id="successAlert" class="alert-box is-success" role="status" aria-live="polite">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                        <div>
+                            <strong>Success!</strong>
+                            <span>Redirecting to data setup...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="help-links">
+                    <a href="#" class="help-link">Trouble connecting?</a>
+                    <span>•</span>
+                    <a href="#" class="help-link">Privacy Policy</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- State Management Script (For Demonstration) -->
+    <script>
+        const connectBtn = document.getElementById('connectBtn');
+        const connectCard = document.getElementById('connectCard');
+        const errorAlert = document.getElementById('errorAlert');
+        const successAlert = document.getElementById('successAlert');
+        
+        // Demo State Variables
+        let isErrorMode = false;
+
+        function setNotLoading() {
+            connectBtn.classList.remove('is-loading');
+            connectBtn.disabled = false;
+        }
+
+        function setLoading() {
+            connectBtn.classList.add('is-loading');
+            connectBtn.disabled = true;
+            // Clear previous alerts
+            errorAlert.style.display = 'none';
+            successAlert.style.display = 'none';
+            connectCard.classList.remove('is-success');
+        }
+
+        function setSuccess() {
+            setNotLoading();
+            connectCard.classList.add('is-success');
+            successAlert.style.display = 'flex';
+            connectBtn.style.display = 'none'; // Hide button on success
+            
+            // Simulate navigation after delay
+            setTimeout(() => {
+                successAlert.innerHTML = `
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    <div>
+                        <strong>Navigating...</strong>
+                        <span>Loading Data Import Options</span>
+                    </div>
+                `;
+            }, 1500);
+        }
+
+        function setError() {
+            setNotLoading();
+            errorAlert.style.display = 'flex';
+            // Accessibility focus management
+            connectBtn.focus(); 
+        }
+
+        // Interaction Logic
+        connectBtn.addEventListener('click', () => {
+            setLoading();
+
+            // Simulate Network Request
+            setTimeout(() => {
+                if (isErrorMode) {
+                    setError();
+                } else {
+                    setSuccess();
+                }
+            }, 2000);
+        });
+
+    </script>
+
+    <!-- Demo Controls (Visible Overlay) -->
+    <div class="demo-controls">
+        <button class="demo-btn" onclick="isErrorMode = false; location.reload()">Reset (Success Flow)</button>
+        <button class="demo-btn" onclick="isErrorMode = true; document.body.style.backgroundColor = '#fef2f2'; alert('Error Mode Enabled: Click Connect to see error state')">Enable Error Mode</button>
+    </div>
+
+</body>
+</html>

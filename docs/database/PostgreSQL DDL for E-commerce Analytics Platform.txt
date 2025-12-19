@@ -1,0 +1,315 @@
+-- Enable UUID generation
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- =============================================
+-- TABLE CREATION
+-- =============================================
+
+-- Entity: User
+CREATE TABLE "User" (
+    "userId" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "email" VARCHAR(255) NOT NULL,
+    "firstName" VARCHAR(100),
+    "lastName" VARCHAR(100),
+    "passwordHash" VARCHAR(255) NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "UC_User_Email" UNIQUE ("email"),
+    CONSTRAINT "CHK_User_Email_Format" CHECK ("email" ~* '^[A-Za-z0-9._%-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,4}$')
+);
+
+-- Entity: PasswordResetToken
+CREATE TABLE "PasswordResetToken" (
+    "passwordResetTokenId" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "UserId" UUID NOT NULL,
+    "tokenHash" VARCHAR(255) NOT NULL,
+    "expiresAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "UC_PasswordResetToken_TokenHash" UNIQUE ("tokenHash")
+);
+
+-- Entity: MerchantAccount
+CREATE TABLE "MerchantAccount" (
+    "merchantAccountId" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "accountName" VARCHAR(255) NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Entity: Role
+CREATE TABLE "Role" (
+    "roleId" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "roleName" VARCHAR(50) NOT NULL,
+    CONSTRAINT "UC_Role_RoleName" UNIQUE ("roleName"),
+    CONSTRAINT "CHK_Role_RoleName_Enum" CHECK ("roleName" IN ('Owner', 'Admin', 'Analyst', 'Marketer'))
+);
+
+-- Entity: UserMerchantAccount
+CREATE TABLE "UserMerchantAccount" (
+    "userMerchantAccountId" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "UserId" UUID NOT NULL,
+    "MerchantAccountId" UUID NOT NULL,
+    "RoleId" UUID NOT NULL,
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "UC_UserMerchantAccount_User_Merchant" UNIQUE ("UserId", "MerchantAccountId")
+);
+
+-- Entity: Invitation
+CREATE TABLE "Invitation" (
+    "invitationId" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "MerchantAccountId" UUID NOT NULL,
+    "InvitedByUserId" UUID NOT NULL,
+    "RoleId" UUID NOT NULL,
+    "inviteeEmail" VARCHAR(255) NOT NULL,
+    "invitationTokenHash" VARCHAR(255) NOT NULL,
+    "status" VARCHAR(20) NOT NULL DEFAULT 'pending',
+    "expiresAt" TIMESTAMP WITH TIME ZONE NOT NULL,
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "UC_Invitation_TokenHash" UNIQUE ("invitationTokenHash"),
+    CONSTRAINT "CHK_Invitation_Status_Enum" CHECK ("status" IN ('pending', 'accepted', 'expired')),
+    CONSTRAINT "CHK_Invitation_Email_Format" CHECK ("inviteeEmail" ~* '^[A-Za-z0-9._%-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,4}$')
+);
+
+-- Entity: Customer
+CREATE TABLE "Customer" (
+    "customerId" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "MerchantAccountId" UUID NOT NULL,
+    "email" VARCHAR(255) NOT NULL,
+    "firstName" VARCHAR(100),
+    "lastName" VARCHAR(100),
+    "city" VARCHAR(100),
+    "country" VARCHAR(100),
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "UC_Customer_Merchant_Email" UNIQUE ("MerchantAccountId", "email"),
+    CONSTRAINT "CHK_Customer_Email_Format" CHECK ("email" ~* '^[A-Za-z0-9._%-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,4}$')
+);
+
+-- Entity: Category
+CREATE TABLE "Category" (
+    "categoryId" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "MerchantAccountId" UUID NOT NULL,
+    "name" VARCHAR(100) NOT NULL,
+    "ParentCategoryId" UUID,
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "UC_Category_Merchant_Name" UNIQUE ("MerchantAccountId", "name")
+);
+
+-- Entity: Product
+CREATE TABLE "Product" (
+    "productId" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "MerchantAccountId" UUID NOT NULL,
+    "CategoryId" UUID NOT NULL,
+    "name" VARCHAR(255) NOT NULL,
+    "description" TEXT,
+    "price" DECIMAL(10, 2) NOT NULL,
+    "sku" VARCHAR(100),
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "UC_Product_Merchant_Sku" UNIQUE ("MerchantAccountId", "sku"),
+    CONSTRAINT "CHK_Product_Price_Positive" CHECK ("price" >= 0)
+);
+
+-- Entity: SalesOrder
+CREATE TABLE "SalesOrder" (
+    "salesOrderId" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "MerchantAccountId" UUID NOT NULL,
+    "CustomerId" UUID NOT NULL,
+    "orderDate" TIMESTAMP WITH TIME ZONE NOT NULL,
+    "totalAmount" DECIMAL(10, 2) NOT NULL,
+    "status" VARCHAR(50) NOT NULL DEFAULT 'completed',
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "CHK_SalesOrder_TotalAmount_Positive" CHECK ("totalAmount" >= 0),
+    CONSTRAINT "CHK_SalesOrder_Status_Enum" CHECK ("status" IN ('pending', 'completed', 'shipped', 'cancelled', 'refunded'))
+) PARTITION BY RANGE ("orderDate");
+
+-- Entity: OrderItem
+CREATE TABLE "OrderItem" (
+    "orderItemId" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "SalesOrderId" UUID NOT NULL,
+    "ProductId" UUID NOT NULL,
+    "quantity" INT NOT NULL,
+    "priceAtPurchase" DECIMAL(10, 2) NOT NULL,
+    "MerchantAccountId" UUID NOT NULL,
+    "orderDate" TIMESTAMP WITH TIME ZONE NOT NULL,
+    CONSTRAINT "CHK_OrderItem_Quantity_Positive" CHECK ("quantity" > 0),
+    CONSTRAINT "CHK_OrderItem_Price_Positive" CHECK ("priceAtPurchase" >= 0)
+);
+
+-- Entity: AbandonedCart
+CREATE TABLE "AbandonedCart" (
+    "abandonedCartId" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "MerchantAccountId" UUID NOT NULL,
+    "CustomerId" UUID NOT NULL,
+    "status" VARCHAR(20) NOT NULL DEFAULT 'active',
+    "recoveryToken" VARCHAR(255),
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "UC_AbandonedCart_RecoveryToken" UNIQUE ("recoveryToken"),
+    CONSTRAINT "CHK_AbandonedCart_Status_Enum" CHECK ("status" IN ('active', 'recovered', 'purged'))
+) PARTITION BY RANGE ("createdAt");
+
+-- Entity: AbandonedCartItem
+CREATE TABLE "AbandonedCartItem" (
+    "abandonedCartItemId" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "AbandonedCartId" UUID NOT NULL,
+    "ProductId" UUID NOT NULL,
+    "quantity" INT NOT NULL,
+    "price" DECIMAL(10, 2) NOT NULL,
+    CONSTRAINT "CHK_AbandonedCartItem_Quantity_Positive" CHECK ("quantity" > 0),
+    CONSTRAINT "CHK_AbandonedCartItem_Price_Positive" CHECK ("price" >= 0)
+);
+
+-- Entity: EmailTemplate
+CREATE TABLE "EmailTemplate" (
+    "emailTemplateId" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "MerchantAccountId" UUID NOT NULL,
+    "name" VARCHAR(255) NOT NULL,
+    "subject" VARCHAR(255) NOT NULL,
+    "body" TEXT NOT NULL,
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "UC_EmailTemplate_Merchant_Name" UNIQUE ("MerchantAccountId", "name")
+);
+
+-- Entity: DomainAuthentication
+CREATE TABLE "DomainAuthentication" (
+    "domainAuthenticationId" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "MerchantAccountId" UUID NOT NULL,
+    "domainName" VARCHAR(255) NOT NULL,
+    "spfRecord" TEXT NOT NULL,
+    "dkimRecord" TEXT NOT NULL,
+    "isSpfVerified" BOOLEAN NOT NULL DEFAULT false,
+    "isDkimVerified" BOOLEAN NOT NULL DEFAULT false,
+    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "UC_DomainAuthentication_MerchantAccountId" UNIQUE ("MerchantAccountId")
+);
+
+-- Entity: AuditLog
+CREATE TABLE "AuditLog" (
+    "auditLogId" BIGSERIAL PRIMARY KEY,
+    "MerchantAccountId" UUID,
+    "UserId" UUID,
+    "eventTimestamp" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "eventType" VARCHAR(100) NOT NULL,
+    "targetResource" VARCHAR(255),
+    "outcome" VARCHAR(20) NOT NULL,
+    "details" JSONB,
+    CONSTRAINT "CHK_AuditLog_Outcome_Enum" CHECK ("outcome" IN ('success', 'failure'))
+) PARTITION BY RANGE ("eventTimestamp");
+
+-- Entity: AIInsightCard
+CREATE TABLE "AIInsightCard" (
+    "aiInsightCardId" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "MerchantAccountId" UUID NOT NULL,
+    "title" VARCHAR(255) NOT NULL,
+    "content" TEXT NOT NULL,
+    "insightType" VARCHAR(50) NOT NULL,
+    "isDismissed" BOOLEAN NOT NULL DEFAULT false,
+    "generatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "CHK_AIInsightCard_InsightType_Enum" CHECK ("insightType" IN ('trend', 'anomaly', 'suggestion'))
+);
+
+-- Entity: UserPreference
+CREATE TABLE "UserPreference" (
+    "userPreferenceId" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "UserId" UUID NOT NULL,
+    "theme" VARCHAR(20) NOT NULL DEFAULT 'system',
+    "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "UC_UserPreference_UserId" UNIQUE ("UserId"),
+    CONSTRAINT "CHK_UserPreference_Theme_Enum" CHECK ("theme" IN ('light', 'dark', 'system'))
+);
+
+-- Entity: DataSubjectRequest
+CREATE TABLE "DataSubjectRequest" (
+    "dataSubjectRequestId" UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    "MerchantAccountId" UUID NOT NULL,
+    "customerIdentifier" VARCHAR(255) NOT NULL,
+    "requestType" VARCHAR(20) NOT NULL,
+    "status" VARCHAR(20) NOT NULL DEFAULT 'pending',
+    "RequestedByUserId" UUID NOT NULL,
+    "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "completedAt" TIMESTAMP WITH TIME ZONE,
+    CONSTRAINT "CHK_DataSubjectRequest_RequestType_Enum" CHECK ("requestType" IN ('export', 'delete')),
+    CONSTRAINT "CHK_DataSubjectRequest_Status_Enum" CHECK ("status" IN ('pending', 'completed', 'failed'))
+);
+
+-- =============================================
+-- INDEX CREATION
+-- =============================================
+
+CREATE INDEX "IX_User_FullName" ON "User" USING BTREE ("firstName", "lastName");
+CREATE INDEX "IX_UserMerchantAccount_Merchant_Role" ON "UserMerchantAccount" USING BTREE ("MerchantAccountId", "RoleId");
+CREATE INDEX "IX_Invitation_Status_ExpiresAt" ON "Invitation" USING BTREE ("status", "expiresAt");
+CREATE INDEX "IX_Customer_Merchant_Location" ON "Customer" USING BTREE ("MerchantAccountId", "country", "city");
+CREATE INDEX "IX_Product_fts" ON "Product" USING GIN (to_tsvector('english', "name" || ' ' || "description"));
+CREATE INDEX "IX_SalesOrder_Merchant_OrderDate" ON "SalesOrder" USING BTREE ("MerchantAccountId", "orderDate");
+CREATE INDEX "IX_SalesOrder_Merchant_Customer_OrderDate" ON "SalesOrder" USING BTREE ("MerchantAccountId", "CustomerId", "orderDate" DESC);
+CREATE INDEX "IX_AbandonedCart_Status_CreatedAt" ON "AbandonedCart" USING BTREE ("status", "createdAt");
+CREATE INDEX "IX_AbandonedCart_Merchant_Customer_Status" ON "AbandonedCart" USING BTREE ("MerchantAccountId", "CustomerId", "status");
+CREATE INDEX "IX_AuditLog_Merchant_Timestamp" ON "AuditLog" USING BTREE ("MerchantAccountId", "eventTimestamp");
+CREATE INDEX "IX_AuditLog_details_GIN" ON "AuditLog" USING GIN ("details");
+CREATE INDEX "IX_AIInsightCard_Merchant_Dismissed_Generated" ON "AIInsightCard" USING BTREE ("MerchantAccountId", "isDismissed", "generatedAt");
+CREATE INDEX "IX_DataSubjectRequest_Merchant_Status" ON "DataSubjectRequest" USING BTREE ("MerchantAccountId", "status");
+
+-- =============================================
+-- FOREIGN KEY CONSTRAINTS
+-- =============================================
+
+ALTER TABLE "PasswordResetToken" ADD CONSTRAINT "FK_PasswordResetToken_User" FOREIGN KEY ("UserId") REFERENCES "User" ("userId") ON DELETE Cascade ON UPDATE Cascade;
+ALTER TABLE "UserMerchantAccount" ADD CONSTRAINT "FK_UserMerchantAccount_User" FOREIGN KEY ("UserId") REFERENCES "User" ("userId") ON DELETE Cascade ON UPDATE Cascade;
+ALTER TABLE "UserMerchantAccount" ADD CONSTRAINT "FK_UserMerchantAccount_MerchantAccount" FOREIGN KEY ("MerchantAccountId") REFERENCES "MerchantAccount" ("merchantAccountId") ON DELETE Cascade ON UPDATE Cascade;
+ALTER TABLE "UserMerchantAccount" ADD CONSTRAINT "FK_UserMerchantAccount_Role" FOREIGN KEY ("RoleId") REFERENCES "Role" ("roleId") ON DELETE Restrict ON UPDATE Cascade;
+ALTER TABLE "Invitation" ADD CONSTRAINT "FK_Invitation_MerchantAccount" FOREIGN KEY ("MerchantAccountId") REFERENCES "MerchantAccount" ("merchantAccountId") ON DELETE Cascade ON UPDATE Cascade;
+ALTER TABLE "Invitation" ADD CONSTRAINT "FK_Invitation_User" FOREIGN KEY ("InvitedByUserId") REFERENCES "User" ("userId") ON DELETE Set Null ON UPDATE Cascade;
+ALTER TABLE "Invitation" ADD CONSTRAINT "FK_Invitation_Role" FOREIGN KEY ("RoleId") REFERENCES "Role" ("roleId") ON DELETE Restrict ON UPDATE Cascade;
+ALTER TABLE "Customer" ADD CONSTRAINT "FK_Customer_MerchantAccount" FOREIGN KEY ("MerchantAccountId") REFERENCES "MerchantAccount" ("merchantAccountId") ON DELETE Cascade ON UPDATE Cascade;
+ALTER TABLE "Category" ADD CONSTRAINT "FK_Category_MerchantAccount" FOREIGN KEY ("MerchantAccountId") REFERENCES "MerchantAccount" ("merchantAccountId") ON DELETE Cascade ON UPDATE Cascade;
+ALTER TABLE "Category" ADD CONSTRAINT "FK_Category_ParentCategory" FOREIGN KEY ("ParentCategoryId") REFERENCES "Category" ("categoryId") ON DELETE Set Null ON UPDATE Cascade;
+ALTER TABLE "Product" ADD CONSTRAINT "FK_Product_MerchantAccount" FOREIGN KEY ("MerchantAccountId") REFERENCES "MerchantAccount" ("merchantAccountId") ON DELETE Cascade ON UPDATE Cascade;
+ALTER TABLE "Product" ADD CONSTRAINT "FK_Product_Category" FOREIGN KEY ("CategoryId") REFERENCES "Category" ("categoryId") ON DELETE Restrict ON UPDATE Cascade;
+ALTER TABLE "SalesOrder" ADD CONSTRAINT "FK_SalesOrder_MerchantAccount" FOREIGN KEY ("MerchantAccountId") REFERENCES "MerchantAccount" ("merchantAccountId") ON DELETE Cascade ON UPDATE Cascade;
+ALTER TABLE "SalesOrder" ADD CONSTRAINT "FK_SalesOrder_Customer" FOREIGN KEY ("CustomerId") REFERENCES "Customer" ("customerId") ON DELETE Restrict ON UPDATE Cascade;
+ALTER TABLE "OrderItem" ADD CONSTRAINT "FK_OrderItem_SalesOrder" FOREIGN KEY ("SalesOrderId") REFERENCES "SalesOrder" ("salesOrderId") ON DELETE Cascade ON UPDATE Cascade;
+ALTER TABLE "OrderItem" ADD CONSTRAINT "FK_OrderItem_Product" FOREIGN KEY ("ProductId") REFERENCES "Product" ("productId") ON DELETE Restrict ON UPDATE Cascade;
+ALTER TABLE "OrderItem" ADD CONSTRAINT "FK_OrderItem_MerchantAccount" FOREIGN KEY ("MerchantAccountId") REFERENCES "MerchantAccount" ("merchantAccountId") ON DELETE Cascade ON UPDATE Cascade;
+ALTER TABLE "AbandonedCart" ADD CONSTRAINT "FK_AbandonedCart_MerchantAccount" FOREIGN KEY ("MerchantAccountId") REFERENCES "MerchantAccount" ("merchantAccountId") ON DELETE Cascade ON UPDATE Cascade;
+ALTER TABLE "AbandonedCart" ADD CONSTRAINT "FK_AbandonedCart_Customer" FOREIGN KEY ("CustomerId") REFERENCES "Customer" ("customerId") ON DELETE Cascade ON UPDATE Cascade;
+ALTER TABLE "AbandonedCartItem" ADD CONSTRAINT "FK_AbandonedCartItem_AbandonedCart" FOREIGN KEY ("AbandonedCartId") REFERENCES "AbandonedCart" ("abandonedCartId") ON DELETE Cascade ON UPDATE Cascade;
+ALTER TABLE "AbandonedCartItem" ADD CONSTRAINT "FK_AbandonedCartItem_Product" FOREIGN KEY ("ProductId") REFERENCES "Product" ("productId") ON DELETE Cascade ON UPDATE Cascade;
+ALTER TABLE "EmailTemplate" ADD CONSTRAINT "FK_EmailTemplate_MerchantAccount" FOREIGN KEY ("MerchantAccountId") REFERENCES "MerchantAccount" ("merchantAccountId") ON DELETE Cascade ON UPDATE Cascade;
+ALTER TABLE "DomainAuthentication" ADD CONSTRAINT "FK_DomainAuthentication_MerchantAccount" FOREIGN KEY ("MerchantAccountId") REFERENCES "MerchantAccount" ("merchantAccountId") ON DELETE Cascade ON UPDATE Cascade;
+ALTER TABLE "AuditLog" ADD CONSTRAINT "FK_AuditLog_MerchantAccount" FOREIGN KEY ("MerchantAccountId") REFERENCES "MerchantAccount" ("merchantAccountId") ON DELETE Cascade ON UPDATE Cascade;
+ALTER TABLE "AuditLog" ADD CONSTRAINT "FK_AuditLog_User" FOREIGN KEY ("UserId") REFERENCES "User" ("userId") ON DELETE Set Null ON UPDATE Cascade;
+ALTER TABLE "AIInsightCard" ADD CONSTRAINT "FK_AIInsightCard_MerchantAccount" FOREIGN KEY ("MerchantAccountId") REFERENCES "MerchantAccount" ("merchantAccountId") ON DELETE Cascade ON UPDATE Cascade;
+ALTER TABLE "UserPreference" ADD CONSTRAINT "FK_UserPreference_User" FOREIGN KEY ("UserId") REFERENCES "User" ("userId") ON DELETE Cascade ON UPDATE Cascade;
+ALTER TABLE "DataSubjectRequest" ADD CONSTRAINT "FK_DataSubjectRequest_MerchantAccount" FOREIGN KEY ("MerchantAccountId") REFERENCES "MerchantAccount" ("merchantAccountId") ON DELETE Cascade ON UPDATE Cascade;
+ALTER TABLE "DataSubjectRequest" ADD CONSTRAINT "FK_DataSubjectRequest_User" FOREIGN KEY ("RequestedByUserId") REFERENCES "User" ("userId") ON DELETE Set Null ON UPDATE Cascade;
+
+-- =============================================
+-- COMMENTS
+-- =============================================
+COMMENT ON TABLE "User" IS 'Represents system users with authentication and profile information. A user can belong to multiple merchant accounts.';
+COMMENT ON TABLE "PasswordResetToken" IS 'Stores temporary, secure tokens for the password reset workflow (REQ-FUNC-003).';
+COMMENT ON TABLE "MerchantAccount" IS 'Represents a tenant''s account or workspace, which contains all of their associated data like products, sales, and users.';
+COMMENT ON TABLE "Role" IS 'Defines a set of permissions for users within a merchant account (e.g., Owner, Admin, Analyst).';
+COMMENT ON TABLE "UserMerchantAccount" IS 'A join table linking Users to MerchantAccounts, assigning them a specific Role. This enables multi-tenancy and team management (REQ-FUNC-007, REQ-UI-001).';
+COMMENT ON TABLE "Invitation" IS 'Tracks invitations sent to users to join a merchant account (REQ-FUNC-006).';
+COMMENT ON TABLE "Customer" IS 'Represents a merchant''s end customer, used for sales tracking and segmentation reports (REQ-FUNC-010).';
+COMMENT ON TABLE "Category" IS 'Represents product categories for filtering and organization in reports (REQ-FUNC-011). Supports hierarchical structures.';
+COMMENT ON TABLE "Product" IS 'Represents an item for sale by a merchant. Forms the basis for product performance reports (REQ-FUNC-011).';
+COMMENT ON TABLE "SalesOrder" IS 'Represents a completed transaction. This is the primary source of data for all sales analytics and reporting (REQ-FUNC-009).';
+COMMENT ON TABLE "OrderItem" IS 'Represents a single line item within a SalesOrder, linking a product to an order with quantity and price at the time of purchase.';
+COMMENT ON COLUMN "OrderItem"."MerchantAccountId" IS 'Denormalized from SalesOrder to improve analytical query performance.';
+COMMENT ON COLUMN "OrderItem"."orderDate" IS 'Denormalized from SalesOrder to improve analytical query performance.';
+COMMENT ON TABLE "AbandonedCart" IS 'Stores information about shopping carts that were not converted into orders, for use in recovery campaigns (REQ-FUNC-019, REQ-DATA-001).';
+COMMENT ON TABLE "AbandonedCartItem" IS 'Represents a single product line item within an AbandonedCart.';
+COMMENT ON TABLE "EmailTemplate" IS 'Stores reusable, rich-text email templates for cart recovery campaigns (REQ-FUNC-019).';
+COMMENT ON TABLE "DomainAuthentication" IS 'Stores SPF and DKIM records and their verification status for a merchant''s sending domain (REQ-FUNC-021).';
+COMMENT ON TABLE "AuditLog" IS 'Maintains an immutable record of security-sensitive events for auditing and compliance (REQ-SEC-005).';
+COMMENT ON TABLE "AIInsightCard" IS 'Stores proactive insights, trends, and anomalies generated by the AI Assistant for display on the dashboard (REQ-FUNC-015).';
+COMMENT ON TABLE "UserPreference" IS 'Stores individual user preferences, such as UI theme choice (REQ-UI-005).';
+COMMENT ON TABLE "DataSubjectRequest" IS 'Tracks Data Subject Access Requests (DSARs) for data export and deletion to comply with regulations like GDPR (REQ-CMPL-001).';

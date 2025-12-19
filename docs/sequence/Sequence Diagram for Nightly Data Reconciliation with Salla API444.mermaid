@@ -1,0 +1,23 @@
+sequenceDiagram
+    participant "Scheduler" as Scheduler
+    participant "Reconciliation Job" as ReconciliationJob
+    participant "Salla Platform" as SallaPlatform
+    participant "OLTP Repository" as OLTPRepository
+
+    activate ReconciliationJob
+    Scheduler->>ReconciliationJob: 1. 1. InvokeFunction(payload: { merchantId: string })
+    ReconciliationJob-->>Scheduler: Function Invocation Ack
+    ReconciliationJob->>ReconciliationJob: 2. 2. Initialize Job: Calculate time window (now - 24h), fetch Salla OAuth token for merchantId
+    ReconciliationJob->>SallaPlatform: 3. 3. [LOOP: For each page] GET /v2/orders?updated_at_min={startTime}&page={pageNumber}
+    SallaPlatform-->>ReconciliationJob: 200 OK with { data: Order[], pagination: {...} }
+    ReconciliationJob->>ReconciliationJob: 4. 4. [LOOP: For each order in page] Transform Salla API model to internal domain model
+    ReconciliationJob->>OLTPRepository: 5. 4.1. findOrderBySallaId(sallaOrderId)
+    OLTPRepository-->>ReconciliationJob: LocalOrder | null
+    ReconciliationJob->>ReconciliationJob: 6. 4.2. [ALT: Compare Timestamps]
+    ReconciliationJob->>ReconciliationJob: 9. 5. Log Job Summary: Report total records fetched, created, updated, skipped, and failed.
+
+    note over ReconciliationJob: The job must be designed to be idempotent. If it fails midway and is re-run, it should not create...
+    note over SallaPlatform: Pagination logic continues until the Salla API returns an empty data array or indicates there are...
+    note over OLTPRepository: A successful reconciliation run will trigger the CDC pipeline (REQ-TEC-003) to propagate these ch...
+
+    deactivate ReconciliationJob

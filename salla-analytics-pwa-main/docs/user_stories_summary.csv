@@ -1,0 +1,2 @@
+"total_stories","total_story_points","must_have_stories","should_have_stories","could_have_stories","epics_identified","estimated_sprints","key_dependencies"
+"6","52","4","2","0","[""Core Infrastructure & Foundation"",""Onboarding & Salla Integration"",""Data Pipeline & Analytics"",""AI Assistant"",""Cart Recovery Module""]","4","[""Authentication Service (WI-004)"",""Salla OAuth (WI-006)"",""CDC Pipeline (WI-009)""]"

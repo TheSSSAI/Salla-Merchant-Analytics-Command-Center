@@ -1,0 +1,2 @@
+"total_stories","total_story_points","must_have_stories","should_have_stories","could_have_stories","epics_identified","estimated_sprints","key_dependencies"
+"9","65","5","2","0","[""Authentication & Tenant Management"",""Data Ingestion & Synchronization Pipeline"",""Deep Analytics & Reporting"",""Abandoned Cart Recovery System"",""AI Assistant & Insights""]","5","[""Salla OAuth Connection (US-002)"",""Historical Data Sync (US-003)"",""OLAP Database Setup (WI-INFRA-003)""]"

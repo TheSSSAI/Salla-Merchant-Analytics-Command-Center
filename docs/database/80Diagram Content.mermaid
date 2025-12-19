@@ -1,0 +1,24 @@
+erDiagram
+    SalesFact {
+        DateTime64 eventDateTime
+        UUID merchantId
+        UUID orderId
+        UUID customerId
+        UUID productId
+        UUID categoryId
+        String customerCountry
+        String customerCity
+        UInt32 quantity
+        "Decimal(10, 2)" revenue
+        "LowCardinality(String)" orderStatus
+    }
+
+    AbandonedCartFact {
+        DateTime64 eventDateTime
+        UUID merchantId
+        UUID abandonedCartId
+        UUID customerId
+        "Decimal(10, 2)" totalValue
+        "LowCardinality(String)" status
+        "Nullable(UUID)" recoveryCampaignId
+    }

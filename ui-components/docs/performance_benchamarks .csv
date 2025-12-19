@@ -1,0 +1,4 @@
+"performance_area","benchmark_type","target_value","measurement_unit","measurement_conditions","test_environment","load_profile","monitoring_tools","baseline_value","acceptable_range","alert_threshold","degradation_trend","improvement_opportunities","business_relevance"
+"API Response Latency","Latency","200","milliseconds","p95 under 100 RPS load","Staging (Mocked DB)","Ramp up to 500 concurrent users","k6; Vercel Analytics","150","0-250ms","300","Flat","Edge Caching; DB Indexing","User Retention"
+"Data Ingestion Lag","Throughput/Latency","5","minutes","Burst of 1000 webhooks","Staging","Spike test","Upstash Console; Custom Metrics","2","0-5 minutes","5.5","Stable","ClickHouse Batch Size tuning","Real-time Reporting Trust"
+"Dashboard LCP","Frontend Loading","2.5","seconds","Desktop 4G Simulation","Preview Deployment","Single User","Lighthouse CI","1.8","0-2.5s","3","Monitor closely","Code splitting; Server Components","SEO & UX"

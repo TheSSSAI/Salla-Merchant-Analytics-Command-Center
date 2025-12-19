@@ -1,0 +1,41 @@
+sequenceDiagram
+    actor "User" as User
+    participant "Frontend SPA" as FrontendSPA
+    participant "API Gateway" as APIGateway
+    participant "Analytics Service" as AnalyticsService
+    participant "Async Task Queue" as AsyncTaskQueue
+    participant "Async Job Worker" as AsyncJobWorker
+    participant "OLAP Repository" as OLAPRepository
+    participant "File Storage" as FileStorage
+    actor "User Service" as UserService
+    participant "Notification Gateway" as NotificationGateway
+
+    User->>FrontendSPA: 1. 1. Clicks 'Export to CSV' on a report
+    activate APIGateway
+    FrontendSPA->>APIGateway: 2. 2. Initiates export job
+    APIGateway-->>FrontendSPA: 7. Returns '202 Accepted' with jobId
+    activate AnalyticsService
+    APIGateway->>AnalyticsService: 3. 3. Forwards export request
+    AnalyticsService-->>APIGateway: 6. Returns job creation confirmation
+    AnalyticsService->>AsyncTaskQueue: 4. 4. Publishes export job message
+    AsyncTaskQueue-->>AnalyticsService: 5. Acknowledges message receipt
+    FrontendSPA->>User: 8. 8. Displays confirmation: 'Export started...'
+    activate AsyncJobWorker
+    AsyncTaskQueue->>AsyncJobWorker: 9. 9. Triggers worker with job message
+    AsyncJobWorker->>OLAPRepository: 10. 10. Fetches report data with streaming
+    OLAPRepository-->>AsyncJobWorker: 11. Streams result set
+    AsyncJobWorker->>FileStorage: 12. 12. Uploads generated CSV file via stream
+    FileStorage-->>AsyncJobWorker: 13. Confirms upload and returns file metadata
+    AsyncJobWorker->>FileStorage: 14. 14. Generates secure download link
+    FileStorage-->>AsyncJobWorker: 15. Returns pre-signed URL
+    AsyncJobWorker->>UserService: 16. 16. Creates in-app success notification
+    UserService-->>AsyncJobWorker: 17. Confirms notification creation
+    AsyncJobWorker->>NotificationGateway: 18. 18. Sends success email notification
+    NotificationGateway-->>AsyncJobWorker: 19. Confirms email sent
+
+    note over AnalyticsService: The initial API call (2-7) must complete under 200ms to meet performance requirements. The heavy ...
+    note over AsyncJobWorker: If any step from 10 onwards fails, the worker catches the exception, logs it with the jobId, and ...
+
+    deactivate AsyncJobWorker
+    deactivate AnalyticsService
+    deactivate APIGateway

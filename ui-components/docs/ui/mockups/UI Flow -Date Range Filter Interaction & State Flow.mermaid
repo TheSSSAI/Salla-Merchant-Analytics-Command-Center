@@ -1,0 +1,63 @@
+flowchart TD
+    %% Nodes
+    Start([User Interaction]) --> Trigger[Click Date Filter Trigger]
+    Trigger --> Popover{Popover State}
+    
+    subgraph "Date Range Filter Component (US-023)"
+        Popover -- Closed --> IdleState["Display Current Range\n(e.g., 'Last 30 Days')"]
+        Popover -- Open --> UI[Render Popover UI]
+        
+        subgraph "UI Composition"
+            UI --> Sidebar[Preset List Sidebar]
+            UI --> CalendarArea[Calendar Primitive Area]
+        end
+        
+        Sidebar --> PresetClick{User Selects Preset}
+        PresetClick -- "Last 7/30 Days, etc." --> CalcPreset[Calculate Start & End Dates]
+        
+        CalendarArea --> CalInteraction{User Interacton}
+        
+        %% Calendar Logic Flow
+        CalInteraction -- "Keyboard/Mouse" --> SelectStart[Select Start Date]
+        SelectStart --> HoverState[Hover: Visual Range Preview]
+        HoverState --> SelectEnd[Select End Date]
+        
+        SelectEnd --> Validate{Validate Range}
+        Validate -- "Start > End" --> Swap[Auto-Swap Dates]
+        Validate -- "Start <= End" --> ValidRange[Valid Selection]
+        Swap --> ValidRange
+        
+        ValidRange --> UpdateInternal[Update Internal Component State]
+        CalcPreset --> UpdateInternal
+        
+        UpdateInternal --> CheckApply{Interaction Type}
+        CheckApply -- Preset --> AutoApply[Auto Apply]
+        CheckApply -- Custom --> WaitForApply[Wait for 'Apply' Click]
+        WaitForApply --> UserClicksApply[User Clicks 'Apply']
+    end
+    
+    subgraph "System Integration & State Sync"
+        AutoApply --> ClosePopover[Close Popover]
+        UserClicksApply --> ClosePopover
+        
+        ClosePopover --> UpdateURL[Update URL Query Params\n?from=YYYY-MM-DD&to=YYYY-MM-DD]
+        
+        UpdateURL --> RouterEffect{Router Event}
+        RouterEffect --> DataFetch[Trigger Data Refetch\n(SWR / React Query)]
+        
+        DataFetch --> LoadingState[Show Skeleton Loaders\non Dashboard Widgets]
+        LoadingState --> RenderData[Render Updated Analytics]
+    end
+
+    %% Styles
+    classDef trigger fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#0d47a1
+    classDef logic fill:#fff3e0,stroke:#ef6c00,stroke-width:2px,color:#e65100
+    classDef ui fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c
+    classDef system fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#1b5e20
+    classDef interaction fill:#ffffff,stroke:#37474f,stroke-width:2px,stroke-dasharray: 5 5
+
+    class Trigger,ClickApply,UserClicksApply trigger
+    class Validate,Swap,CalcPreset,CheckApply,RouterEffect logic
+    class UI,Sidebar,CalendarArea,IdleState,LoadingState ui
+    class UpdateURL,DataFetch,RenderData system
+    class PresetClick,CalInteraction,SelectStart,SelectEnd interaction

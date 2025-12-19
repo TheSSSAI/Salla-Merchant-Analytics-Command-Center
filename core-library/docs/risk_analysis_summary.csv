@@ -1,0 +1,2 @@
+"total_risks_identified","critical_risks","high_priority_risks","average_risk_score","key_risk_themes","immediate_actions_required"
+"6","1","2","14.6","[""Serverless Architecture Constraints"",""Cross-Tenant Data Security"",""Data Consistency (OLTP vs OLAP)""]","[""Architect QStash recursive chaining for historical sync immediately to prevent timeout failures."",""Implement mandatory 'merchant_id' scoping in the RAG/Vector pipeline code layer."",""Design the checksum reconciliation job for the Data Pipeline.""]"

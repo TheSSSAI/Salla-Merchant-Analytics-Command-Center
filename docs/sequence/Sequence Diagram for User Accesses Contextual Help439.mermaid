@@ -1,0 +1,22 @@
+sequenceDiagram
+    actor "User Browser" as UserBrowser
+    participant "Frontend SPA" as FrontendSPA
+
+    activate FrontendSPA
+    UserBrowser->>FrontendSPA: 1. User clicks the HelpIcon component or focuses it via keyboard and presses 'Enter'/'Space'.
+    FrontendSPA->>FrontendSPA: 2. Invokes handleTogglePopover(true, 'aov_kpi') event handler, updating component state (e.g., using useState or a Zustand store action) to set the popover's visibility and content ID.
+    FrontendSPA->>FrontendSPA: 3. Synchronously retrieves help content from a local, version-controlled helpContent.json map using the contentId ('aov_kpi') as the key.
+    FrontendSPA-->>FrontendSPA: Returns { title, description, learnMoreUrl } object.
+    FrontendSPA->>FrontendSPA: 4. Triggers a component re-render. The Popover component from shadcn/ui is rendered with the retrieved content. Accessibility attributes are applied.
+    FrontendSPA->>UserBrowser: 5. Displays the positioned Popover adjacent to the help icon, ensuring it is fully visible within the viewport.
+    UserBrowser->>UserBrowser: 6. ALT: User clicks the 'Learn More' link within the popover.
+    UserBrowser-->>UserBrowser: Opens knowledge base URL in a new browser tab.
+    UserBrowser->>FrontendSPA: 7. ALT: User clicks outside the popover or presses the 'Escape' key.
+    FrontendSPA->>FrontendSPA: 8. Invokes handleTogglePopover(false) event handler, updating state to set the popover's visibility to false.
+    FrontendSPA->>UserBrowser: 9. Component re-renders, removing the Popover from the DOM.
+
+    note over FrontendSPA: Accessibility (REQ-INT-005): The HelpIcon component MUST be implemented as a focusable element (e...
+    note over FrontendSPA: Positioning Logic: The underlying shadcn/ui Popover component handles automatic positioning to pr...
+    note over FrontendSPA: Content Management: All help text is managed in a single, version-controlled helpContent.json fil...
+
+    deactivate FrontendSPA

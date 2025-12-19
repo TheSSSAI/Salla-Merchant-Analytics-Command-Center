@@ -1,0 +1,2 @@
+"total_risks_identified","critical_risks","high_priority_risks","average_risk_score","key_risk_themes","immediate_actions_required"
+"7","2","3","16.14","[""Serverless Execution Constraints"",""External API Dependencies (Salla)"",""Data Consistency (OLTP vs OLAP)""]","[""Architect sync workers for recursive execution via QStash immediately"",""Configure PgBouncer for Postgres production environment"",""Implement Leaky Bucket rate limiting for Salla API calls""]"

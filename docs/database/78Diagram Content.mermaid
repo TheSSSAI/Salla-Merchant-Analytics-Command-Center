@@ -1,0 +1,93 @@
+erDiagram
+    User {
+        Guid userId PK
+    }
+    PasswordResetToken {
+        Guid passwordResetTokenId PK
+    }
+    MerchantAccount {
+        Guid merchantAccountId PK
+    }
+    Role {
+        Guid roleId PK
+    }
+    UserMerchantAccount {
+        Guid userMerchantAccountId PK
+    }
+    Invitation {
+        Guid invitationId PK
+    }
+    Customer {
+        Guid customerId PK
+    }
+    Category {
+        Guid categoryId PK
+    }
+    Product {
+        Guid productId PK
+    }
+    SalesOrder {
+        Guid salesOrderId PK
+    }
+    OrderItem {
+        Guid orderItemId PK
+    }
+    AbandonedCart {
+        Guid abandonedCartId PK
+    }
+    AbandonedCartItem {
+        Guid abandonedCartItemId PK
+    }
+    EmailTemplate {
+        Guid emailTemplateId PK
+    }
+    DomainAuthentication {
+        Guid domainAuthenticationId PK
+    }
+    AuditLog {
+        BIGINT auditLogId PK
+    }
+    AIInsightCard {
+        Guid aiInsightCardId PK
+    }
+    UserPreference {
+        Guid userPreferenceId PK
+    }
+    DataSubjectRequest {
+        Guid dataSubjectRequestId PK
+    }
+
+    User ||--o{ PasswordResetToken : "requests"
+    User ||--o{ UserMerchantAccount : "has membership"
+    User ||--o{ Invitation : "sends"
+    User ||--o| UserPreference : "has"
+    User |o--o{ AuditLog : "performed by"
+    User ||--o{ DataSubjectRequest : "requests"
+
+    MerchantAccount ||--|{ UserMerchantAccount : "has member"
+    MerchantAccount ||--o{ Invitation : "has"
+    MerchantAccount ||--o{ Customer : "has"
+    MerchantAccount ||--o{ Category : "has"
+    MerchantAccount ||--o{ Product : "has"
+    MerchantAccount ||--o{ SalesOrder : "has"
+    MerchantAccount ||--o{ AbandonedCart : "has"
+    MerchantAccount ||--o{ EmailTemplate : "has"
+    MerchantAccount ||--o| DomainAuthentication : "has"
+    MerchantAccount |o--o{ AuditLog : "relates to"
+    MerchantAccount ||--o{ AIInsightCard : "has"
+    MerchantAccount ||--o{ DataSubjectRequest : "has"
+
+    Role ||--o{ UserMerchantAccount : "assigns"
+    Role ||--o{ Invitation : "specifies"
+
+    Customer ||--o{ SalesOrder : "places"
+    Customer ||--o{ AbandonedCart : "has"
+
+    Category |o--o{ Category : "parent of"
+    Category ||--o{ Product : "contains"
+
+    Product ||--o{ OrderItem : "appears in"
+    Product ||--o{ AbandonedCartItem : "appears in"
+
+    SalesOrder ||--|{ OrderItem : "contains"
+    AbandonedCart ||--|{ AbandonedCartItem : "contains"

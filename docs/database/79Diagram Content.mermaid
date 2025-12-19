@@ -1,0 +1,42 @@
+erDiagram
+    User {
+        UUID userId PK
+        VARCHAR email UK
+    }
+    PasswordResetToken {
+        UUID passwordResetTokenId PK
+        UUID userId FK
+    }
+    MerchantAccount {
+        UUID merchantAccountId PK
+        VARCHAR accountName
+    }
+    Role {
+        UUID roleId PK
+        VARCHAR roleName UK
+    }
+    UserMerchantAccount {
+        UUID userMerchantAccountId PK
+        UUID userId FK
+        UUID merchantAccountId FK
+        UUID roleId FK
+    }
+    Invitation {
+        UUID invitationId PK
+        UUID merchantAccountId FK
+        UUID invitedByUserId FK
+        UUID roleId FK
+    }
+    UserPreference {
+        UUID userPreferenceId PK
+        UUID userId FK, UK
+    }
+
+    User ||--o{ PasswordResetToken : "requests"
+    User ||--o| UserPreference : "has"
+    User }o--o| UserMerchantAccount : "is member of"
+    MerchantAccount }o--o| UserMerchantAccount : "has member"
+    Role }o--o| UserMerchantAccount : "assigns"
+    MerchantAccount }o--o| Invitation : "sends"
+    User }o--o| Invitation : "sent by"
+    Role }o--o| Invitation : "for role"

@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Chat Interface Component</title>
+  <style>
+    /* -------------------------------------------------------------------------- */
+    /* 1. DESIGN TOKENS                                                           */
+    /* -------------------------------------------------------------------------- */
+    :root {
+      /* Colors: Primary (Indigo) */
+      --color-primary-50: #eef2ff;
+      --color-primary-100: #e0e7ff;
+      --color-primary-500: #6366f1;
+      --color-primary-600: #4f46e5;
+      --color-primary-700: #4338ca;
+      
+      /* Colors: Neutrals (Slate) */
+      --color-white: #ffffff;
+      --color-gray-50: #f8fafc;
+      --color-gray-100: #f1f5f9;
+      --color-gray-200: #e2e8f0;
+      --color-gray-300: #cbd5e1;
+      --color-gray-400: #94a3b8;
+      --color-gray-500: #64748b;
+      --color-gray-600: #475569;
+      --color-gray-700: #334155;
+      --color-gray-800: #1e293b;
+      --color-gray-900: #0f172a;
+
+      /* Colors: Semantic */
+      --color-error: #ef4444;
+      --color-error-bg: #fef2f2;
+      
+      /* Spacing */
+      --spacing-1: 4px;
+      --spacing-2: 8px;
+      --spacing-3: 12px;
+      --spacing-4: 16px;
+      --spacing-6: 24px;
+      --spacing-8: 32px;
+      
+      /* Typography */
+      --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --text-xs: 0.75rem;
+      --text-sm: 0.875rem;
+      --text-base: 1rem;
+      --text-lg: 1.125rem;
+      --text-xl: 1.25rem;
+      
+      /* UI Elements */
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 8px;
+      --radius-xl: 12px;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+      --shadow-focus: 0 0 0 3px var(--color-primary-100);
+      
+      /* Animation */
+      --transition-base: 0.2s ease;
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* 2. RESET & BASE                                                            */
+    /* -------------------------------------------------------------------------- */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: var(--font-primary);
+      background-color: var(--color-gray-100);
+      color: var(--color-gray-900);
+      line-height: 1.5;
+      padding: var(--spacing-8);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* 3. ATOMS (Dependencies)                                                    */
+    /* -------------------------------------------------------------------------- */
+    /* Icons */
+    .icon { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .icon--lg { width: 20px; height: 20px; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-2);
+      padding: 8px 16px; border-radius: var(--radius-md); font-weight: 500; font-size: var(--text-sm);
+      cursor: pointer; transition: var(--transition-base); border: 1px solid transparent; white-space: nowrap;
+    }
+    .btn:focus-visible { outline: none; box-shadow: var(--shadow-focus); }
+    .btn--primary { background-color: var(--color-primary-600); color: var(--color-white); }
+    .btn--primary:hover { background-color: var(--color-primary-700); }
+    .btn--ghost { background-color: transparent; color: var(--color-gray-600); }
+    .btn--ghost:hover { background-color: var(--color-gray-100); color: var(--color-gray-900); }
+    .btn--icon { padding: 8px; width: 36px; height: 36px; }
+    .btn--sm { height: 32px; width: 32px; padding: 0; }
+
+    /* Avatar */
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%; 
+      display: flex; align-items: center; justify-content: center; 
+      font-size: var(--text-xs); font-weight: 600; overflow: hidden; flex-shrink: 0;
+    }
+    .avatar--ai { background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-700)); color: var(--color-white); }
+    .avatar--user { background: var(--color-gray-200); color: var(--color-gray-700); }
+
+    /* -------------------------------------------------------------------------- */
+    /* 4. MOLECULES (Chat Input - Reused)                                         */
+    /* -------------------------------------------------------------------------- */
+    .chat-input {
+      display: flex; flex-direction: column; gap: var(--spacing-2);
+      background: var(--color-white); border: 1px solid var(--color-gray-200);
+      border-radius: var(--radius-lg); padding: var(--spacing-2);
+      box-shadow: var(--shadow-sm); transition: var(--transition-base);
+    }
+    .chat-input:focus-within { border-color: var(--color-primary-500); box-shadow: var(--shadow-focus); }
+    .chat-input__field {
+      width: 100%; border: none; resize: none; outline: none;
+      font-family: var(--font-primary); font-size: var(--text-base); color: var(--color-gray-900);
+      min-height: 24px; max-height: 200px; padding: var(--spacing-2);
+    }
+    .chat-input__field::placeholder { color: var(--color-gray-400); }
+    .chat-input__footer {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0 var(--spacing-2) var(--spacing-1);
+    }
+    .chat-input__helper { font-size: var(--text-xs); color: var(--color-gray-400); }
+
+    /* -------------------------------------------------------------------------- */
+    /* 5. ORGANISM: AI CHAT INTERFACE                                             */
+    /* -------------------------------------------------------------------------- */
+    .ai-chat {
+      display: flex;
+      flex-direction: column;
+      background: var(--color-white);
+      overflow: hidden;
+      /* Default to card/panel styling */
+      border: 1px solid var(--color-gray-200);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* -- Header -- */
+    .ai-chat__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing-4);
+      border-bottom: 1px solid var(--color-gray-200);
+      background: var(--color-white);
+      flex-shrink: 0;
+    }
+    .ai-chat__title-group { display: flex; align-items: center; gap: var(--spacing-3); }
+    .ai-chat__title { font-size: var(--text-base); font-weight: 600; color: var(--color-gray-900); }
+    .ai-chat__status { 
+      font-size: var(--text-xs); color: var(--color-gray-500); display: flex; align-items: center; gap: 6px; 
+    }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-primary-500); }
+
+    /* -- Body / Message List -- */
+    .ai-chat__body {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--spacing-4);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-6);
+      background: var(--color-gray-50);
+      scroll-behavior: smooth;
+    }
+
+    /* -- Message Bubble Component (Local to Organism) -- */
+    .msg-group {
+      display: flex;
+      gap: var(--spacing-3);
+      max-width: 90%;
+    }
+    .msg-group--user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+    .msg-group--ai {
+      align-self: flex-start;
+    }
+
+    .msg-bubble {
+      padding: var(--spacing-3) var(--spacing-4);
+      border-radius: var(--radius-lg);
+      font-size: var(--text-sm);
+      line-height: 1.5;
+      position: relative;
+      box-shadow: var(--shadow-sm);
+    }
+    .msg-group--user .msg-bubble {
+      background-color: var(--color-primary-600);
+      color: var(--color-white);
+      border-bottom-right-radius: 2px;
+    }
+    .msg-group--ai .msg-bubble {
+      background-color: var(--color-white);
+      color: var(--color-gray-900);
+      border: 1px solid var(--color-gray-200);
+      border-bottom-left-radius: 2px;
+    }
+    
+    /* Message Metadata */
+    .msg-meta {
+      font-size: 11px;
+      margin-top: 4px;
+      opacity: 0.8;
+      display: block;
+    }
+    .msg-group--user .msg-meta { text-align: right; color: var(--color-primary-100); }
+    .msg-group--ai .msg-meta { text-align: left; color: var(--color-gray-500); }
+
+    /* -- Footer / Input Wrapper -- */
+    .ai-chat__footer {
+      padding: var(--spacing-4);
+      background: var(--color-white);
+      border-top: 1px solid var(--color-gray-200);
+      flex-shrink: 0;
+    }
+
+    /* -- Empty State -- */
+    .ai-chat__empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      color: var(--color-gray-500);
+      padding: var(--spacing-8);
+    }
+    .empty-icon {
+      width: 48px; height: 48px; margin-bottom: var(--spacing-4);
+      color: var(--color-primary-200);
+    }
+
+    /* -- Thinking State Animation -- */
+    .typing-indicator {
+      display: flex; gap: 4px; padding: var(--spacing-2);
+      align-items: center; justify-content: center;
+    }
+    .typing-dot {
+      width: 6px; height: 6px; background: var(--color-gray-400); border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+    @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+    /* -- Error State -- */
+    .error-banner {
+      background: var(--color-error-bg);
+      border: 1px solid var(--color-error);
+      color: #991b1b;
+      padding: var(--spacing-2) var(--spacing-3);
+      border-radius: var(--radius-md);
+      font-size: var(--text-xs);
+      display: flex; align-items: center; gap: var(--spacing-2);
+      margin-top: var(--spacing-2);
+    }
+
+    /* -- VARIANT: Sidebar Panel -- */
+    .ai-chat--sidebar {
+      width: 400px;
+      height: 600px; /* Fixed height for demo, would be 100vh in real sidebar */
+      display: flex;
+    }
+
+    /* -- VARIANT: Full Page -- */
+    .ai-chat--full-page {
+      width: 100%;
+      height: 600px; /* Demo height */
+      max-width: 1000px;
+      margin: 0 auto;
+      border: none;
+      box-shadow: none;
+      background: transparent;
+    }
+    .ai-chat--full-page .ai-chat__body {
+      background: transparent;
+      padding: 0 var(--spacing-8); /* Narrow content */
+    }
+    .ai-chat--full-page .ai-chat__header { background: transparent; border-bottom: none; }
+    .ai-chat--full-page .ai-chat__footer { background: transparent; border-top: none; }
+    
+    /* Responsive Adaptations */
+    @media (max-width: 768px) {
+      .ai-chat--sidebar {
+        width: 100%;
+        height: 100%;
+        border-radius: 0;
+        position: fixed; top: 0; left: 0; bottom: 0; right: 0;
+        z-index: 9999;
+      }
+      .msg-group { max-width: 95%; }
+    }
+
+    /* Documentation Styles (Not part of component) */
+    .showcase-container { max-width: 1200px; margin: 0 auto; }
+    .showcase-grid { display: grid; grid-template-columns: 1fr; gap: 40px; margin-top: 32px; }
+    .variant-label { 
+      font-size: 1.5rem; font-weight: 700; margin-bottom: 16px; 
+      border-bottom: 2px solid var(--color-gray-200); padding-bottom: 8px;
+    }
+    .variant-desc { color: var(--color-gray-600); margin-bottom: 24px; }
+
+  </style>
+</head>
+<body>
+
+  <div class="showcase-container">
+    <header style="margin-bottom: 40px;">
+      <h1 style="font-size: 2rem; font-weight: 800; color: var(--color-gray-900);">AI Chat Interface Showcase</h1>
+      <p style="color: var(--color-gray-600);">Organism-level component demonstrating complex state management, responsive layout, and atomic composition.</p>
+    </header>
+
+    <div class="showcase-grid">
+      
+      <!-- VARIANT 1: SIDEBAR PANEL (Active State) -->
+      <div>
+        <h2 class="variant-label">Variant: Sidebar Panel</h2>
+        <p class="variant-desc">
+          Typical usage: Slide-out drawer or floating widget. Fixed width on desktop (400px), full width on mobile. 
+          Shown here in "Conversation Active" state with history and thinking indicator.
+        </p>
+        
+        <!-- Component Wrapper -->
+        <article class="ai-chat ai-chat--sidebar" aria-label="AI Assistant Chat">
+          <!-- Header -->
+          <header class="ai-chat__header">
+            <div class="ai-chat__title-group">
+              <div class="avatar avatar--ai">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 1 10 10c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm0 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16zm0 13a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm0-11a4 4 0 0 1 4 4c0 1.22-.55 2.167-1.333 3.167L14 11.5c-.667.833-1 1.5-1 2.5a1 1 0 0 1-2 0c0-1.5.5-2.5 2-4l.5-.5c.667-.667 1-1.333 1-2a2 2 0 1 0-4 0 1 1 0 0 1-2 0 4 4 0 0 1 4-4z" fill="currentColor"/></svg>
+              </div>
+              <div>
+                <h3 class="ai-chat__title">Data Assistant</h3>
+                <div class="ai-chat__status">
+                  <span class="status-dot"></span> Online
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; gap:4px;">
+              <button class="btn btn--icon btn--ghost" aria-label="Clear chat">
+                <svg class="icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+              <button class="btn btn--icon btn--ghost" aria-label="Close panel">
+                <svg class="icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+          </header>
+
+          <!-- Body -->
+          <div class="ai-chat__body" id="chat-history" role="log" aria-live="polite">
+            
+            <!-- Message: AI (Intro) -->
+            <div class="msg-group msg-group--ai">
+              <div class="avatar avatar--ai">AI</div>
+              <div>
+                <div class="msg-bubble">
+                  Hello! I can help you analyze your store's performance. Try asking about your sales trends or top products.
+                </div>
+                <span class="msg-meta">10:23 AM</span>
+              </div>
+            </div>
+
+            <!-- Message: User -->
+            <div class="msg-group msg-group--user">
+              <div class="avatar avatar--user">
+                <img src="https://ui-avatars.com/api/?name=User&background=random" alt="User">
+              </div>
+              <div>
+                <div class="msg-bubble">
+                  What were my total sales last week compared to the previous week?
+                </div>
+                <span class="msg-meta">10:24 AM</span>
+              </div>
+            </div>
+
+            <!-- Message: AI -->
+            <div class="msg-group msg-group--ai">
+              <div class="avatar avatar--ai">AI</div>
+              <div>
+                <div class="msg-bubble">
+                  <strong>Total Sales (Last Week):</strong> $12,450<br>
+                  <strong>Previous Week:</strong> $10,200<br><br>
+                  That's a <span style="color:var(--color-primary-600); font-weight:600;">22% increase</span>! 🚀
+                </div>
+                <span class="msg-meta">10:24 AM</span>
+              </div>
+            </div>
+
+            <!-- Thinking State -->
+            <div class="msg-group msg-group--ai">
+              <div class="avatar avatar--ai">AI</div>
+              <div class="msg-bubble" style="padding: 8px 12px;">
+                <div class="typing-indicator">
+                  <div class="typing-dot"></div>
+                  <div class="typing-dot"></div>
+                  <div class="typing-dot"></div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Footer -->
+          <footer class="ai-chat__footer">
+            <div class="chat-input">
+              <textarea class="chat-input__field" placeholder="Ask a follow-up question..." rows="1"></textarea>
+              <div class="chat-input__footer">
+                <span class="chat-input__helper">Shift + Enter for new line</span>
+                <button class="btn btn--primary btn--sm btn--icon" aria-label="Send message">
+                  <svg class="icon" viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+              </div>
+            </div>
+          </footer>
+        </article>
+      </div>
+
+      <!-- VARIANT 2: FULL PAGE (Empty/Error State) -->
+      <div>
+        <h2 class="variant-label">Variant: Full Page / Immersive</h2>
+        <p class="variant-desc">
+          Typical usage: Dedicated "Ask AI" page. Centered layout with wider constraints. 
+          Shown here in "Empty" state with an error example.
+        </p>
+
+        <div style="background: #f1f5f9; padding: 40px; border-radius: 12px;">
+          <article class="ai-chat ai-chat--full-page">
+            <!-- Header (Simplified for full page) -->
+            <header class="ai-chat__header">
+              <div class="ai-chat__title-group">
+                <div class="avatar avatar--ai" style="width:40px; height:40px;">AI</div>
+                <div>
+                  <h3 class="ai-chat__title" style="font-size: 1.25rem;">Analytics Assistant</h3>
+                  <p style="font-size: 0.875rem; color: var(--color-gray-500);">Powered by GPT-4</p>
+                </div>
+              </div>
+            </header>
+
+            <!-- Body (Empty State) -->
+            <div class="ai-chat__body">
+              <div class="ai-chat__empty">
+                <svg class="empty-icon icon" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                <h4 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 8px;">How can I help you today?</h4>
+                <p style="max-width: 300px; margin-bottom: 24px;">I can analyze your store data, generate reports, or explain complex metrics.</p>
+                
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
+                  <button class="btn btn--secondary btn--sm">Analyze revenue</button>
+                  <button class="btn btn--secondary btn--sm">Show abandoned carts</button>
+                  <button class="btn btn--secondary btn--sm">Forecast sales</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer (With Error State) -->
+            <footer class="ai-chat__footer">
+              <div class="chat-input" style="border-color: var(--color-error);">
+                <textarea class="chat-input__field" placeholder="Type your query..." rows="1">Show me customers from Mars</textarea>
+                <div class="chat-input__footer">
+                  <span class="chat-input__helper text-error"></span>
+                  <button class="btn btn--primary btn--sm btn--icon" aria-label="Retry">
+                    <svg class="icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="error-banner" role="alert">
+                <svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                <span>Request failed: Unable to connect to AI service. Please check your connection.</span>
+              </div>
+            </footer>
+          </article>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

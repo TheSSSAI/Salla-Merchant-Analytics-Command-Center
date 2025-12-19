@@ -1,0 +1,6 @@
+"dependency_id","from_task","to_task","dependency_type","description","critical_path","lead_time_days","responsible_team","coordination_required","risk_level","mitigation_plan","status","resolution_date","impact_if_delayed","escalation_required"
+"DEP-001","TASK-001","TASK-002","Technical","Migration depends on schema","true","1","Backend","","Low","None","Active","2025-02-03","DB not ready",""
+"DEP-002","TASK-005","TASK-006","Technical","OAuth callback requires redirect logic","true","2","Security","true","Medium","Pair programming","Active","2025-02-07","Auth blocked",""
+"DEP-003","TASK-009","TASK-010","Technical","CDC Consumer needs publisher config","true","1","Backend","true","Medium","Define schema first","Active","2025-02-17","Data pipeline blocked",""
+"DEP-004","TASK-013","TASK-014","Technical","API needs SQL queries","true","1","Data","true","Low","Mock data","Active","2025-02-20","Dashboard empty",""
+"DEP-005","TASK-019","TASK-020","Technical","Prompt needs context logic","true","2","AI","true","High","Use static context for prompt testing","Active","2025-03-03","AI broken",""

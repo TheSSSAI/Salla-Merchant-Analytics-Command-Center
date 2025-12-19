@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report Builder Container</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* -------------------------------------------------------------------------- */
+    /* 1. DESIGN TOKENS (Sourced from Design System)                              */
+    /* -------------------------------------------------------------------------- */
+    :root {
+      /* Colors */
+      --color-primary-50: #eef2ff;
+      --color-primary-100: #e0e7ff;
+      --color-primary-500: #6366f1;
+      --color-primary-600: #4f46e5;
+      --color-primary-700: #4338ca;
+      
+      --color-white: #ffffff;
+      --color-gray-50: #f8fafc;
+      --color-gray-100: #f1f5f9;
+      --color-gray-200: #e2e8f0;
+      --color-gray-300: #cbd5e1;
+      --color-gray-400: #94a3b8;
+      --color-gray-500: #64748b;
+      --color-gray-600: #475569;
+      --color-gray-700: #334155;
+      --color-gray-900: #0f172a;
+
+      --color-success: #10b981;
+      --color-success-bg: #ecfdf5;
+      --color-success-text: #065f46;
+      
+      --color-error: #ef4444;
+      --color-error-bg: #fef2f2;
+      --color-error-text: #991b1b;
+
+      /* Typography */
+      --font-family: 'Inter', sans-serif;
+      --font-size-xs: 0.75rem;
+      --font-size-sm: 0.875rem;
+      --font-size-base: 1rem;
+      --font-size-lg: 1.125rem;
+      --font-size-xl: 1.25rem;
+      --font-size-2xl: 1.5rem;
+      
+      --font-weight-regular: 400;
+      --font-weight-medium: 500;
+      --font-weight-semibold: 600;
+      --font-weight-bold: 700;
+
+      /* Spacing */
+      --spacing-1: 4px;
+      --spacing-2: 8px;
+      --spacing-3: 12px;
+      --spacing-4: 16px;
+      --spacing-6: 24px;
+      --spacing-8: 32px;
+
+      /* Border Radius */
+      --radius-sm: 4px;
+      --radius-md: 6px;
+      --radius-lg: 8px;
+
+      /* Shadows */
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      --shadow-focus: 0 0 0 3px var(--color-primary-100);
+
+      /* Layout */
+      --header-height: 64px;
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* 2. BASE STYLES & RESET                                                     */
+    /* -------------------------------------------------------------------------- */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: var(--font-family);
+      background-color: var(--color-gray-50);
+      color: var(--color-gray-900);
+      line-height: 1.5;
+      padding: var(--spacing-8);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* 3. ATOMS & MOLECULES (Dependencies)                                        */
+    /* -------------------------------------------------------------------------- */
+    
+    /* Button Atom */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-2);
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-medium);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+      text-decoration: none;
+      min-height: 36px;
+    }
+    
+    .btn:focus-visible { outline: none; box-shadow: var(--shadow-focus); border-color: var(--color-primary-500); }
+    
+    .btn--primary { background-color: var(--color-primary-600); color: var(--color-white); }
+    .btn--primary:hover { background-color: var(--color-primary-700); }
+    
+    .btn--secondary { background-color: var(--color-white); border-color: var(--color-gray-300); color: var(--color-gray-700); }
+    .btn--secondary:hover { background-color: var(--color-gray-50); border-color: var(--color-gray-400); }
+    
+    .btn--ghost { background-color: transparent; color: var(--color-gray-600); }
+    .btn--ghost:hover { background-color: var(--color-gray-100); }
+
+    .btn--icon { padding: 8px; }
+
+    /* Icon Atom (Placeholder SVG styles) */
+    .icon { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .icon--sm { width: 14px; height: 14px; }
+
+    /* Molecule: Date Range Filter (Reused from Molecular Spec) */
+    .date-filter { position: relative; display: inline-block; }
+    .date-filter__trigger { display: inline-flex; align-items: center; justify-content: space-between; gap: var(--spacing-2); min-width: 200px; }
+    
+    /* Molecule: Search Input */
+    .search-input { position: relative; }
+    .search-input__field {
+      padding: 8px 12px 8px 36px;
+      border: 1px solid var(--color-gray-300);
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-sm);
+      width: 100%;
+      min-width: 240px;
+    }
+    .search-input__field:focus { outline: none; border-color: var(--color-primary-500); box-shadow: var(--shadow-focus); }
+    .search-input__icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--color-gray-400); }
+
+    /* -------------------------------------------------------------------------- */
+    /* 4. ORGANISM: REPORT BUILDER CONTAINER                                      */
+    /* -------------------------------------------------------------------------- */
+    
+    .report-builder {
+      background: var(--color-white);
+      border: 1px solid var(--color-gray-200);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      width: 100%;
+      max-width: 100%;
+    }
+
+    /* -- Header Section -- */
+    .report-builder__header {
+      padding: var(--spacing-4) var(--spacing-6);
+      border-bottom: 1px solid var(--color-gray-200);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-4);
+    }
+
+    .report-builder__title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--spacing-4);
+    }
+
+    .report-builder__title {
+      font-size: var(--font-size-lg);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-gray-900);
+      margin: 0;
+    }
+
+    .report-builder__meta {
+      font-size: var(--font-size-sm);
+      color: var(--color-gray-500);
+    }
+
+    .report-builder__controls {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-3);
+      flex-wrap: wrap;
+    }
+
+    .report-builder__spacer { flex: 1; }
+
+    /* -- Content Section -- */
+    .report-builder__content {
+      position: relative;
+      min-height: 300px;
+      /* Default state is data loaded */
+    }
+
+    /* Table Wrapper for Horizontal Scroll */
+    .table-wrapper {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Data Table Component */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--font-size-sm);
+      text-align: left;
+      white-space: nowrap; /* Prevent wrapping for dense data */
+    }
+
+    .data-table thead {
+      background-color: var(--color-gray-50);
+      border-bottom: 1px solid var(--color-gray-200);
+    }
+
+    .data-table th {
+      padding: 12px 24px;
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-gray-600);
+      text-transform: uppercase;
+      font-size: var(--font-size-xs);
+      letter-spacing: 0.05em;
+      position: sticky;
+      top: 0;
+      background-color: var(--color-gray-50);
+      z-index: 10;
+    }
+
+    /* Sortable Header Variant */
+    .data-table th.is-sortable { cursor: pointer; user-select: none; }
+    .data-table th.is-sortable:hover { background-color: var(--color-gray-100); color: var(--color-gray-900); }
+    .sort-icon { display: inline-block; margin-left: 4px; vertical-align: middle; opacity: 0.3; }
+    .is-sorted .sort-icon { opacity: 1; color: var(--color-primary-600); }
+
+    .data-table tbody tr {
+      border-bottom: 1px solid var(--color-gray-200);
+      transition: background-color 0.15s;
+    }
+
+    .data-table tbody tr:last-child { border-bottom: none; }
+    .data-table tbody tr:hover { background-color: var(--color-gray-50); }
+
+    .data-table td {
+      padding: 14px 24px;
+      color: var(--color-gray-700);
+    }
+
+    .data-table__primary-text {
+      font-weight: var(--font-weight-medium);
+      color: var(--color-gray-900);
+    }
+
+    .data-table__secondary-text {
+      font-size: var(--font-size-xs);
+      color: var(--color-gray-500);
+      display: block;
+      margin-top: 2px;
+    }
+
+    /* Semantic Status Badges within Table */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      font-size: var(--font-size-xs);
+      font-weight: var(--font-weight-medium);
+    }
+    .status-badge--success { background: var(--color-success-bg); color: var(--color-success-text); }
+    .status-badge--error { background: var(--color-error-bg); color: var(--color-error-text); }
+    .status-badge--neutral { background: var(--color-gray-100); color: var(--color-gray-700); }
+
+    /* -- Footer / Pagination Section -- */
+    .report-builder__footer {
+      padding: var(--spacing-3) var(--spacing-6);
+      border-top: 1px solid var(--color-gray-200);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: var(--color-white);
+    }
+
+    .pagination-info {
+      font-size: var(--font-size-sm);
+      color: var(--color-gray-500);
+    }
+
+    .pagination-controls {
+      display: flex;
+      gap: var(--spacing-2);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* 5. STATES (Loading, Empty, Error)                                          */
+    /* -------------------------------------------------------------------------- */
+
+    /* Loading State */
+    .report-builder--loading .report-builder__content {
+      padding: var(--spacing-6);
+    }
+    .skeleton-row {
+      height: 48px;
+      background: var(--color-gray-50);
+      margin-bottom: var(--spacing-2);
+      border-radius: var(--radius-md);
+      position: relative;
+      overflow: hidden;
+    }
+    .skeleton-row::after {
+      content: "";
+      position: absolute;
+      top: 0; right: 0; bottom: 0; left: 0;
+      transform: translateX(-100%);
+      background-image: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0,
+        rgba(255, 255, 255, 0.5) 20%,
+        rgba(255, 255, 255, 0.8) 60%,
+        rgba(255, 255, 255, 0)
+      );
+      animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+      100% { transform: translateX(100%); }
+    }
+
+    /* Empty State */
+    .state-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 64px 24px;
+      text-align: center;
+    }
+    .state-empty__icon {
+      width: 48px; height: 48px;
+      color: var(--color-gray-300);
+      margin-bottom: var(--spacing-4);
+    }
+    .state-empty__title {
+      font-size: var(--font-size-base);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-gray-900);
+      margin-bottom: var(--spacing-2);
+    }
+    .state-empty__desc {
+      font-size: var(--font-size-sm);
+      color: var(--color-gray-500);
+      max-width: 320px;
+      margin-bottom: var(--spacing-6);
+    }
+
+    /* Error State */
+    .state-error {
+      margin: var(--spacing-6);
+      padding: var(--spacing-4);
+      background-color: var(--color-error-bg);
+      border: 1px solid var(--color-error);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-3);
+    }
+    .state-error__icon { color: var(--color-error-text); flex-shrink: 0; margin-top: 2px; }
+    .state-error__content { flex: 1; }
+    .state-error__title { color: var(--color-error-text); font-weight: var(--font-weight-semibold); font-size: var(--font-size-sm); margin-bottom: 4px; }
+    .state-error__text { color: var(--color-error-text); font-size: var(--font-size-sm); opacity: 0.9; margin-bottom: var(--spacing-3); }
+
+    /* -------------------------------------------------------------------------- */
+    /* 6. RESPONSIVE ADAPTATIONS                                                  */
+    /* -------------------------------------------------------------------------- */
+    
+    @media (min-width: 768px) {
+      .report-builder__header {
+        flex-direction: row;
+        align-items: center;
+      }
+      .report-builder__title-row {
+        margin-bottom: 0;
+      }
+      .report-builder__controls {
+        flex-wrap: nowrap;
+      }
+    }
+
+    @media (max-width: 767px) {
+      /* Mobile specific adjustments */
+      .report-builder__header {
+        padding: var(--spacing-4);
+      }
+      
+      .report-builder__controls {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+      }
+      
+      .date-filter__trigger, 
+      .search-input, 
+      .search-input__field {
+        width: 100%;
+        min-width: 0;
+      }
+      
+      .btn {
+        width: 100%;
+      }
+      
+      .report-builder__footer {
+        flex-direction: column;
+        gap: var(--spacing-4);
+        align-items: center;
+        text-align: center;
+      }
+    }
+
+    /* Showcase Layout Styles (Not part of component) */
+    .showcase-wrapper { margin-bottom: 40px; }
+    .showcase-label {
+      font-size: var(--font-size-sm);
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--spacing-4);
+      display: block;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- 
+    =============================================================================
+    VARIANT 1: SALES REPORT (Data Loaded)
+    Desktop view with filters, export, search, and populated table.
+    =============================================================================
+  -->
+  <div class="showcase-wrapper">
+    <span class="showcase-label">Variant: Sales Report (Data Loaded)</span>
+    
+    <div class="report-builder" role="region" aria-label="Sales Performance Report">
+      <!-- Header -->
+      <header class="report-builder__header">
+        <div class="report-builder__title-row">
+          <div>
+            <h2 class="report-builder__title">Sales Performance</h2>
+            <span class="report-builder__meta">Overview of revenue and units sold</span>
+          </div>
+        </div>
+        
+        <div class="report-builder__spacer"></div>
+        
+        <div class="report-builder__controls">
+          <!-- Molecular Component: Search -->
+          <div class="search-input">
+            <svg class="search-input__icon icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" class="search-input__field" placeholder="Search orders..." aria-label="Search orders">
+          </div>
+
+          <!-- Molecular Component: Date Filter -->
+          <button class="btn btn--secondary date-filter__trigger" aria-haspopup="true">
+            <span style="display:flex; align-items:center; gap:8px;">
+              <svg class="icon icon--sm" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              Last 30 Days
+            </span>
+            <svg class="icon icon--sm" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
+
+          <!-- Atomic: Export Button -->
+          <button class="btn btn--secondary">
+            <svg class="icon icon--sm" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Export
+          </button>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <div class="report-builder__content">
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th scope="col" class="is-sortable is-sorted">
+                  Order ID 
+                  <svg class="icon icon--sm sort-icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+                </th>
+                <th scope="col" class="is-sortable">Date <svg class="icon icon--sm sort-icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></th>
+                <th scope="col">Customer</th>
+                <th scope="col">Status</th>
+                <th scope="col" class="is-sortable" style="text-align:right;">Amount <svg class="icon icon--sm sort-icon" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></th>
+                <th scope="col" style="text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="data-table__primary-text">#ORD-2023-001</span></td>
+                <td>Oct 24, 2023</td>
+                <td>
+                  <span class="data-table__primary-text">Ahmed Al-Sayed</span>
+                  <span class="data-table__secondary-text">ahmed@example.com</span>
+                </td>
+                <td><span class="status-badge status-badge--success">Completed</span></td>
+                <td style="text-align:right;"><span class="data-table__primary-text">$120.00</span></td>
+                <td style="text-align:right;">
+                  <button class="btn btn--ghost btn--icon btn--sm" aria-label="View Details"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg></button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="data-table__primary-text">#ORD-2023-002</span></td>
+                <td>Oct 24, 2023</td>
+                <td>
+                  <span class="data-table__primary-text">Sarah Johnson</span>
+                  <span class="data-table__secondary-text">sarah.j@example.com</span>
+                </td>
+                <td><span class="status-badge status-badge--neutral">Processing</span></td>
+                <td style="text-align:right;"><span class="data-table__primary-text">$85.50</span></td>
+                <td style="text-align:right;">
+                  <button class="btn btn--ghost btn--icon btn--sm" aria-label="View Details"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg></button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="data-table__primary-text">#ORD-2023-003</span></td>
+                <td>Oct 23, 2023</td>
+                <td>
+                  <span class="data-table__primary-text">Mohammed Ali</span>
+                  <span class="data-table__secondary-text">m.ali@test.com</span>
+                </td>
+                <td><span class="status-badge status-badge--error">Failed</span></td>
+                <td style="text-align:right;"><span class="data-table__primary-text">$210.00</span></td>
+                <td style="text-align:right;">
+                  <button class="btn btn--ghost btn--icon btn--sm" aria-label="View Details"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg></button>
+                </td>
+              </tr>
+              <tr>
+                <td><span class="data-table__primary-text">#ORD-2023-004</span></td>
+                <td>Oct 23, 2023</td>
+                <td>
+                  <span class="data-table__primary-text">Layla Hassan</span>
+                  <span class="data-table__secondary-text">layla@company.sa</span>
+                </td>
+                <td><span class="status-badge status-badge--success">Completed</span></td>
+                <td style="text-align:right;"><span class="data-table__primary-text">$45.00</span></td>
+                <td style="text-align:right;">
+                  <button class="btn btn--ghost btn--icon btn--sm" aria-label="View Details"><svg class="icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg></button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer class="report-builder__footer">
+        <div class="pagination-info">Showing <strong>1-4</strong> of <strong>128</strong> results</div>
+        <div class="pagination-controls">
+          <button class="btn btn--secondary btn--sm" disabled>Previous</button>
+          <button class="btn btn--secondary btn--sm">Next</button>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <!-- 
+    =============================================================================
+    VARIANT 2: PRODUCT REPORT (Loading State)
+    Demonstrates skeleton loading UI.
+    =============================================================================
+  -->
+  <div class="showcase-wrapper">
+    <span class="showcase-label">Variant: Product Report (Loading State)</span>
+    
+    <div class="report-builder report-builder--loading" aria-busy="true" aria-label="Loading Product Data">
+      <header class="report-builder__header">
+        <div class="report-builder__title-row">
+          <div>
+            <h2 class="report-builder__title">Top Products</h2>
+            <span class="report-builder__meta">Performance by units sold</span>
+          </div>
+        </div>
+        <div class="report-builder__spacer"></div>
+        <div class="report-builder__controls">
+          <div style="width: 200px; height: 36px; background: var(--color-gray-100); border-radius: var(--radius-md);"></div>
+          <div style="width: 100px; height: 36px; background: var(--color-gray-100); border-radius: var(--radius-md);"></div>
+        </div>
+      </header>
+
+      <div class="report-builder__content">
+        <div class="skeleton-row" style="width: 100%;"></div>
+        <div class="skeleton-row" style="width: 100%;"></div>
+        <div class="skeleton-row" style="width: 100%;"></div>
+        <div class="skeleton-row" style="width: 100%;"></div>
+        <div class="skeleton-row" style="width: 100%;"></div>
+      </div>
+      
+      <footer class="report-builder__footer">
+        <div style="width: 150px; height: 20px; background: var(--color-gray-100); border-radius: var(--radius-sm);"></div>
+        <div style="width: 120px; height: 32px; background: var(--color-gray-100); border-radius: var(--radius-md);"></div>
+      </footer>
+    </div>
+  </div>
+
+  <!-- 
+    =============================================================================
+    VARIANT 3: CUSTOMER REPORT (Error & Empty States)
+    Demonstrates error handling and empty data scenarios.
+    =============================================================================
+  -->
+  <div class="showcase-wrapper">
+    <span class="showcase-label">Variant: Error State</span>
+    
+    <div class="report-builder">
+      <header class="report-builder__header">
+        <h2 class="report-builder__title">Customer Insights</h2>
+      </header>
+      
+      <div class="report-builder__content" style="min-height: auto;">
+        <div class="state-error" role="alert">
+          <svg class="state-error__icon icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          <div class="state-error__content">
+            <h4 class="state-error__title">Unable to load report data</h4>
+            <p class="state-error__text">There was a problem connecting to the data server. Please check your connection and try again.</p>
+            <button class="btn btn--primary btn--sm">Retry Connection</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="showcase-wrapper">
+    <span class="showcase-label">Variant: Empty State</span>
+    
+    <div class="report-builder">
+      <header class="report-builder__header">
+        <h2 class="report-builder__title">Abandoned Carts</h2>
+        <div class="report-builder__controls">
+           <button class="btn btn--secondary date-filter__trigger">Today</button>
+        </div>
+      </header>
+      
+      <div class="report-builder__content">
+        <div class="state-empty">
+          <svg class="state-empty__icon icon" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+          <h3 class="state-empty__title">No abandoned carts found</h3>
+          <p class="state-empty__desc">Great job! There are no abandoned carts recorded for the selected time period.</p>
+          <button class="btn btn--secondary btn--sm">Clear Filters</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

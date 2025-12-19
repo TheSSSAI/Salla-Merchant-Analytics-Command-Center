@@ -1,0 +1,49 @@
+name: CI Database Schema Check
+
+on:
+  push:
+    branches: [ "main", "develop" ]
+    paths:
+      - 'prisma/**'
+      - 'src/**'
+      - 'package.json'
+      - 'tsconfig.json'
+  pull_request:
+    branches: [ "main", "develop" ]
+    paths:
+      - 'prisma/**'
+      - 'src/**'
+      - 'package.json'
+      - 'tsconfig.json'
+
+jobs:
+  schema-validation:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Validate Prisma Schema
+      run: npx prisma validate
+
+    - name: Check Prisma Formatting
+      run: npx prisma format --check
+
+    - name: Type Check (Schema Generation)
+      run: npx prisma generate
+
+    - name: Lint Code
+      run: npm run lint
+
+    - name: Build Project
+      run: npm run build

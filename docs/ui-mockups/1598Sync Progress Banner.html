@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organism: Sync Progress Banner</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* -------------------------------------------------------------------------- */
+    /* 1. DESIGN TOKENS                                                           */
+    /* -------------------------------------------------------------------------- */
+    :root {
+      /* Colors */
+      --color-primary-50: #eef2ff;
+      --color-primary-100: #e0e7ff;
+      --color-primary-500: #6366f1;
+      --color-primary-600: #4f46e5;
+      --color-primary-700: #4338ca;
+
+      --color-success-bg: #ecfdf5;
+      --color-success-text: #065f46;
+      --color-success-border: #a7f3d0;
+
+      --color-error-bg: #fef2f2;
+      --color-error-text: #991b1b;
+      --color-error-border: #fecaca;
+
+      --color-neutral-white: #ffffff;
+      --color-neutral-50: #f8fafc;
+      --color-neutral-200: #e2e8f0;
+      --color-neutral-500: #64748b;
+      --color-neutral-700: #334155;
+      --color-neutral-900: #0f172a;
+
+      /* Spacing */
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-6: 24px;
+      --space-8: 32px;
+
+      /* Typography */
+      --font-family: 'Inter', system-ui, sans-serif;
+      --text-xs: 0.75rem;
+      --text-sm: 0.875rem;
+      --text-base: 1rem;
+      --weight-medium: 500;
+      --weight-semibold: 600;
+
+      /* Effects */
+      --radius-md: 6px;
+      --radius-lg: 8px;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      --shadow-floating: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      
+      /* Animation */
+      --transition-fast: 200ms ease;
+    }
+
+    /* Reset */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--color-neutral-50);
+      font-family: var(--font-family);
+      color: var(--color-neutral-900);
+      padding: var(--space-8);
+      line-height: 1.5;
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* 2. MOLECULAR DEPENDENCY: PROGRESS BAR                                      */
+    /* -------------------------------------------------------------------------- */
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background-color: var(--color-neutral-200);
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar__fill {
+      height: 100%;
+      background-color: var(--color-primary-600);
+      border-radius: 999px;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+
+    /* Indeterminate State Animation */
+    .progress-bar__fill--indeterminate {
+      width: 100% !important;
+      background: linear-gradient(90deg, 
+        var(--color-primary-600) 0%, 
+        var(--color-primary-500) 50%, 
+        var(--color-primary-600) 100%);
+      background-size: 200% 100%;
+      animation: shimmer 2s infinite linear;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* 3. ATOM: BANNER BUTTONS                                                    */
+    /* -------------------------------------------------------------------------- */
+    .banner-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 12px;
+      font-size: 0.8125rem;
+      font-weight: var(--weight-medium);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      border: 1px solid transparent;
+      background: transparent;
+      text-decoration: none;
+    }
+    
+    .banner-btn:focus-visible {
+      outline: 2px solid var(--color-primary-600);
+      outline-offset: 2px;
+    }
+
+    .banner-btn--primary {
+      background: var(--color-primary-600);
+      color: white;
+    }
+    .banner-btn--primary:hover { background: var(--color-primary-700); }
+
+    .banner-btn--outline {
+      border-color: var(--color-neutral-200);
+      background: white;
+      color: var(--color-neutral-700);
+    }
+    .banner-btn--outline:hover { background: var(--color-neutral-50); border-color: var(--color-neutral-500); }
+
+    .banner-btn--text {
+      color: var(--color-neutral-500);
+      padding: 6px 8px;
+    }
+    .banner-btn--text:hover { color: var(--color-neutral-900); background: var(--color-neutral-50); }
+
+    /* -------------------------------------------------------------------------- */
+    /* 4. ORGANISM: SYNC PROGRESS BANNER                                          */
+    /* -------------------------------------------------------------------------- */
+    
+    /* Base Container */
+    .sync-banner {
+      display: flex;
+      flex-direction: column;
+      background: var(--color-neutral-white);
+      border: 1px solid var(--color-neutral-200);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4);
+      gap: var(--space-2);
+      position: relative;
+      overflow: hidden;
+      transition: all var(--transition-fast);
+    }
+
+    /* Header: Icon + Text */
+    .sync-banner__header {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-3);
+    }
+
+    .sync-banner__icon {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: var(--color-primary-50);
+      color: var(--color-primary-600);
+    }
+
+    .sync-banner__content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .sync-banner__title {
+      font-size: var(--text-sm);
+      font-weight: var(--weight-semibold);
+      line-height: 1.4;
+      color: var(--color-neutral-900);
+    }
+
+    .sync-banner__description {
+      font-size: var(--text-sm);
+      color: var(--color-neutral-500);
+      line-height: 1.4;
+      margin-top: 2px;
+    }
+
+    /* Meta Data Row */
+    .sync-banner__meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: var(--space-2);
+      margin-bottom: 4px;
+      font-size: 0.75rem;
+      font-weight: var(--weight-medium);
+      color: var(--color-neutral-500);
+    }
+
+    .sync-banner__percentage {
+      color: var(--color-primary-700);
+      font-weight: var(--weight-semibold);
+    }
+
+    /* Actions Area */
+    .sync-banner__actions {
+      display: flex;
+      gap: var(--space-2);
+      justify-content: flex-end;
+      margin-top: var(--space-2);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* 5. VARIANTS & STATES                                                       */
+    /* -------------------------------------------------------------------------- */
+
+    /* Floating Variant */
+    .sync-banner--floating {
+      position: fixed;
+      bottom: var(--space-6);
+      right: var(--space-6);
+      width: 380px;
+      box-shadow: var(--shadow-floating);
+      z-index: 1000;
+      border: 1px solid var(--color-neutral-200);
+      animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Completed State */
+    .sync-banner--completed {
+      background: var(--color-success-bg);
+      border-color: var(--color-success-border);
+    }
+    .sync-banner--completed .sync-banner__icon {
+      background: var(--color-neutral-white);
+      color: var(--color-success-text);
+    }
+    .sync-banner--completed .progress-bar {
+      background-color: rgba(255,255,255,0.5);
+    }
+    .sync-banner--completed .progress-bar__fill {
+      background-color: var(--color-success-text);
+    }
+    .sync-banner--completed .sync-banner__percentage {
+      color: var(--color-success-text);
+    }
+
+    /* Failed State */
+    .sync-banner--failed {
+      background: var(--color-error-bg);
+      border-color: var(--color-error-border);
+    }
+    .sync-banner--failed .sync-banner__icon {
+      background: var(--color-neutral-white);
+      color: var(--color-error-text);
+    }
+    .sync-banner--failed .progress-bar {
+      background-color: rgba(255,255,255,0.5);
+    }
+    .sync-banner--failed .progress-bar__fill {
+      background-color: var(--color-error-text);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* 6. RESPONSIVE (COMPACT MODE)                                               */
+    /* -------------------------------------------------------------------------- */
+    @media (max-width: 640px) {
+      .sync-banner--floating {
+        left: var(--space-4);
+        right: var(--space-4);
+        bottom: var(--space-4);
+        width: auto;
+      }
+
+      /* Compact Mode Logic */
+      .sync-banner__description {
+        display: none; /* Hide description on mobile */
+      }
+      
+      .sync-banner__header {
+        align-items: center;
+      }
+      
+      .sync-banner__icon {
+        width: 24px;
+        height: 24px;
+      }
+      .sync-banner__icon svg {
+        width: 14px;
+        height: 14px;
+      }
+      
+      .sync-banner__actions {
+        width: 100%;
+      }
+      
+      .banner-btn {
+        flex: 1;
+        text-align: center;
+      }
+    }
+
+    /* Mock Layout Styles */
+    .showcase-container { max-width: 800px; margin: 0 auto; }
+    .showcase-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; }
+    .showcase-subtitle { color: var(--color-neutral-500); margin-bottom: 32px; }
+    .variant-section { margin-bottom: 48px; }
+    .variant-label { 
+      font-size: 0.75rem; 
+      font-weight: 600; 
+      text-transform: uppercase; 
+      letter-spacing: 0.05em; 
+      color: var(--color-neutral-500); 
+      margin-bottom: 12px; 
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+<div class="showcase-container">
+  <h1 class="showcase-title">Organism: Sync Progress Banner</h1>
+  <p class="showcase-subtitle">Displays status of background data synchronization tasks. Includes Inline and Floating variants.</p>
+
+  <!-- VARIANT 1: INLINE - SYNCING -->
+  <div class="variant-section">
+    <span class="variant-label">State: Syncing (Active)</span>
+    <div class="sync-banner sync-banner--inline" role="status" aria-label="Data synchronization in progress">
+      <div class="sync-banner__header">
+        <div class="sync-banner__icon">
+          <!-- Spinner SVG -->
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 2s linear infinite;">
+            <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+          </svg>
+          <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
+        </div>
+        <div class="sync-banner__content">
+          <div class="sync-banner__title">Syncing historical data...</div>
+          <div class="sync-banner__description">Importing orders and customers from Salla. You can continue using other features.</div>
+        </div>
+      </div>
+      
+      <div class="sync-banner__progress-area">
+        <div class="sync-banner__meta">
+          <span>About 5 minutes remaining</span>
+          <span class="sync-banner__percentage">45%</span>
+        </div>
+        <div class="progress-bar" role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100">
+          <div class="progress-bar__fill" style="width: 45%;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VARIANT 2: INLINE - CALCULATING -->
+  <div class="variant-section">
+    <span class="variant-label">State: Calculating (Indeterminate)</span>
+    <div class="sync-banner sync-banner--inline" role="status">
+      <div class="sync-banner__header">
+        <div class="sync-banner__icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </div>
+        <div class="sync-banner__content">
+          <div class="sync-banner__title">Preparing data import...</div>
+          <div class="sync-banner__description">Analyzing data volume to estimate time.</div>
+        </div>
+      </div>
+      
+      <div class="sync-banner__progress-area">
+        <div class="sync-banner__meta">
+          <span>Calculating...</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-bar__fill progress-bar__fill--indeterminate"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VARIANT 3: INLINE - COMPLETED -->
+  <div class="variant-section">
+    <span class="variant-label">State: Completed (Success)</span>
+    <div class="sync-banner sync-banner--inline sync-banner--completed" role="status">
+      <div class="sync-banner__header">
+        <div class="sync-banner__icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <div class="sync-banner__content">
+          <div class="sync-banner__title">Sync completed successfully</div>
+          <div class="sync-banner__description">Your historical data is now ready for analysis.</div>
+        </div>
+      </div>
+      
+      <div class="sync-banner__progress-area">
+        <div class="progress-bar" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+          <div class="progress-bar__fill" style="width: 100%;"></div>
+        </div>
+      </div>
+
+      <div class="sync-banner__actions">
+        <button class="banner-btn banner-btn--text">Dismiss</button>
+        <button class="banner-btn banner-btn--primary" style="background-color: var(--color-success-text);">View Dashboard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- VARIANT 4: INLINE - FAILED -->
+  <div class="variant-section">
+    <span class="variant-label">State: Failed (Error)</span>
+    <div class="sync-banner sync-banner--inline sync-banner--failed" role="alert">
+      <div class="sync-banner__header">
+        <div class="sync-banner__icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <div class="sync-banner__content">
+          <div class="sync-banner__title">Sync failed</div>
+          <div class="sync-banner__description">Connection lost during import. Please check your internet connection.</div>
+        </div>
+      </div>
+      
+      <div class="sync-banner__progress-area">
+        <div class="sync-banner__meta">
+          <span>Failed at 62%</span>
+        </div>
+        <div class="progress-bar" role="progressbar" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100">
+          <div class="progress-bar__fill" style="width: 62%;"></div>
+        </div>
+      </div>
+
+      <div class="sync-banner__actions">
+        <button class="banner-btn banner-btn--text" style="color: var(--color-error-text);">Contact Support</button>
+        <button class="banner-btn banner-btn--primary" style="background-color: var(--color-error-text);">Retry Sync</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING DEMO -->
+  <div class="sync-banner sync-banner--floating" role="status">
+    <div class="sync-banner__header">
+      <div class="sync-banner__icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="animation: spin 2s linear infinite;">
+          <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+        </svg>
+      </div>
+      <div class="sync-banner__content">
+        <div class="sync-banner__title">Syncing historical data...</div>
+        <div class="sync-banner__description">Importing 24 months of order history.</div>
+      </div>
+    </div>
+    
+    <div class="sync-banner__progress-area">
+      <div class="sync-banner__meta">
+        <span>~2 mins remaining</span>
+        <span class="sync-banner__percentage">78%</span>
+      </div>
+      <div class="progress-bar" role="progressbar" aria-valuenow="78" aria-valuemin="0" aria-valuemax="100">
+        <div class="progress-bar__fill" style="width: 78%;"></div>
+      </div>
+    </div>
+    <div class="sync-banner__actions">
+      <button class="banner-btn banner-btn--text">Hide</button>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,2 @@
+"total_risks_identified","critical_risks","high_priority_risks","average_risk_score","key_risk_themes","immediate_actions_required"
+"6","0","4","14.1","[""AI/LLM Reliability & Security"",""Serverless Execution Limits"",""Third-Party Integration Stability""]","[""Finalize SQL validation logic for AI Assistant (WI-AI-002)"",""Implement QStash decoupling for Salla webhooks immediately (WI-DATA-001)"",""Establish RLS-equivalent patterns in ClickHouse queries (WI-AUTH-003)""]"

@@ -1,0 +1,2 @@
+"total_stories","total_story_points","must_have_stories","should_have_stories","could_have_stories","critical_stories","epics_identified","estimated_sprints","key_dependencies"
+"7","50","3","2","0","2","[""Authentication & User Management"",""Onboarding & Data Integration"",""Analytics Dashboards & Reporting"",""AI Assistant (RAG)"",""Abandoned Cart Recovery""]","4","[""Salla OAuth (US-009) blocks all data features"",""Data Sync (US-012) blocks Analytics & AI"",""ClickHouse Schema (WI-DATA-001) blocks Dashboard""]"

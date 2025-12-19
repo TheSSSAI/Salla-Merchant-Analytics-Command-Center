@@ -1,0 +1,4 @@
+"component_name","business_criticality","technical_complexity","change_frequency","test_types_required","unit_test_coverage","integration_test_coverage","e2e_test_coverage","automation_percentage","manual_test_effort","automated_test_effort","total_test_cases","risk_mitigation_score","quality_confidence","maintenance_overhead","tool_compatibility","team_skill_alignment"
+"Auth & Infrastructure","Critical","Medium","Low","[""Unit"",""Integration"",""Security""]","95","90","70","90","4","24","35","0.95","Very High","Low","Excellent","High"
+"Salla Integration (OAuth/Sync)","High","High","Medium","[""Integration"",""Contract"",""Resilience""]","85","85","60","80","8","32","40","0.88","High","Medium","Good (Requires Mocks)","Good"
+"Analytics & AI Engine","High","Very High","High","[""Unit"",""Performance"",""Security"",""Data Quality""]","90","80","50","75","12","48","50","0.85","Medium-High","High","Medium (ClickHouse/Vectors)","Medium"

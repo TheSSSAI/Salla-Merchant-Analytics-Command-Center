@@ -1,0 +1,931 @@
+# 1 Overview
+
+## 1.1 Diagram Id
+
+SEQ-FF-001
+
+## 1.2 Name
+
+Asynchronous Data Export
+
+## 1.3 Description
+
+A user in the SPA clicks 'Export to CSV' on a large report. The frontend makes an API call that quickly validates the request and places a job on a message queue. The API returns an immediate '202 Accepted' response. A separate background worker picks up the job, generates the CSV file, stores it in cloud storage, and notifies the user (e.g., via in-app notification and email) that their file is ready for download.
+
+## 1.4 Type
+
+🔹 FeatureFlow
+
+## 1.5 Purpose
+
+To provide a non-blocking user experience for data-intensive operations like large data exports, fulfilling requirement REQ-PERF-002.
+
+## 1.6 Complexity
+
+Medium
+
+## 1.7 Priority
+
+🟡 Medium
+
+## 1.8 Frequency
+
+OnDemand
+
+## 1.9 Participants
+
+- user-browser
+- spa-frontend-001
+- api-gateway-002
+- analytics-service-004
+- async-task-queue-013
+- olap-repository-008
+- notification-gateway-009
+
+## 1.10 Key Interactions
+
+- User clicks the export button in the SPA.
+- The analytics-service-004 receives the request and publishes a message to the async-task-queue-013 with the report parameters and userId.
+- The service immediately responds to the SPA with a 202 Accepted and a job ID.
+- A background worker consumes the message from the queue.
+- The worker queries the ClickHouse olap-repository-008 to fetch the large dataset.
+- The data is formatted into a CSV file and uploaded to secure file storage (e.g., Cloudflare R2).
+- A secure, time-limited download link is generated for the stored file.
+- The notification-gateway-009 sends an email to the user with the download link, and an in-app notification is created.
+
+## 1.11 Triggers
+
+- User requests to export a large dataset from any report that supports it.
+
+## 1.12 Outcomes
+
+- The user can continue using the application without waiting for the export to finish.
+- A CSV file containing the requested data is generated and made available via a secure download link.
+- The user is notified via multiple channels when the export is complete.
+
+## 1.13 Business Rules
+
+- Complex data-intensive operations must be processed asynchronously (NFR-102).
+- Download links must be secure (e.g., pre-signed URLs) and have a limited expiry time (e.g., 24 hours).
+
+## 1.14 Error Scenarios
+
+- The background job fails to generate the file; the user is notified of the failure.
+- The database query times out; the job fails and the user is notified.
+
+## 1.15 Integration Points
+
+- Cloud File Storage (e.g., Cloudflare R2).
+- Email Provider (via Notification Gateway).
+
+# 2.0 Details
+
+## 2.1 Diagram Id
+
+SEQ-FF-001
+
+## 2.2 Name
+
+Asynchronous Data Export Feature Flow
+
+## 2.3 Description
+
+Implementation-ready sequence for handling large, asynchronous data exports. A user initiates an export from the SPA, triggering a command that queues a background job. The user receives an immediate confirmation, and a separate worker process handles the data fetching, file generation, storage, and user notification, ensuring a non-blocking UI experience as per REQ-PERF-002.
+
+## 2.4 Participants
+
+### 2.4.1 Actor
+
+#### 2.4.1.1 Repository Id
+
+user-browser
+
+#### 2.4.1.2 Display Name
+
+User
+
+#### 2.4.1.3 Type
+
+🔹 Actor
+
+#### 2.4.1.4 Technology
+
+Human-Computer Interaction
+
+#### 2.4.1.5 Order
+
+1
+
+#### 2.4.1.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | actor |
+| Color | #999999 |
+| Stereotype |  |
+
+### 2.4.2.0 FrontendApplication
+
+#### 2.4.2.1 Repository Id
+
+spa-frontend-001
+
+#### 2.4.2.2 Display Name
+
+Frontend SPA
+
+#### 2.4.2.3 Type
+
+🔹 FrontendApplication
+
+#### 2.4.2.4 Technology
+
+React 18, TypeScript 5.4
+
+#### 2.4.2.5 Order
+
+2
+
+#### 2.4.2.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | boundary |
+| Color | #4285F4 |
+| Stereotype | React SPA |
+
+### 2.4.3.0 Gateway
+
+#### 2.4.3.1 Repository Id
+
+api-gateway-002
+
+#### 2.4.3.2 Display Name
+
+API Gateway
+
+#### 2.4.3.3 Type
+
+🔹 Gateway
+
+#### 2.4.3.4 Technology
+
+AWS API Gateway
+
+#### 2.4.3.5 Order
+
+3
+
+#### 2.4.3.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | boundary |
+| Color | #FF9900 |
+| Stereotype | Gateway |
+
+### 2.4.4.0 Serverless Function Group
+
+#### 2.4.4.1 Repository Id
+
+analytics-service-004
+
+#### 2.4.4.2 Display Name
+
+Analytics Service
+
+#### 2.4.4.3 Type
+
+🔹 Serverless Function Group
+
+#### 2.4.4.4 Technology
+
+AWS Lambda, Node.js 20.x
+
+#### 2.4.4.5 Order
+
+4
+
+#### 2.4.4.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | control |
+| Color | #DB4437 |
+| Stereotype | Command Handler |
+
+### 2.4.5.0 Queue
+
+#### 2.4.5.1 Repository Id
+
+async-task-queue-013
+
+#### 2.4.5.2 Display Name
+
+Async Task Queue
+
+#### 2.4.5.3 Type
+
+🔹 Queue
+
+#### 2.4.5.4 Technology
+
+AWS SQS
+
+#### 2.4.5.5 Order
+
+5
+
+#### 2.4.5.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | queue |
+| Color | #7E57C2 |
+| Stereotype | SQS Queue |
+
+### 2.4.6.0 Background Process
+
+#### 2.4.6.1 Repository Id
+
+async-jobs-service-001
+
+#### 2.4.6.2 Display Name
+
+Async Job Worker
+
+#### 2.4.6.3 Type
+
+🔹 Background Process
+
+#### 2.4.6.4 Technology
+
+AWS Lambda, Node.js 20.x
+
+#### 2.4.6.5 Order
+
+6
+
+#### 2.4.6.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | control |
+| Color | #0F9D58 |
+| Stereotype | Worker |
+
+### 2.4.7.0 Repository
+
+#### 2.4.7.1 Repository Id
+
+olap-repository-008
+
+#### 2.4.7.2 Display Name
+
+OLAP Repository
+
+#### 2.4.7.3 Type
+
+🔹 Repository
+
+#### 2.4.7.4 Technology
+
+ClickHouse
+
+#### 2.4.7.5 Order
+
+7
+
+#### 2.4.7.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | database |
+| Color | #F4B400 |
+| Stereotype | ClickHouse |
+
+### 2.4.8.0 ExternalService
+
+#### 2.4.8.1 Repository Id
+
+file-storage-service
+
+#### 2.4.8.2 Display Name
+
+File Storage
+
+#### 2.4.8.3 Type
+
+🔹 ExternalService
+
+#### 2.4.8.4 Technology
+
+Cloudflare R2
+
+#### 2.4.8.5 Order
+
+8
+
+#### 2.4.8.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | database |
+| Color | #607D8B |
+| Stereotype | Cloud Storage |
+
+### 2.4.9.0 Service
+
+#### 2.4.9.1 Repository Id
+
+user-service-001
+
+#### 2.4.9.2 Display Name
+
+User Service
+
+#### 2.4.9.3 Type
+
+🔹 Service
+
+#### 2.4.9.4 Technology
+
+AWS Lambda, Node.js 20.x
+
+#### 2.4.9.5 Order
+
+9
+
+#### 2.4.9.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | control |
+| Color | #DB4437 |
+| Stereotype | Service |
+
+### 2.4.10.0 Gateway
+
+#### 2.4.10.1 Repository Id
+
+notification-gateway-009
+
+#### 2.4.10.2 Display Name
+
+Notification Gateway
+
+#### 2.4.10.3 Type
+
+🔹 Gateway
+
+#### 2.4.10.4 Technology
+
+AWS SES SDK
+
+#### 2.4.10.5 Order
+
+10
+
+#### 2.4.10.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | interface |
+| Color | #03A9F4 |
+| Stereotype | Gateway |
+
+## 2.5.0.0 Interactions
+
+### 2.5.1.0 userInteraction
+
+#### 2.5.1.1 Source Id
+
+user-browser
+
+#### 2.5.1.2 Target Id
+
+spa-frontend-001
+
+#### 2.5.1.3 Message
+
+1. Clicks 'Export to CSV' on a report
+
+#### 2.5.1.4 Sequence Number
+
+1
+
+#### 2.5.1.5 Type
+
+🔹 userInteraction
+
+#### 2.5.1.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.1.7 Has Return
+
+❌ No
+
+#### 2.5.1.8 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | UI Event |
+| Method | onClick |
+| Parameters | Event object |
+| Authentication | N/A |
+| Error Handling | N/A |
+
+### 2.5.2.0 request
+
+#### 2.5.2.1 Source Id
+
+spa-frontend-001
+
+#### 2.5.2.2 Target Id
+
+api-gateway-002
+
+#### 2.5.2.3 Message
+
+2. Initiates export job
+
+#### 2.5.2.4 Sequence Number
+
+2
+
+#### 2.5.2.5 Type
+
+🔹 request
+
+#### 2.5.2.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.2.7 Return Message
+
+7. Returns '202 Accepted' with jobId
+
+#### 2.5.2.8 Has Return
+
+✅ Yes
+
+#### 2.5.2.9 Is Activation
+
+✅ Yes
+
+#### 2.5.2.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | HTTPS/1.1 |
+| Method | POST /api/v1/reports/export |
+| Parameters | Body: { reportType: 'sales-trend', format: 'csv', ... |
+| Authentication | JWT Bearer Token in Authorization header |
+| Error Handling | Receives 4xx/5xx responses; displays error message... |
+
+### 2.5.3.0 request
+
+#### 2.5.3.1 Source Id
+
+api-gateway-002
+
+#### 2.5.3.2 Target Id
+
+analytics-service-004
+
+#### 2.5.3.3 Message
+
+3. Forwards export request
+
+#### 2.5.3.4 Sequence Number
+
+3
+
+#### 2.5.3.5 Type
+
+🔹 request
+
+#### 2.5.3.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.3.7 Return Message
+
+6. Returns job creation confirmation
+
+#### 2.5.3.8 Has Return
+
+✅ Yes
+
+#### 2.5.3.9 Is Activation
+
+✅ Yes
+
+#### 2.5.3.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Lambda Invoke |
+| Method | invokeFunction('AnalyticsService-ExportHandler') |
+| Parameters | Validated request payload, user context from JWT |
+| Authentication | IAM Role |
+| Error Handling | Returns appropriate HTTP status codes (400, 503). |
+
+### 2.5.4.0 publish
+
+#### 2.5.4.1 Source Id
+
+analytics-service-004
+
+#### 2.5.4.2 Target Id
+
+async-task-queue-013
+
+#### 2.5.4.3 Message
+
+4. Publishes export job message
+
+#### 2.5.4.4 Sequence Number
+
+4
+
+#### 2.5.4.5 Type
+
+🔹 publish
+
+#### 2.5.4.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.4.7 Return Message
+
+5. Acknowledges message receipt
+
+#### 2.5.4.8 Has Return
+
+✅ Yes
+
+#### 2.5.4.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | AWS SQS SDK |
+| Method | sendMessage |
+| Parameters | Payload: { jobId, userId, merchantId, reportType, ... |
+| Authentication | IAM Role |
+| Error Handling | Throws ServiceUnavailableException on failure, lea... |
+
+### 2.5.5.0 uiUpdate
+
+#### 2.5.5.1 Source Id
+
+spa-frontend-001
+
+#### 2.5.5.2 Target Id
+
+user-browser
+
+#### 2.5.5.3 Message
+
+8. Displays confirmation: 'Export started...'
+
+#### 2.5.5.4 Sequence Number
+
+8
+
+#### 2.5.5.5 Type
+
+🔹 uiUpdate
+
+#### 2.5.5.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.5.7 Has Return
+
+❌ No
+
+#### 2.5.5.8 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | DOM Update |
+| Method | renderToastNotification |
+| Parameters | { title: 'Export in Progress', description: 'We'll... |
+| Authentication | N/A |
+| Error Handling | N/A |
+
+### 2.5.6.0 trigger
+
+#### 2.5.6.1 Source Id
+
+async-task-queue-013
+
+#### 2.5.6.2 Target Id
+
+async-jobs-service-001
+
+#### 2.5.6.3 Message
+
+9. Triggers worker with job message
+
+#### 2.5.6.4 Sequence Number
+
+9
+
+#### 2.5.6.5 Type
+
+🔹 trigger
+
+#### 2.5.6.6 Is Synchronous
+
+❌ No
+
+#### 2.5.6.7 Has Return
+
+❌ No
+
+#### 2.5.6.8 Is Activation
+
+✅ Yes
+
+#### 2.5.6.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Lambda Event Source Mapping |
+| Method | N/A (Polling and invocation) |
+| Parameters | SQS message payload |
+| Authentication | IAM Role |
+| Error Handling | On failure, message becomes visible again for retr... |
+
+### 2.5.7.0 query
+
+#### 2.5.7.1 Source Id
+
+async-jobs-service-001
+
+#### 2.5.7.2 Target Id
+
+olap-repository-008
+
+#### 2.5.7.3 Message
+
+10. Fetches report data with streaming
+
+#### 2.5.7.4 Sequence Number
+
+10
+
+#### 2.5.7.5 Type
+
+🔹 query
+
+#### 2.5.7.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.7.7 Return Message
+
+11. Streams result set
+
+#### 2.5.7.8 Has Return
+
+✅ Yes
+
+#### 2.5.7.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | ClickHouse Native TCP |
+| Method | db.queryStream() |
+| Parameters | SQL query based on job parameters, scoped by merch... |
+| Authentication | Database credentials from Secrets Manager |
+| Error Handling | Catches query timeout or connection errors. Trigge... |
+
+### 2.5.8.0 command
+
+#### 2.5.8.1 Source Id
+
+async-jobs-service-001
+
+#### 2.5.8.2 Target Id
+
+file-storage-service
+
+#### 2.5.8.3 Message
+
+12. Uploads generated CSV file via stream
+
+#### 2.5.8.4 Sequence Number
+
+12
+
+#### 2.5.8.5 Type
+
+🔹 command
+
+#### 2.5.8.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.8.7 Return Message
+
+13. Confirms upload and returns file metadata
+
+#### 2.5.8.8 Has Return
+
+✅ Yes
+
+#### 2.5.8.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | HTTPS/S3 API |
+| Method | putObject |
+| Parameters | Streamed CSV data, Bucket, Key (e.g., 'exports/{me... |
+| Authentication | IAM Role with write permissions |
+| Error Handling | Catches upload errors. Triggers failure notificati... |
+
+### 2.5.9.0 command
+
+#### 2.5.9.1 Source Id
+
+async-jobs-service-001
+
+#### 2.5.9.2 Target Id
+
+file-storage-service
+
+#### 2.5.9.3 Message
+
+14. Generates secure download link
+
+#### 2.5.9.4 Sequence Number
+
+14
+
+#### 2.5.9.5 Type
+
+🔹 command
+
+#### 2.5.9.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.9.7 Return Message
+
+15. Returns pre-signed URL
+
+#### 2.5.9.8 Has Return
+
+✅ Yes
+
+#### 2.5.9.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | HTTPS/S3 API |
+| Method | getSignedUrl |
+| Parameters | { Bucket, Key, ExpiresIn: 86400 } (24 hours) |
+| Authentication | IAM Role with read permissions |
+| Error Handling | Catches errors. Triggers failure notification path... |
+
+### 2.5.10.0 command
+
+#### 2.5.10.1 Source Id
+
+async-jobs-service-001
+
+#### 2.5.10.2 Target Id
+
+user-service-001
+
+#### 2.5.10.3 Message
+
+16. Creates in-app success notification
+
+#### 2.5.10.4 Sequence Number
+
+16
+
+#### 2.5.10.5 Type
+
+🔹 command
+
+#### 2.5.10.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.10.7 Return Message
+
+17. Confirms notification creation
+
+#### 2.5.10.8 Has Return
+
+✅ Yes
+
+#### 2.5.10.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Lambda Invoke |
+| Method | invokeFunction('UserService-CreateNotification') |
+| Parameters | { userId, type: 'export_success', title: 'Export R... |
+| Authentication | IAM Role |
+| Error Handling | Logs error on failure but does not fail the entire... |
+
+### 2.5.11.0 command
+
+#### 2.5.11.1 Source Id
+
+async-jobs-service-001
+
+#### 2.5.11.2 Target Id
+
+notification-gateway-009
+
+#### 2.5.11.3 Message
+
+18. Sends success email notification
+
+#### 2.5.11.4 Sequence Number
+
+18
+
+#### 2.5.11.5 Type
+
+🔹 command
+
+#### 2.5.11.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.11.7 Return Message
+
+19. Confirms email sent
+
+#### 2.5.11.8 Has Return
+
+✅ Yes
+
+#### 2.5.11.9 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | AWS SES SDK |
+| Method | sendEmail |
+| Parameters | { to: userEmail, template: 'exportSuccess', templa... |
+| Authentication | IAM Role |
+| Error Handling | Logs error on failure but does not fail the entire... |
+
+## 2.6.0.0 Notes
+
+### 2.6.1.0 Content
+
+#### 2.6.1.1 Content
+
+The initial API call (2-7) must complete under 200ms to meet performance requirements. The heavy lifting is offloaded to the worker.
+
+#### 2.6.1.2 Position
+
+top-right
+
+#### 2.6.1.3 Participant Id
+
+analytics-service-004
+
+#### 2.6.1.4 Sequence Number
+
+6
+
+### 2.6.2.0 Content
+
+#### 2.6.2.1 Content
+
+If any step from 10 onwards fails, the worker catches the exception, logs it with the jobId, and triggers a failure notification flow to the user via the Notification Gateway.
+
+#### 2.6.2.2 Position
+
+bottom-left
+
+#### 2.6.2.3 Participant Id
+
+async-jobs-service-001
+
+#### 2.6.2.4 Sequence Number
+
+10
+
+## 2.7.0.0 Implementation Guidance
+
+| Property | Value |
+|----------|-------|
+| Security Requirements | The API Gateway must enforce JWT authentication an... |
+| Performance Targets | The initial synchronous API response (to the user)... |
+| Error Handling Strategy | The synchronous part returns standard HTTP error c... |
+| Testing Considerations | Unit tests for the analytics service should mock t... |
+| Monitoring Requirements | A correlation ID (using the `jobId`) must be logge... |
+| Deployment Considerations | The command handler (`analytics-service-004`) and ... |
+

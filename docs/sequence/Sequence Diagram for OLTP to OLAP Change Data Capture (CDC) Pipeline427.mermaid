@@ -1,0 +1,28 @@
+sequenceDiagram
+    participant "Application Service" as ApplicationService
+    participant "OLTP Database" as OLTPDatabase
+    participant "CDC Service" as CDCService
+    participant "Message Queue" as MessageQueue
+    participant "Data Pipeline Processor" as DataPipelineProcessor
+    participant "OLAP Data Warehouse" as OLAPDataWarehouse
+
+    activate OLTPDatabase
+    ApplicationService->>OLTPDatabase: 1. 1. COMMIT TRANSACTION
+    OLTPDatabase-->>ApplicationService: COMMIT SUCCESS
+    activate CDCService
+    OLTPDatabase->>CDCService: 2. 2. [Internal] Read change from Write-Ahead Log (WAL)
+    CDCService->>MessageQueue: 3. 3. PublishMessage(changeEvent)
+    MessageQueue-->>CDCService: MessageID, MD5OfBody
+    activate DataPipelineProcessor
+    MessageQueue->>DataPipelineProcessor: 4. 4. [Trigger] Invoke with Batch of Messages
+    DataPipelineProcessor->>DataPipelineProcessor: 5. 5. Deserialize, Validate, and Transform Data
+    DataPipelineProcessor->>OLAPDataWarehouse: 6. 6. Batch INSERT INTO SalesFact(...)
+    OLAPDataWarehouse-->>DataPipelineProcessor: Success / Failure
+    DataPipelineProcessor->>MessageQueue: 7. 7. [On Success] Delete processed messages from queue
+
+    note over DataPipelineProcessor: Denormalization Logic (Step 5): The processor is responsible for creating a single, wide record f...
+    note over DataPipelineProcessor: Idempotency is CRITICAL: Because SQS provides an at-least-once delivery guarantee, the Data Pipel...
+
+    deactivate DataPipelineProcessor
+    deactivate CDCService
+    deactivate OLTPDatabase

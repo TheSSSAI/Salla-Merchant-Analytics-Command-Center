@@ -1,0 +1,41 @@
+sequenceDiagram
+    actor "User Browser" as UserBrowser
+    participant "Frontend SPA" as FrontendSPA
+    participant "API Gateway" as APIGateway
+    participant "AI Assistant Service" as AIAssistantService
+    participant "Vector DB Repository" as VectorDBRepository
+    participant "OLAP Repository" as OLAPRepository
+    participant "OpenAI Gateway" as OpenAIGateway
+    participant "External OpenAI API" as ExternalOpenAIAPI
+
+    UserBrowser->>FrontendSPA: 1. 1. Submits natural language query (e.g., 'What were my top 5 products last month?')
+    activate APIGateway
+    FrontendSPA->>APIGateway: 2. 2. POST /api/v1/ai/query
+    APIGateway-->>FrontendSPA: 16. 200 OK | 4xx/5xx Error
+    activate AIAssistantService
+    APIGateway->>AIAssistantService: 3. 3. Invokes Lambda function with request payload
+    AIAssistantService-->>APIGateway: 15. Returns result or error object
+    AIAssistantService->>AIAssistantService: 4. 4. Parses query for intent and entities
+    activate VectorDBRepository
+    AIAssistantService->>VectorDBRepository: 5. 5. findRelevantContext(queryEmbedding, merchantId)
+    VectorDBRepository-->>AIAssistantService: 7. Returns relevant context snippets
+    activate OLAPRepository
+    AIAssistantService->>OLAPRepository: 8. 8. fetchAnalyticalData(generatedQuery, merchantId)
+    OLAPRepository-->>AIAssistantService: 10. Returns sales data results
+    AIAssistantService->>AIAssistantService: 11. 11. Constructs prompt; scrubs PII
+    activate OpenAIGateway
+    AIAssistantService->>OpenAIGateway: 12. 12. getCompletion(prompt)
+    OpenAIGateway-->>AIAssistantService: 14. Returns LLM response or throws error
+    activate ExternalOpenAIAPI
+    OpenAIGateway->>ExternalOpenAIAPI: 13. 13. POST /v1/chat/completions
+
+    note over AIAssistantService: Data Scoping: All database interactions (Vector DB and OLAP) MUST be strictly scoped by merchantI...
+    note over AIAssistantService: PII Scrubbing: Before constructing the final prompt, any potential Personally Identifiable Inform...
+    note over OpenAIGateway: Circuit Breaker Pattern: This interaction is protected by a circuit breaker. If the OpenAI API fa...
+
+    deactivate ExternalOpenAIAPI
+    deactivate OpenAIGateway
+    deactivate OLAPRepository
+    deactivate VectorDBRepository
+    deactivate AIAssistantService
+    deactivate APIGateway

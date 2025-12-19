@@ -1,0 +1,3 @@
+"optimization_area","current_state","recommended_action","expected_benefit","implementation_cost"
+"Frontend Utilization","10% utilization in Sprint 1","Pull forward 'Implement Sales Chart Components' to Sprint 2 using mock data","Reduces Sprint 3 critical path density","2"
+"Backend Load Balancing","backend.dev at 96% utilization in peak sprints","Reassign 'Develop Aggregation API' to Data Engineer (SQL expertise match)","Balances load and utilizes Data Eng SQL skills in Sprint 3","4"

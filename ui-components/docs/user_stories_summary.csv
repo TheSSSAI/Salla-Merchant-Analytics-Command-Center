@@ -1,0 +1,2 @@
+"total_stories","total_story_points","must_have_stories","should_have_stories","could_have_stories","epics_identified","estimated_sprints","key_dependencies"
+"5","47","3","1","1","[""Core Tenant Identity & Access Management"",""High-Performance Data Pipeline"",""Cart Recovery Automation System"",""AI Assistant & RAG Implementation""]","4","[""Salla API OAuth"",""ClickHouse OLAP Setup"",""Upstash QStash Configuration""]"

@@ -1,0 +1,88 @@
+stateDiagram-v2
+    %% Styling Definitions
+    classDef authState fill:#f3f4f6,stroke:#4b5563,stroke-width:2px,color:#1f2937
+    classDef onboardingState fill:#eff6ff,stroke:#3b82f6,stroke-width:2px,color:#1e3a8a
+    classDef activeState fill:#ecfdf5,stroke:#10b981,stroke-width:2px,color:#064e3b
+    classDef errorState fill:#fef2f2,stroke:#ef4444,stroke-width:2px,stroke-dasharray: 5 5,color:#7f1d1d
+    classDef processState fill:#fff7ed,stroke:#f97316,stroke-width:1px,stroke-dasharray: 3 3,color:#7c2d12
+
+    [*] --> AppInitialization : App Load
+
+    state "Authentication Phase" as AuthPhase {
+        state "Check Local Session" as CheckSession
+        state "Public Access" as Public {
+            [*] --> LoginView
+            LoginView --> RegisterView : New User (US-001)
+            RegisterView --> LoginView : Existing User
+            LoginView --> ForgotPassword : Reset Request (US-006)
+        }
+        
+        CheckSession --> Public : No Token / Invalid
+    }
+
+    state "Authenticated App Shell" as AppShell {
+        %% Global Context Providers
+        state "Router Guard (Middleware)" as RouterGuard
+        
+        state "Onboarding Workflow" as Onboarding {
+            state "Connect Salla Store" as SallaConnect
+            state "Select Import Depth" as ImportConfig
+            
+            state "Data Synchronization" as SyncProcess {
+                state "Sync Running" as Syncing
+                state "Sync Failed" as SyncError
+                
+                Syncing --> SyncError : Max Retries Exceeded (US-014)
+                SyncError --> Syncing : User Restarts Sync
+                
+                note right of Syncing
+                    Global Banner Visible (US-012)
+                    Background Job: QStash
+                end note
+            }
+        }
+
+        state "Active Workspace" as Active {
+            state "Main Dashboard" as Dashboard
+            state "Settings & Team" as Settings
+            state "Analytics Reports" as Reports
+        }
+
+        %% Transitions & Logic
+        RouterGuard --> SallaConnect : State: No_Store
+        SallaConnect --> ImportConfig : OAuth Success (US-009)
+        ImportConfig --> Syncing : Depth Selected (US-011)
+        
+        %% Partial Access Logic (US-015)
+        Syncing --> Dashboard : View Allowed (Skeleton UI)
+        Syncing --> Settings : View Allowed (Full Access)
+        Syncing --> Reports : Access Blocked
+        
+        %% Happy Path Completion
+        Syncing --> Active : Sync Completed (US-013)
+        Active --> Dashboard : Default Route
+    }
+
+    %% Main Flow Connections
+    AppInitialization --> CheckSession
+    CheckSession --> RouterGuard : Token Valid
+    Public --> RouterGuard : Login Success (US-004)
+
+    %% Background Processes
+    state "Session Management" as SessionMgmt {
+        state "Silent Token Refresh" as Refresh
+        state "Logout" as LogoutProcess
+    }
+
+    AppShell --> Refresh : Access Token Expiring (US-446)
+    Refresh --> AppShell : New Token Issued
+    Refresh --> Public : Refresh Failed (Session Invalid)
+    AppShell --> LogoutProcess : User Clicks Logout (US-008)
+    LogoutProcess --> Public : Clear Session
+
+    %% Class Assignments
+    class AuthPhase authState
+    class SallaConnect,ImportConfig,Syncing onboardingState
+    class Dashboard,Settings,Reports activeState
+    class SyncError errorState
+    class Refresh,LogoutProcess processState

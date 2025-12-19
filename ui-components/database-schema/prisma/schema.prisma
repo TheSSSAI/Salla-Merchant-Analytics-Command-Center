@@ -1,0 +1,443 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// User Management & Multi-Tenancy
+// -----------------------------------------------------------------------------
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  passwordHash  String?   // Nullable for OAuth users in future
+  name          String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  memberships   UserMerchantAccess[]
+  invitations   Invitation[]           @relation("InvitedBy")
+  resetTokens   PasswordResetToken[]
+  preferences   UserPreference?
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
+model MerchantAccount {
+  id              String    @id @default(uuid())
+  storeName       String
+  sallaStoreId    String?   @unique // From Salla API
+  domain          String?
+  plan            String    @default("FREE")
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Legal Agreements
+  dpaAcceptedAt   DateTime?
+  dpaVersion      String?
+  
+  // Relations
+  memberships     UserMerchantAccess[]
+  invitations     Invitation[]
+  sallaConnection SallaConnection?
+  syncJobs        SyncJob[]
+  
+  // Domain Data
+  customers       Customer[]
+  products        Product[]
+  orders          Order[]
+  carts           AbandonedCart[]
+  
+  // Feature Configuration
+  emailTemplates  EmailTemplate[]
+  campaigns       RecoveryCampaign[]
+  domainSettings  DomainAuthentication?
+  
+  // Logs
+  auditLogs       AuditLog[]
+  dataRequests    DataSubjectRequest[]
+
+  @@map("merchant_accounts")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  ANALYST
+  MARKETER
+}
+
+model UserMerchantAccess {
+  id              String          @id @default(uuid())
+  userId          String
+  merchantId      String
+  role            Role
+  joinedAt        DateTime        @default(now())
+
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  merchant        MerchantAccount @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, merchantId])
+  @@map("user_merchant_access")
+}
+
+model Invitation {
+  id              String          @id @default(uuid())
+  email           String
+  role            Role
+  merchantId      String
+  invitedByUserId String
+  token           String          @unique
+  status          InvitationStatus @default(PENDING)
+  expiresAt       DateTime
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  merchant        MerchantAccount @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  invitedBy       User            @relation("InvitedBy", fields: [invitedByUserId], references: [id])
+
+  @@index([email])
+  @@map("invitations")
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}
+
+model UserPreference {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  theme     String   @default("system") // light, dark, system
+  locale    String   @default("en")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+// -----------------------------------------------------------------------------
+// Salla Integration & Data Sync
+// -----------------------------------------------------------------------------
+
+model SallaConnection {
+  id              String          @id @default(uuid())
+  merchantId      String          @unique
+  accessToken     String          // Encrypted
+  refreshToken    String          // Encrypted
+  expiresAt       DateTime
+  scope           String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  merchant        MerchantAccount @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@map("salla_connections")
+}
+
+model SyncJob {
+  id              String          @id @default(uuid())
+  merchantId      String
+  type            SyncType        // INITIAL, DAILY, RECONCILIATION
+  status          SyncStatus      @default(PENDING)
+  progress        Int             @default(0)
+  itemsProcessed  Int             @default(0)
+  errorMessage    String?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime        @default(now())
+
+  merchant        MerchantAccount @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@index([merchantId, createdAt])
+  @@map("sync_jobs")
+}
+
+enum SyncType {
+  INITIAL
+  DAILY
+  RECONCILIATION
+}
+
+enum SyncStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+// -----------------------------------------------------------------------------
+// Domain Entities (OLTP Subset for Operational Use)
+// -----------------------------------------------------------------------------
+
+model Customer {
+  id              String          @id @default(uuid())
+  merchantId      String
+  sallaId         String
+  firstName       String?
+  lastName        String?
+  email           String?
+  phone           String?
+  city            String?
+  country         String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  merchant        MerchantAccount @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  orders          Order[]
+  carts           AbandonedCart[]
+
+  @@unique([merchantId, sallaId])
+  @@index([merchantId, email])
+  @@map("customers")
+}
+
+model Product {
+  id              String          @id @default(uuid())
+  merchantId      String
+  sallaId         String
+  name            String
+  sku             String?
+  price           Decimal         @db.Decimal(10, 2)
+  category        String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  merchant        MerchantAccount @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  cartItems       AbandonedCartItem[]
+  orderItems      OrderItem[]
+
+  @@unique([merchantId, sallaId])
+  @@map("products")
+}
+
+model Order {
+  id              String          @id @default(uuid())
+  merchantId      String
+  customerId      String?
+  sallaId         String
+  status          String
+  total           Decimal         @db.Decimal(10, 2)
+  currency        String
+  placedAt        DateTime
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  merchant        MerchantAccount @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  customer        Customer?       @relation(fields: [customerId], references: [id])
+  items           OrderItem[]
+
+  @@unique([merchantId, sallaId])
+  @@index([merchantId, placedAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id              String          @id @default(uuid())
+  orderId         String
+  productId       String?
+  quantity        Int
+  price           Decimal         @db.Decimal(10, 2)
+  total           Decimal         @db.Decimal(10, 2)
+
+  order           Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product         Product?        @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+// -----------------------------------------------------------------------------
+// Cart Recovery Module
+// -----------------------------------------------------------------------------
+
+model AbandonedCart {
+  id              String          @id @default(uuid())
+  merchantId      String
+  customerId      String?
+  sallaCartId     String?
+  totalValue      Decimal         @db.Decimal(10, 2)
+  currency        String          @default("SAR")
+  checkoutUrl     String?
+  isRecovered     Boolean         @default(false)
+  recoveredAt     DateTime?
+  abandonedAt     DateTime
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  // Recovery Flow State
+  campaignId      String?
+  currentStep     Int             @default(0)
+  lastEmailSentAt DateTime?
+  status          RecoveryStatus  @default(PENDING)
+
+  merchant        MerchantAccount @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  customer        Customer?       @relation(fields: [customerId], references: [id])
+  items           AbandonedCartItem[]
+  campaign        RecoveryCampaign? @relation(fields: [campaignId], references: [id])
+
+  @@index([merchantId, abandonedAt])
+  @@index([merchantId, status])
+  @@map("abandoned_carts")
+}
+
+enum RecoveryStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  RECOVERED
+  CANCELLED
+}
+
+model AbandonedCartItem {
+  id              String          @id @default(uuid())
+  cartId          String
+  productId       String?
+  productName     String
+  quantity        Int
+  price           Decimal         @db.Decimal(10, 2)
+
+  cart            AbandonedCart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product         Product?        @relation(fields: [productId], references: [id])
+
+  @@map("abandoned_cart_items")
+}
+
+model EmailTemplate {
+  id              String          @id @default(uuid())
+  merchantId      String
+  name            String
+  subject         String
+  bodyHtml        String          @db.Text
+  isDefault       Boolean         @default(false)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  merchant        MerchantAccount @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  campaignSteps   CampaignStep[]
+
+  @@unique([merchantId, name])
+  @@map("email_templates")
+}
+
+model RecoveryCampaign {
+  id              String          @id @default(uuid())
+  merchantId      String
+  name            String
+  isActive        Boolean         @default(false)
+  description     String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  merchant        MerchantAccount @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  steps           CampaignStep[]
+  carts           AbandonedCart[]
+
+  @@map("recovery_campaigns")
+}
+
+model CampaignStep {
+  id              String          @id @default(uuid())
+  campaignId      String
+  templateId      String
+  stepOrder       Int             // 1, 2, 3...
+  delayValue      Int             // e.g., 1
+  delayUnit       DelayUnit       // HOURS, DAYS
+
+  campaign        RecoveryCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  template        EmailTemplate    @relation(fields: [templateId], references: [id])
+
+  @@map("campaign_steps")
+}
+
+enum DelayUnit {
+  MINUTES
+  HOURS
+  DAYS
+}
+
+model DomainAuthentication {
+  id              String          @id @default(uuid())
+  merchantId      String          @unique
+  domain          String
+  dkimVerified    Boolean         @default(false)
+  spfVerified     Boolean         @default(false)
+  verifiedAt      DateTime?
+  dnsRecords      Json            // Stores required CNAME/TXT records
+
+  merchant        MerchantAccount @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@map("domain_authentications")
+}
+
+// -----------------------------------------------------------------------------
+// Security & Compliance
+// -----------------------------------------------------------------------------
+
+model AuditLog {
+  id              String          @id @default(uuid())
+  merchantId      String?
+  userId          String?
+  action          String          // LOGIN, EXPORT_DATA, CHANGE_ROLE
+  resource        String          // Target entity
+  details         Json?
+  ipAddress       String?
+  userAgent       String?
+  createdAt       DateTime        @default(now())
+
+  merchant        MerchantAccount? @relation(fields: [merchantId], references: [id])
+  user            User?            @relation(fields: [userId], references: [id])
+
+  @@index([merchantId, createdAt])
+  @@map("audit_logs")
+}
+
+model DataSubjectRequest {
+  id              String          @id @default(uuid())
+  merchantId      String
+  customerEmail   String
+  type            DsarType        // ACCESS, ERASURE
+  status          DsarStatus      @default(PENDING)
+  requestedBy     String          // User ID of owner who requested
+  completedAt     DateTime?
+  createdAt       DateTime        @default(now())
+
+  merchant        MerchantAccount @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@map("data_subject_requests")
+}
+
+enum DsarType {
+  ACCESS
+  ERASURE
+}
+
+enum DsarStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}

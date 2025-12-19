@@ -1,0 +1,673 @@
+# 1 Overview
+
+## 1.1 Diagram Id
+
+SEQ-OF-002
+
+## 1.2 Name
+
+Proactive AI Insight Generation (Scheduled)
+
+## 1.3 Description
+
+A daily scheduled job analyzes each merchant's recent data for significant trends, anomalies, or optimization opportunities. If a pattern is found, the AI Assistant Service generates a concise insight card (e.g., 'Sales are up 30% this week compared to the monthly average') and stores it in the database to be displayed on the merchant's dashboard.
+
+## 1.4 Type
+
+🔹 OperationalFlow
+
+## 1.5 Purpose
+
+To proactively provide value to merchants by automatically surfacing important insights and anomalies in their data, fulfilling requirement REQ-FUN-402.
+
+## 1.6 Complexity
+
+High
+
+## 1.7 Priority
+
+🟡 Medium
+
+## 1.8 Frequency
+
+Daily
+
+## 1.9 Participants
+
+- scheduled-jobs-processor-015
+- ai-assistant-service-005
+- olap-repository-008
+- oltp-repository-008
+
+## 1.10 Key Interactions
+
+- The scheduled job is triggered once a day by a cron-like scheduler.
+- The job iterates through the list of active merchants.
+- For each merchant, the AI Assistant Service queries the OLAP database for recent performance data (e.g., sales, carts, conversions for the last 7 and 30 days).
+- The service runs a series of predefined analytical checks for anomalies (e.g., z-score deviation) and trend deviations.
+- If a statistically significant pattern is detected, a structured insight is generated.
+- The insight (text, related data, severity) is saved to an 'Insights' table in the OLTP database, associated with the merchant.
+- When the merchant logs in, their dashboard fetches and displays these stored, unread insights.
+
+## 1.11 Triggers
+
+- A daily cron-like schedule (e.g., 03:00 UTC).
+
+## 1.12 Outcomes
+
+- Actionable insights are automatically generated for merchants.
+- Merchants are alerted to important changes in their business without having to manually search for them.
+
+## 1.13 Business Rules
+
+- Insight generation logic is based on predefined rules and statistical norms.
+- Generated insights are stored per-merchant and can be marked as 'read' or 'dismissed' by the user.
+
+## 1.14 Error Scenarios
+
+- The scheduled job fails for a specific merchant due to data issues but continues with others.
+- No significant patterns are found for a merchant, so no insights are generated for that day.
+
+## 1.15 Integration Points
+
+*No items available*
+
+# 2.0 Details
+
+## 2.1 Diagram Id
+
+SEQ-IMP-OF-002
+
+## 2.2 Name
+
+Implementation: Proactive AI Insight Generation (Scheduled)
+
+## 2.3 Description
+
+A daily scheduled background job that systematically analyzes each active merchant's data to generate and store proactive insights. The process is designed for operational resilience, isolating failures to individual merchants to ensure the overall job completes. It leverages the OLAP data warehouse for high-performance analytics and persists findings in the OLTP database for presentation to the user. This flow directly implements REQ-FUN-402.
+
+## 2.4 Participants
+
+### 2.4.1 Background Process
+
+#### 2.4.1.1 Repository Id
+
+scheduled-jobs-processor-015
+
+#### 2.4.1.2 Display Name
+
+Scheduled Jobs Processor
+
+#### 2.4.1.3 Type
+
+🔹 Background Process
+
+#### 2.4.1.4 Technology
+
+AWS Lambda
+
+#### 2.4.1.5 Order
+
+1
+
+#### 2.4.1.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | actor |
+| Color | #D35400 |
+| Stereotype | <<Lambda, Scheduled>> |
+
+### 2.4.2.0 Repository
+
+#### 2.4.2.1 Repository Id
+
+oltp-repository-008
+
+#### 2.4.2.2 Display Name
+
+OLTP Repository
+
+#### 2.4.2.3 Type
+
+🔹 Repository
+
+#### 2.4.2.4 Technology
+
+Prisma (PostgreSQL)
+
+#### 2.4.2.5 Order
+
+2
+
+#### 2.4.2.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | database |
+| Color | #2980B9 |
+| Stereotype | <<Repository, OLTP>> |
+
+### 2.4.3.0 Serverless Function Group
+
+#### 2.4.3.1 Repository Id
+
+ai-assistant-service-005
+
+#### 2.4.3.2 Display Name
+
+AI Assistant Service
+
+#### 2.4.3.3 Type
+
+🔹 Serverless Function Group
+
+#### 2.4.3.4 Technology
+
+AWS Lambda
+
+#### 2.4.3.5 Order
+
+3
+
+#### 2.4.3.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | component |
+| Color | #8E44AD |
+| Stereotype | <<Lambda, Service>> |
+
+### 2.4.4.0 Repository
+
+#### 2.4.4.1 Repository Id
+
+olap-repository-008
+
+#### 2.4.4.2 Display Name
+
+OLAP Repository
+
+#### 2.4.4.3 Type
+
+🔹 Repository
+
+#### 2.4.4.4 Technology
+
+@clickhouse/client (ClickHouse)
+
+#### 2.4.4.5 Order
+
+4
+
+#### 2.4.4.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | database |
+| Color | #16A085 |
+| Stereotype | <<Repository, OLAP>> |
+
+## 2.5.0.0 Interactions
+
+### 2.5.1.0 Activation
+
+#### 2.5.1.1 Source Id
+
+scheduled-jobs-processor-015
+
+#### 2.5.1.2 Target Id
+
+scheduled-jobs-processor-015
+
+#### 2.5.1.3 Message
+
+Job execution begins
+
+#### 2.5.1.4 Sequence Number
+
+1
+
+#### 2.5.1.5 Type
+
+🔹 Activation
+
+#### 2.5.1.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.1.7 Return Message
+
+
+
+#### 2.5.1.8 Has Return
+
+❌ No
+
+#### 2.5.1.9 Is Activation
+
+✅ Yes
+
+#### 2.5.1.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Event |
+| Method | Lambda Invocation |
+| Parameters | Triggered by AWS EventBridge Schedule (Cron: '0 3 ... |
+| Authentication | IAM Role with EventBridge invocation permission |
+| Error Handling | Lambda DLQ configured for catastrophic job failure... |
+| Performance | Cold start latency should be monitored. |
+
+### 2.5.2.0 Database Query
+
+#### 2.5.2.1 Source Id
+
+scheduled-jobs-processor-015
+
+#### 2.5.2.2 Target Id
+
+oltp-repository-008
+
+#### 2.5.2.3 Message
+
+getActiveMerchants()
+
+#### 2.5.2.4 Sequence Number
+
+2
+
+#### 2.5.2.5 Type
+
+🔹 Database Query
+
+#### 2.5.2.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.2.7 Return Message
+
+Merchant[]
+
+#### 2.5.2.8 Has Return
+
+✅ Yes
+
+#### 2.5.2.9 Is Activation
+
+❌ No
+
+#### 2.5.2.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Prisma Client |
+| Method | prisma.merchant.findMany |
+| Parameters | { where: { status: 'ACTIVE' }, select: { id: true ... |
+| Authentication | Database connection string from AWS Secrets Manage... |
+| Error Handling | Throws PrismaClientKnownRequestError on failure. J... |
+| Performance | Query should be indexed on 'status' field. Latency... |
+
+### 2.5.3.0 Internal Method Call
+
+#### 2.5.3.1 Source Id
+
+scheduled-jobs-processor-015
+
+#### 2.5.3.2 Target Id
+
+scheduled-jobs-processor-015
+
+#### 2.5.3.3 Message
+
+processMerchant(merchant)
+
+#### 2.5.3.4 Sequence Number
+
+3
+
+#### 2.5.3.5 Type
+
+🔹 Internal Method Call
+
+#### 2.5.3.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.3.7 Return Message
+
+
+
+#### 2.5.3.8 Has Return
+
+❌ No
+
+#### 2.5.3.9 Is Activation
+
+❌ No
+
+#### 2.5.3.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | N/A |
+| Method | Loop through each returned merchant |
+| Parameters | merchant.id |
+| Authentication | N/A |
+| Error Handling | A try/catch block must wrap the call to ai-assista... |
+| Performance | Consider processing merchants in parallel batches ... |
+
+#### 2.5.3.11 Nested Interactions
+
+##### 2.5.3.11.1 Service Invocation
+
+###### 2.5.3.11.1.1 Source Id
+
+scheduled-jobs-processor-015
+
+###### 2.5.3.11.1.2 Target Id
+
+ai-assistant-service-005
+
+###### 2.5.3.11.1.3 Message
+
+generateProactiveInsightsForMerchant(merchantId)
+
+###### 2.5.3.11.1.4 Sequence Number
+
+4
+
+###### 2.5.3.11.1.5 Type
+
+🔹 Service Invocation
+
+###### 2.5.3.11.1.6 Is Synchronous
+
+✅ Yes
+
+###### 2.5.3.11.1.7 Return Message
+
+InsightGenerationResult
+
+###### 2.5.3.11.1.8 Has Return
+
+✅ Yes
+
+###### 2.5.3.11.1.9 Is Activation
+
+✅ Yes
+
+###### 2.5.3.11.1.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | AWS SDK |
+| Method | Lambda.invoke |
+| Parameters | Payload: { merchantId: string } |
+| Authentication | IAM Role with permission to invoke the AI Assistan... |
+| Error Handling | Parent processor catches exceptions. The service r... |
+| Performance | Invocation latency target < 50ms. Function timeout... |
+
+##### 2.5.3.11.2.0 Database Query
+
+###### 2.5.3.11.2.1 Source Id
+
+ai-assistant-service-005
+
+###### 2.5.3.11.2.2 Target Id
+
+olap-repository-008
+
+###### 2.5.3.11.2.3 Message
+
+queryPerformanceMetrics(merchantId, dateRanges)
+
+###### 2.5.3.11.2.4 Sequence Number
+
+5
+
+###### 2.5.3.11.2.5 Type
+
+🔹 Database Query
+
+###### 2.5.3.11.2.6 Is Synchronous
+
+✅ Yes
+
+###### 2.5.3.11.2.7 Return Message
+
+PerformanceData
+
+###### 2.5.3.11.2.8 Has Return
+
+✅ Yes
+
+###### 2.5.3.11.2.9 Is Activation
+
+❌ No
+
+###### 2.5.3.11.2.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | TCP/IP |
+| Method | clickhouseClient.query |
+| Parameters | SQL query with merchantId, last 7 days, and last 3... |
+| Authentication | Database credentials from AWS Secrets Manager |
+| Error Handling | Throws exception on query failure, which is caught... |
+| Performance | Critical path. Query must be optimized for sub-sec... |
+
+##### 2.5.3.11.3.0 Internal Computation
+
+###### 2.5.3.11.3.1 Source Id
+
+ai-assistant-service-005
+
+###### 2.5.3.11.3.2 Target Id
+
+ai-assistant-service-005
+
+###### 2.5.3.11.3.3 Message
+
+analyzeDataForPatterns(performanceData)
+
+###### 2.5.3.11.3.4 Sequence Number
+
+6
+
+###### 2.5.3.11.3.5 Type
+
+🔹 Internal Computation
+
+###### 2.5.3.11.3.6 Is Synchronous
+
+✅ Yes
+
+###### 2.5.3.11.3.7 Return Message
+
+Insight[] | null
+
+###### 2.5.3.11.3.8 Has Return
+
+✅ Yes
+
+###### 2.5.3.11.3.9 Is Activation
+
+❌ No
+
+###### 2.5.3.11.3.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | N/A |
+| Method | Internal business logic function |
+| Parameters | The result set from ClickHouse |
+| Authentication | N/A |
+| Error Handling | Pure function, errors indicate bugs and should thr... |
+| Performance | CPU-bound task. Monitor execution time. Should com... |
+
+##### 2.5.3.11.4.0 Database Write
+
+###### 2.5.3.11.4.1 Source Id
+
+ai-assistant-service-005
+
+###### 2.5.3.11.4.2 Target Id
+
+oltp-repository-008
+
+###### 2.5.3.11.4.3 Message
+
+saveInsights(merchantId, insights)
+
+###### 2.5.3.11.4.4 Sequence Number
+
+7
+
+###### 2.5.3.11.4.5 Type
+
+🔹 Database Write
+
+###### 2.5.3.11.4.6 Is Synchronous
+
+✅ Yes
+
+###### 2.5.3.11.4.7 Return Message
+
+success
+
+###### 2.5.3.11.4.8 Has Return
+
+✅ Yes
+
+###### 2.5.3.11.4.9 Is Activation
+
+❌ No
+
+###### 2.5.3.11.4.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Prisma Client |
+| Method | prisma.insight.createMany |
+| Parameters | { data: InsightData[] } where each insight is link... |
+| Authentication | Database credentials from AWS Secrets Manager |
+| Error Handling | Transactional write. On failure, throws exception ... |
+| Performance | Bulk insert for efficiency. Latency target < 100ms... |
+
+### 2.5.4.0.0.0 Logging
+
+#### 2.5.4.1.0.0 Source Id
+
+scheduled-jobs-processor-015
+
+#### 2.5.4.2.0.0 Target Id
+
+scheduled-jobs-processor-015
+
+#### 2.5.4.3.0.0 Message
+
+Log overall job summary
+
+#### 2.5.4.4.0.0 Sequence Number
+
+8
+
+#### 2.5.4.5.0.0 Type
+
+🔹 Logging
+
+#### 2.5.4.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.4.7.0.0 Return Message
+
+
+
+#### 2.5.4.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.4.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.4.10.0.0 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Structured Log (JSON) |
+| Method | logger.info |
+| Parameters | { totalMerchants: number, processed: number, failu... |
+| Authentication | N/A |
+| Error Handling | N/A |
+| Performance | N/A |
+
+## 2.6.0.0.0.0 Notes
+
+### 2.6.1.0.0.0 Content
+
+#### 2.6.1.1.0.0 Content
+
+Trigger: AWS EventBridge Schedule fires a cron event ('0 3 * * ? *') which invokes the processor.
+
+#### 2.6.1.2.0.0 Position
+
+top-left
+
+#### 2.6.1.3.0.0 Participant Id
+
+*Not specified*
+
+#### 2.6.1.4.0.0 Sequence Number
+
+1
+
+### 2.6.2.0.0.0 Content
+
+#### 2.6.2.1.0.0 Content
+
+Loop: For each merchant in Merchant[]
+
+#### 2.6.2.2.0.0 Position
+
+center
+
+#### 2.6.2.3.0.0 Participant Id
+
+scheduled-jobs-processor-015
+
+#### 2.6.2.4.0.0 Sequence Number
+
+3
+
+### 2.6.3.0.0.0 Content
+
+#### 2.6.3.1.0.0 Content
+
+Opt: If analyzeDataForPatterns returns one or more insights
+
+#### 2.6.3.2.0.0 Position
+
+center
+
+#### 2.6.3.3.0.0 Participant Id
+
+ai-assistant-service-005
+
+#### 2.6.3.4.0.0 Sequence Number
+
+7
+
+## 2.7.0.0.0.0 Implementation Guidance
+
+| Property | Value |
+|----------|-------|
+| Security Requirements | Each Lambda function must have a narrowly scoped I... |
+| Performance Targets | The entire job for all merchants must complete wit... |
+| Error Handling Strategy | The primary requirement is failure isolation. The ... |
+| Testing Considerations | Unit tests should cover the pattern analysis logic... |
+| Monitoring Requirements | A CloudWatch Dashboard should be created for this ... |
+| Deployment Considerations | The entire stack, including Lambda functions, IAM ... |
+

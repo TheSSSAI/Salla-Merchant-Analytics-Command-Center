@@ -1,0 +1,25 @@
+sequenceDiagram
+    actor "User/Client (SPA)" as UserClientSPA
+    participant "AIAssistantService" as AIAssistantService
+    participant "OpenAIGateway" as OpenAIGateway
+    participant "OpenAI API" as OpenAIAPI
+    participant "Monitoring System" as MonitoringSystem
+
+    activate AIAssistantService
+    UserClientSPA->>AIAssistantService: 1. 1. POST /ai/query (query: string)
+    AIAssistantService-->>UserClientSPA: Fallback Response (e.g., 'AI Assistant is temporarily unavailable.') or Successful Response
+    activate OpenAIGateway
+    AIAssistantService->>OpenAIGateway: 2. 2. generateCompletion(prompt)
+    OpenAIGateway-->>AIAssistantService: Throws CircuitBreakerOpenError or returns completion string
+    OpenAIGateway->>OpenAIGateway: 3. 3. [LOOP 5 times] Attempt API Call with Circuit Closed
+    OpenAIGateway->>OpenAIGateway: 6. 4. [ALT] Failure Threshold Reached: Transition to 'Open' state
+    OpenAIGateway->>OpenAIGateway: 10. 5. [ALT] Circuit is 'Open': Fail Fast
+    OpenAIGateway->>OpenAIGateway: 12. 6. [ALT] Reset Timeout Expires: Transition to 'Half-Open'
+    AIAssistantService->>UserClientSPA: 15. 7. return fallback response { message: '...' }
+
+    note over OpenAIGateway: Circuit Breaker State: CLOSED. Requests are allowed through. Failures are counted.
+    note over OpenAIGateway: Circuit Breaker State: OPEN. Threshold breached. Requests fail immediately. Reset timer (60s) sta...
+    note over OpenAIGateway: Circuit Breaker State: HALF-OPEN. Reset timer elapsed. A single trial request is permitted to che...
+
+    deactivate OpenAIGateway
+    deactivate AIAssistantService

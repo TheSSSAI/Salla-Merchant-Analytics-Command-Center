@@ -1,0 +1,752 @@
+# 1 Overview
+
+## 1.1 Diagram Id
+
+SEQ-BP-001
+
+## 1.2 Name
+
+Owner Invites a New Team Member
+
+## 1.3 Description
+
+A user with the 'Owner' role uses the UI to invite a new team member by email and assigns them a role. The system generates a unique, time-limited invitation link and sends it to the invitee. The invitee clicks the link to accept and either registers a new account or joins the team with their existing account.
+
+## 1.4 Type
+
+🔹 BusinessProcess
+
+## 1.5 Purpose
+
+To allow store owners to build a team and delegate access to the platform based on predefined roles, facilitating collaboration as per FR-202.
+
+## 1.6 Complexity
+
+Medium
+
+## 1.7 Priority
+
+🔴 High
+
+## 1.8 Frequency
+
+OnDemand
+
+## 1.9 Participants
+
+- user-browser
+- spa-frontend-001
+- api-gateway-002
+- user-management-service-003
+- oltp-repository-008
+- notification-gateway-009
+- audit-logger-010
+
+## 1.10 Key Interactions
+
+- Owner submits the invitation form (email, role).
+- The User Management Service creates an invitation record in the database with a unique token and an expiry date.
+- The Notification Gateway sends a formatted email to the invitee with the unique invitation link.
+- Invitee clicks the link and is taken to a landing page.
+- If the invitee's email is new, they complete a streamlined registration form.
+- If the email already exists in the system, the invitee simply logs in to accept.
+- Upon acceptance, the system associates the user with the merchant's team and the assigned role.
+- An audit event for the invitation is logged.
+
+## 1.11 Triggers
+
+- A user with the 'Owner' role initiates an invitation from the team management UI.
+
+## 1.12 Outcomes
+
+- A new team member is added to the merchant's account with the correct role.
+- The invitee can now access the system according to their assigned permissions.
+- An audit event is logged for the invitation and the subsequent acceptance.
+
+## 1.13 Business Rules
+
+- Only the 'Owner' role can send invitations (FR-202).
+- Invitation links are time-limited (e.g., 7 days).
+- A single user account can belong to multiple merchant teams (FR-202).
+
+## 1.14 Error Scenarios
+
+- Owner attempts to invite an email that is already on the team.
+- Invitee tries to use an expired or invalid link.
+- Email delivery fails, and the invitation status reflects this.
+
+## 1.15 Integration Points
+
+- Email Provider (via Notification Gateway).
+
+# 2.0 Details
+
+## 2.1 Diagram Id
+
+SEQ-BP-001
+
+## 2.2 Name
+
+Implementation: Owner Invites a New Team Member
+
+## 2.3 Description
+
+A comprehensive technical sequence for an 'Owner' role user inviting a new team member via email. This process includes synchronous API validation and asynchronous notification and auditing. The sequence covers business rule validation (user not already on team), secure token generation, state persistence, and integration with external notification and internal audit services.
+
+## 2.4 Participants
+
+### 2.4.1 Client
+
+#### 2.4.1.1 Repository Id
+
+user-browser
+
+#### 2.4.1.2 Display Name
+
+User Browser
+
+#### 2.4.1.3 Type
+
+🔹 Client
+
+#### 2.4.1.4 Technology
+
+Web Browser (Chrome, Firefox, etc.)
+
+#### 2.4.1.5 Order
+
+1
+
+#### 2.4.1.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | actor |
+| Color | #DDDDDD |
+| Stereotype | Human Actor |
+
+### 2.4.2.0 FrontendApplication
+
+#### 2.4.2.1 Repository Id
+
+spa-frontend-001
+
+#### 2.4.2.2 Display Name
+
+Frontend SPA
+
+#### 2.4.2.3 Type
+
+🔹 FrontendApplication
+
+#### 2.4.2.4 Technology
+
+React 18, TypeScript 5.4
+
+#### 2.4.2.5 Order
+
+2
+
+#### 2.4.2.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | boundary |
+| Color | #82b3d8 |
+| Stereotype | React SPA |
+
+### 2.4.3.0 Gateway
+
+#### 2.4.3.1 Repository Id
+
+api-gateway-002
+
+#### 2.4.3.2 Display Name
+
+API Gateway
+
+#### 2.4.3.3 Type
+
+🔹 Gateway
+
+#### 2.4.3.4 Technology
+
+AWS API Gateway
+
+#### 2.4.3.5 Order
+
+3
+
+#### 2.4.3.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | interface |
+| Color | #90CAF9 |
+| Stereotype | Gateway |
+
+### 2.4.4.0 Serverless Function Group
+
+#### 2.4.4.1 Repository Id
+
+user-management-service-003
+
+#### 2.4.4.2 Display Name
+
+User Management Service
+
+#### 2.4.4.3 Type
+
+🔹 Serverless Function Group
+
+#### 2.4.4.4 Technology
+
+AWS Lambda, Node.js 20.x
+
+#### 2.4.4.5 Order
+
+4
+
+#### 2.4.4.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | control |
+| Color | #42A5F5 |
+| Stereotype | Service |
+
+### 2.4.5.0 Repository
+
+#### 2.4.5.1 Repository Id
+
+oltp-repository-008
+
+#### 2.4.5.2 Display Name
+
+OLTP Repository
+
+#### 2.4.5.3 Type
+
+🔹 Repository
+
+#### 2.4.5.4 Technology
+
+Prisma 5.x on PostgreSQL 16
+
+#### 2.4.5.5 Order
+
+5
+
+#### 2.4.5.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | database |
+| Color | #1E88E5 |
+| Stereotype | PostgreSQL |
+
+### 2.4.6.0 Service
+
+#### 2.4.6.1 Repository Id
+
+audit-logger-010
+
+#### 2.4.6.2 Display Name
+
+Audit Logger
+
+#### 2.4.6.3 Type
+
+🔹 Service
+
+#### 2.4.6.4 Technology
+
+AWS Lambda, Winston
+
+#### 2.4.6.5 Order
+
+6
+
+#### 2.4.6.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | control |
+| Color | #64B5F6 |
+| Stereotype | Audit Service |
+
+### 2.4.7.0 Gateway
+
+#### 2.4.7.1 Repository Id
+
+notification-gateway-009
+
+#### 2.4.7.2 Display Name
+
+Notification Gateway
+
+#### 2.4.7.3 Type
+
+🔹 Gateway
+
+#### 2.4.7.4 Technology
+
+AWS SES SDK
+
+#### 2.4.7.5 Order
+
+7
+
+#### 2.4.7.6 Style
+
+| Property | Value |
+|----------|-------|
+| Shape | interface |
+| Color | #64B5F6 |
+| Stereotype | Email Gateway |
+
+## 2.5.0.0 Interactions
+
+### 2.5.1.0 User Interaction
+
+#### 2.5.1.1 Source Id
+
+user-browser
+
+#### 2.5.1.2 Target Id
+
+spa-frontend-001
+
+#### 2.5.1.3 Message
+
+1. Fills and submits team member invitation form with email and role.
+
+#### 2.5.1.4 Sequence Number
+
+1
+
+#### 2.5.1.5 Type
+
+🔹 User Interaction
+
+#### 2.5.1.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.1.7 Return Message
+
+
+
+#### 2.5.1.8 Has Return
+
+❌ No
+
+#### 2.5.1.9 Is Activation
+
+✅ Yes
+
+#### 2.5.1.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | DOM Events |
+| Method | onSubmit |
+| Parameters | Form data: { inviteeEmail: string, role: string } |
+| Authentication | N/A |
+| Error Handling | Client-side validation errors displayed (e.g., inv... |
+| Performance | Sub-100ms UI response. |
+
+### 2.5.2.0 API Call
+
+#### 2.5.2.1 Source Id
+
+spa-frontend-001
+
+#### 2.5.2.2 Target Id
+
+api-gateway-002
+
+#### 2.5.2.3 Message
+
+2. POST /api/v1/teams/invitations
+
+#### 2.5.2.4 Sequence Number
+
+2
+
+#### 2.5.2.5 Type
+
+🔹 API Call
+
+#### 2.5.2.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.2.7 Return Message
+
+4.1 HTTP 201 Created | 409 Conflict | 403 Forbidden
+
+#### 2.5.2.8 Has Return
+
+✅ Yes
+
+#### 2.5.2.9 Is Activation
+
+✅ Yes
+
+#### 2.5.2.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | HTTPS/REST |
+| Method | POST |
+| Parameters | Body: { "inviteeEmail": "new.member@example.com", ... |
+| Authentication | JWT Bearer token in 'Authorization' header. |
+| Error Handling | Handles 4xx/5xx responses from the server. |
+| Performance | Awaits response to update UI. |
+
+### 2.5.3.0 Function Invocation
+
+#### 2.5.3.1 Source Id
+
+api-gateway-002
+
+#### 2.5.3.2 Target Id
+
+user-management-service-003
+
+#### 2.5.3.3 Message
+
+3. invoke(inviteTeamMember)
+
+#### 2.5.3.4 Sequence Number
+
+3
+
+#### 2.5.3.5 Type
+
+🔹 Function Invocation
+
+#### 2.5.3.6 Is Synchronous
+
+✅ Yes
+
+#### 2.5.3.7 Return Message
+
+4. return { statusCode: 201 | 409 | 403, body: {...} }
+
+#### 2.5.3.8 Has Return
+
+✅ Yes
+
+#### 2.5.3.9 Is Activation
+
+✅ Yes
+
+#### 2.5.3.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | AWS Lambda Invocation |
+| Method | inviteTeamMember |
+| Parameters | Lambda event object with request body and authoriz... |
+| Authentication | Validates JWT from authorizer context. Checks for ... |
+| Error Handling | Propagates validation or processing errors as HTTP... |
+| Performance | Target p95 < 500ms for synchronous path. |
+
+#### 2.5.3.11 Nested Interactions
+
+##### 2.5.3.11.1 Database Query
+
+###### 2.5.3.11.1.1 Source Id
+
+user-management-service-003
+
+###### 2.5.3.11.1.2 Target Id
+
+oltp-repository-008
+
+###### 2.5.3.11.1.3 Message
+
+3.1. [Validation] isUserOnTeam(email, merchantId)
+
+###### 2.5.3.11.1.4 Sequence Number
+
+3.1
+
+###### 2.5.3.11.1.5 Type
+
+🔹 Database Query
+
+###### 2.5.3.11.1.6 Is Synchronous
+
+✅ Yes
+
+###### 2.5.3.11.1.7 Return Message
+
+3.2. return existingUser | null
+
+###### 2.5.3.11.1.8 Has Return
+
+✅ Yes
+
+###### 2.5.3.11.1.9 Is Activation
+
+✅ Yes
+
+###### 2.5.3.11.1.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Prisma Client |
+| Method | prisma.userMerchantAccount.findFirst(...) |
+| Parameters | { where: { user: { email: inviteeEmail }, merchant... |
+| Authentication | Database connection credentials. |
+| Error Handling | If user exists, abort and return 409 Conflict. |
+| Performance | Indexed query, target < 50ms. |
+
+##### 2.5.3.11.2.0 Database Write
+
+###### 2.5.3.11.2.1 Source Id
+
+user-management-service-003
+
+###### 2.5.3.11.2.2 Target Id
+
+oltp-repository-008
+
+###### 2.5.3.11.2.3 Message
+
+3.3. createInvitation(details)
+
+###### 2.5.3.11.2.4 Sequence Number
+
+3.3
+
+###### 2.5.3.11.2.5 Type
+
+🔹 Database Write
+
+###### 2.5.3.11.2.6 Is Synchronous
+
+✅ Yes
+
+###### 2.5.3.11.2.7 Return Message
+
+3.4. return newInvitation
+
+###### 2.5.3.11.2.8 Has Return
+
+✅ Yes
+
+###### 2.5.3.11.2.9 Is Activation
+
+✅ Yes
+
+###### 2.5.3.11.2.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | Prisma Client |
+| Method | prisma.invitation.create(...) |
+| Parameters | Data: { merchantAccountId, inviteeEmail, roleId, t... |
+| Authentication | Database connection credentials. |
+| Error Handling | Throws exception on database error, leading to a 5... |
+| Performance | Target < 100ms. |
+
+##### 2.5.3.11.3.0 Event Publication
+
+###### 2.5.3.11.3.1 Source Id
+
+user-management-service-003
+
+###### 2.5.3.11.3.2 Target Id
+
+audit-logger-010
+
+###### 2.5.3.11.3.3 Message
+
+3.5. [Async] logEvent('TeamMemberInvited')
+
+###### 2.5.3.11.3.4 Sequence Number
+
+3.5
+
+###### 2.5.3.11.3.5 Type
+
+🔹 Event Publication
+
+###### 2.5.3.11.3.6 Is Synchronous
+
+❌ No
+
+###### 2.5.3.11.3.7 Return Message
+
+
+
+###### 2.5.3.11.3.8 Has Return
+
+❌ No
+
+###### 2.5.3.11.3.9 Is Activation
+
+✅ Yes
+
+###### 2.5.3.11.3.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | AWS SQS / Asynchronous Lambda Invocation |
+| Method | sendMessage / invokeAsync |
+| Parameters | Event Payload: { eventType: 'TEAM_MEMBER_INVITED',... |
+| Authentication | IAM Role permissions. |
+| Error Handling | Failure to publish does not fail the primary reque... |
+| Performance | Fire-and-forget. |
+
+##### 2.5.3.11.4.0 Service Call
+
+###### 2.5.3.11.4.1 Source Id
+
+user-management-service-003
+
+###### 2.5.3.11.4.2 Target Id
+
+notification-gateway-009
+
+###### 2.5.3.11.4.3 Message
+
+3.6. [Async] sendInvitationEmail(email, link)
+
+###### 2.5.3.11.4.4 Sequence Number
+
+3.6
+
+###### 2.5.3.11.4.5 Type
+
+🔹 Service Call
+
+###### 2.5.3.11.4.6 Is Synchronous
+
+❌ No
+
+###### 2.5.3.11.4.7 Return Message
+
+
+
+###### 2.5.3.11.4.8 Has Return
+
+❌ No
+
+###### 2.5.3.11.4.9 Is Activation
+
+✅ Yes
+
+###### 2.5.3.11.4.10 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | AWS SES SDK |
+| Method | sendEmail |
+| Parameters | { to: inviteeEmail, template: 'invitation_template... |
+| Authentication | IAM Role permissions for SES. |
+| Error Handling | Failures are logged. A separate mechanism may be n... |
+| Performance | Fire-and-forget from the perspective of the main f... |
+
+### 2.5.4.0.0.0 UI Update
+
+#### 2.5.4.1.0.0 Source Id
+
+spa-frontend-001
+
+#### 2.5.4.2.0.0 Target Id
+
+user-browser
+
+#### 2.5.4.3.0.0 Message
+
+5. Displays 'Invitation sent successfully' message.
+
+#### 2.5.4.4.0.0 Sequence Number
+
+5
+
+#### 2.5.4.5.0.0 Type
+
+🔹 UI Update
+
+#### 2.5.4.6.0.0 Is Synchronous
+
+✅ Yes
+
+#### 2.5.4.7.0.0 Return Message
+
+
+
+#### 2.5.4.8.0.0 Has Return
+
+❌ No
+
+#### 2.5.4.9.0.0 Is Activation
+
+❌ No
+
+#### 2.5.4.10.0.0 Technical Details
+
+| Property | Value |
+|----------|-------|
+| Protocol | DOM Manipulation |
+| Method | setState |
+| Parameters | N/A |
+| Authentication | N/A |
+| Error Handling | N/A |
+| Performance | Immediate. |
+
+## 2.6.0.0.0.0 Notes
+
+### 2.6.1.0.0.0 Content
+
+#### 2.6.1.1.0.0 Content
+
+This sequence diagram covers ONLY the creation and sending of the invitation. The process of the invitee accepting the invitation is a separate business process (and thus a separate sequence diagram) triggered by the user clicking the link in the email.
+
+#### 2.6.1.2.0.0 Position
+
+bottom
+
+#### 2.6.1.3.0.0 Participant Id
+
+*Not specified*
+
+#### 2.6.1.4.0.0 Sequence Number
+
+*Not specified*
+
+### 2.6.2.0.0.0 Content
+
+#### 2.6.2.1.0.0 Content
+
+The calls to the Audit Logger and Notification Gateway are modeled as asynchronous (fire-and-forget) to ensure the API response to the user is not delayed by these external integrations. This improves the user experience and system resilience.
+
+#### 2.6.2.2.0.0 Position
+
+right
+
+#### 2.6.2.3.0.0 Participant Id
+
+user-management-service-003
+
+#### 2.6.2.4.0.0 Sequence Number
+
+3.5
+
+## 2.7.0.0.0.0 Implementation Guidance
+
+| Property | Value |
+|----------|-------|
+| Security Requirements | 1. **RBAC**: The API Gateway authorizer MUST enfor... |
+| Performance Targets | 1. **API Response Time**: The synchronous API endp... |
+| Error Handling Strategy | 1. **User Already on Team**: The service must perf... |
+| Testing Considerations | 1. **Unit Tests**: Test the business logic within ... |
+| Monitoring Requirements | 1. **API Metrics**: Monitor the latency, error rat... |
+| Deployment Considerations | A database migration is required to add the `Invit... |
+

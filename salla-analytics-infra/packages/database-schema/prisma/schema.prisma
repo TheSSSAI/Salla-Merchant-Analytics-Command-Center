@@ -1,0 +1,105 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User & Auth
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String
+  role          UserRole  @default(ANALYST)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  merchantId    String?
+  merchant      Merchant? @relation(fields: [merchantId], references: [id])
+  
+  // Auditing
+  auditLogs     AuditLog[]
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MARKETER
+  ANALYST
+}
+
+// Tenant / Merchant
+model Merchant {
+  id              String    @id @default(uuid())
+  sallaStoreId    String    @unique
+  storeName       String
+  domain          String?
+  
+  // Salla OAuth
+  accessToken     String    @db.Text
+  refreshToken    String    @db.Text
+  tokenExpiresAt  DateTime
+  
+  // Metadata
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  users           User[]
+  syncJobs        SyncJob[]
+  dataPipelines   DataPipelineStatus[]
+}
+
+// Infrastructure & Sync State
+model SyncJob {
+  id            String      @id @default(uuid())
+  merchantId    String
+  merchant      Merchant    @relation(fields: [merchantId], references: [id])
+  
+  status        SyncStatus  @default(PENDING)
+  resourceType  String      // e.g., "orders", "customers"
+  itemsProcessed Int        @default(0)
+  errorMessage  String?
+  
+  startedAt     DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime    @default(now())
+}
+
+enum SyncStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+model DataPipelineStatus {
+  id            String    @id @default(uuid())
+  merchantId    String
+  merchant      Merchant  @relation(fields: [merchantId], references: [id])
+  
+  lastSyncTime  DateTime
+  healthy       Boolean   @default(true)
+  
+  updatedAt     DateTime  @updatedAt
+}
+
+// Security & Compliance
+model AuditLog {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  action      String
+  resource    String
+  details     Json?
+  ipAddress   String?
+  createdAt   DateTime  @default(now())
+}
